@@ -1,2 +1,3 @@
-*.nc
+.DS_Store
 *.jld
+*.nc
