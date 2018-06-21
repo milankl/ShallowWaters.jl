@@ -17,23 +17,45 @@ interpolated as second argument. =#
 
 # ------------- 2-point interpolation between T and u or v. -----------------
 
-function ITu(u,T)
+function ITu_nonperiodic(u,T)
     #= Interpolates a variable T from the T-grid to a variable u on the u-grid. =#
+    u[:,:] = 0.5*(T[2:end,:] + T[1:end-1,:])
+    return u
+end
+
+function ITu_periodic(u,T)
+    #= Interpolates a variable T from the T-grid to a variable u on the u-grid. =#
+    u[2:end,:] = 0.5*(T[2:end,:] + T[1:end-1,:])
+    u[1,:] = 0.5*(T[1,:] + T[end,:])
     return u
 end
 
 function ITv(v,T)
     #= Interpolates a variable T from the T-grid to a variable v on the v-grid. =#
+    v[:,:] = 0.5*(T[:,2:end] + T[:,1:end-1])
     return v
 end
 
-function IuT(T,u)
+function IuT_nonperiodic(T,u)
     #= Interpolates a variable u from the u-grid to a variable T on the T-grid. =#
+    T[1,:] = 0.5*u[1,:]    # +0, kinematic boundary condition
+    T[2:end-1,:] = 0.5*(u[2:end,:] + u[1:end-1,:])
+    T[end,:] = 0.5*u[end,:] # +0, kinematic bc
+    return T
+end
+
+function IuT_periodic(T,u)
+    #= Interpolates a variable u from the u-grid to a variable T on the T-grid. =#
+    T[1:end-1,:] = 0.5*(u[2:end,:] + u[1:end-1,:])
+    T[end,:] = 0.5*(u[1,:]+u[end,:])
     return T
 end
 
 function IvT(T,v)
     #= Interpolates a variable v from the v-grid to a variable T on the T-grid. =#
+    T[:,2:end-1] = 0.5*(v[:,2:end] + v[:,1:end-1])
+    T[:,1] = 0.5*v[:,1] # +0, kinematic bc
+    T[:,end] = 0.5*v[:,end] # +0, kinematic bc
     return T
 end
 

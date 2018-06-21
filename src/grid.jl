@@ -12,6 +12,8 @@ const Nu = (nx-1)*ny   # number of u-points
 const Nv = nx*(ny-1)   # number of v-points
 const Nq = (nx+1)*(ny+1) # number of q-points
 
+const dx,ny,Ly = grid(nx,Lx,L_ratio)
+const one_over_dx = 1/dx
 
 
 #=
