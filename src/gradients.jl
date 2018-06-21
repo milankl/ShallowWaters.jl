@@ -100,7 +100,7 @@ function Gqx_nonperiodic(dqdx,q)
     #= Calculates the gradient in x-direction on the q-grid.
     The result dqdx sits on the v-grid. =#
 
-    dqdx[:,:] = one_over_dx*(q[2:end,:] - q[1:end-1,:])
+    dqdx[:,:] = one_over_dx*(q[2:end,2:end-1] - q[1:end-1,2:end-1])
     return dqdx
 end
 
@@ -108,15 +108,23 @@ function Gqx_periodic(dqdx,q)
     #= Calculates the gradient in x-direction on the q-grid.
     The result dqdx sits on the v-grid. =#
 
-    dqdx[1:end-1,:] = one_over_dx*(q[2:end,:] - q[1:end-1,:])
-    dqdx[end,:] = one_over_dx*(q[1,:] - q[end,:])
+    dqdx[1:end-1,:] = one_over_dx*(q[2:end,2:end-1] - q[1:end-1,2:end-1])
+    dqdx[end,:] = one_over_dx*(q[1,2:end-1] - q[end,2:end-1])
     return dqdx
 end
 
-function Gqy(dqdy,q)
+function Gqy_nonperiodic(dqdy,q)
     #= Calculates the gradient in y-direction on the q-grid.
     The result dqdy sits on the u-grid. =#
 
-    dqdy[:,:] = one_over_dx*(q[:,2:end] - q[:,1:end-1])    
+    dqdy[:,:] = one_over_dx*(q[2:end-1,2:end] - q[2:end-1,1:end-1])
+    return dqdy
+end
+
+function Gqy_periodic(dqdy,q)
+    #= Calculates the gradient in y-direction on the q-grid.
+    The result dqdy sits on the u-grid. =#
+
+    dqdy[:,:] = one_over_dx*(q[:,2:end] - q[:,1:end-1])
     return dqdy
 end

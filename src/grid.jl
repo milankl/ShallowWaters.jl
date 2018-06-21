@@ -14,6 +14,12 @@ const Nq = (nx+1)*(ny+1) # number of q-points
 
 const dx,ny,Ly = grid(nx,Lx,L_ratio)
 const one_over_dx = 1/dx
+const zeero = 0.    # change according to datatype
+const oone = 1.
+const twoo = 2.
+const one_minus_α_half = 1-0.5*α
+const one_half = 0.5
+const one_quarter = 0.25
 
 
 #=
