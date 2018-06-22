@@ -65,7 +65,19 @@ function Gvy(dvdy,v)
     return dvdy
 end
 
-function Guy(dudy,u)
+function Guy_nonperiodic(dudy,u)
+    #= Calculates the gradient in y-direction on the u-grid.
+    The result dudy sits on the q-grid. =#
+
+    dudy[2:end-1,2:end-1] = one_over_dx*(u[:,2:end] - u[:,1:end-1])
+    dudy[2:end-1,1] = (one_over_dx*α)*u[:,1] #  α is the lateral boundary condition parameter
+    dudy[2:end-1,end] = (-one_over_dx*α)*u[:,end]
+    dudy[1,:] = zeero
+    dudy[end,:] = zeero
+    return dudy
+end
+
+function Guy_periodic(dudy,u)
     #= Calculates the gradient in y-direction on the u-grid.
     The result dudy sits on the q-grid. =#
 
@@ -79,20 +91,22 @@ function Gvx_nonperiodic(dvdx,v)
     #= Calculates the gradient in x-direction on the v-grid.
     The result dvdx sits on the q-grid. =#
 
-    dvdx[2:end-1,:] = one_over_dx*(v[2:end,:] - v[1:end-1,:])
-    dvdx[1,:] = (one_over_dx*α)*v[1,:] #  α is the lateral boundary condition parameter
-    dvdx[end,:] = (-one_over_dx*α)*v[end,:]
+    dvdx[2:end-1,2:end-1] = one_over_dx*(v[2:end,:] - v[1:end-1,:])
+    dvdx[1,2:end-1] = (one_over_dx*α)*v[1,:] #  α is the lateral boundary condition parameter
+    dvdx[end,2:end-1] = (-one_over_dx*α)*v[end,:]
+    dvdx[:,1] = zeero      # redundant if initialised with zeros
+    dvdx[:,end] = zeero
     return dvdx
 end
-
-
 
 function Gvx_periodic(dvdx,v)
     #= Calculates the gradient in x-direction on the v-grid.
     The result dvdx sits on the q-grid. =#
 
-    dvdx[2:end,:] = one_over_dx*(v[2:end,:] - v[1:end-1,:])
-    dvdx[1,:] = one_over_dx*(v[1,:]-v[end,:])
+    dvdx[2:end,2:end-1] = one_over_dx*(v[2:end,:] - v[1:end-1,:])
+    dvdx[1,2:end-1] = one_over_dx*(v[1,:]-v[end,:])
+    dvdx[:,1] = zeero      # redundant if initialised with zeros
+    dvdx[:,end] = zeero
     return dvdx
 end
 

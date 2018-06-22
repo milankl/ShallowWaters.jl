@@ -1,18 +1,23 @@
-function grid(nx::Int,Lx::Float,L_ratio::Float)
+function grid(nx::Int,Lx::AbstractFloat,L_ratio::AbstractFloat)
     dx = Lx / nx
     ny = Int(round(Lx / L_ratio / dx))
     Ly = ny * dx
     return dx,ny,Ly
 end
 
+nx = 3
+Lx = 3.
+L_ratio = 1.
+const α = 2.
 
 #TODO depends on the boundary conditions! periodic vs non-periodic
+const dx,ny,Ly = grid(nx,Lx,L_ratio)
+
 const NT = nx*ny
 const Nu = (nx-1)*ny   # number of u-points
 const Nv = nx*(ny-1)   # number of v-points
 const Nq = (nx+1)*(ny+1) # number of q-points
 
-const dx,ny,Ly = grid(nx,Lx,L_ratio)
 const one_over_dx = 1/dx
 const zeero = 0.    # change according to datatype
 const oone = 1.
