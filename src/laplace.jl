@@ -182,14 +182,46 @@ function Lv_periodic(dv,v)
     return dv
 end
 
-function LLu(du,u)
+function LLu_periodic(du,du2,u)
     #= LLu is the biharmonic operator d/dx^4 + d/dy^4 + 2*(d/dx^2)*(d/dy^2)
     applied to a variable on the u-grid. The result du sits again on the u-grid. =#
+
+    # apply the harmonic Laplacian twice
+    du = Lu_periodic(du,u)
+    du = Lu_periodic(du2,du)
+
     return du
 end
 
-function LLv(dv,v)
+function LLu_nonperiodic(du,du2,u)
+    #= LLu is the biharmonic operator d/dx^4 + d/dy^4 + 2*(d/dx^2)*(d/dy^2)
+    applied to a variable on the u-grid. The result du sits again on the u-grid. =#
+
+    # apply the harmonic Laplacian twice
+    du = Lu_nonperiodic(du,u)
+    du = Lu_nonperiodic(du2,du)
+
+    return du
+end
+
+function LLv_periodic(dv,dv2,v)
     #= LLv is the biharmonic operator d/dx^4 + d/dy^4 + 2*(d/dx^2)*(d/dy^2)
     applied to a variable on the v-grid. The result dv sits again on the v-grid. =#
+
+    # apply the harmonic Laplacian twice
+    dv = Lv_periodic(dv,v)
+    dv = Lv_periodic(dv2,v)
+
+    return dv
+end
+
+function LLv_nonperiodic(dv,dv2,v)
+    #= LLv is the biharmonic operator d/dx^4 + d/dy^4 + 2*(d/dx^2)*(d/dy^2)
+    applied to a variable on the v-grid. The result dv sits again on the v-grid. =#
+
+    # apply the harmonic Laplacian twice
+    dv = Lv_nonperiodic(dv,v)
+    dv = Lv_nonperiodic(dv2,v)
+
     return dv
 end

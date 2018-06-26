@@ -12,7 +12,7 @@ const Ndays = 10
 
 # boundary condtions
 const bc_x = "periodic"    # or "free-slip" or "no-slip"
-const bc_y = "free-slip"   # or "no-slip"
+const α = 0.
 
 const run_id = 0           #TODO make automatic
 const c_D = 1e-5
