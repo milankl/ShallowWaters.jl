@@ -1,7 +1,7 @@
 # renames the operator functions according to the boundary conditions set
 # by bc_x
 
-if bc_x == "periodic"
+if bc_x == 1    # i.e. periodic
 
     # GRADIENTS
     GTx = GTx_periodic
@@ -33,7 +33,7 @@ if bc_x == "periodic"
     LLu = LLu_periodic
     LLv = LLv_periodic
 
-else
+else            # i.e. non-periodic
 
     # GRADIENTS
     GTx = GTx_nonperiodic
