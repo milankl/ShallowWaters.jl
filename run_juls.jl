@@ -1,9 +1,10 @@
 #= This script includes all modules and functions, sets up the grid parameters
 etc, and runs the model =#
 
+using Base.Dates
 #using JLD
 #using netCDF4 at some point in the future for output
-using SigmoidNumbers
+#using SigmoidNumbers
 
 # PARAMETERS, GRID and CONSTANTS
 include("parameters.jl")
@@ -21,10 +22,8 @@ include("src/viscosity.jl")
 include("src/rhs.jl")
 include("src/time_integration.jl")
 
-#TODO
-#include("src/nc_output.jl")
-#include("src/jld_output.jl")
-#include("src/feeback.jl")
+#include("src/output.jl")
+include("src/feedback.jl")
 
 # INITILIASE
 include("src/initial_conditions.jl")

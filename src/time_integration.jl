@@ -26,6 +26,9 @@ function time_integration(u,v,η)
 
     dt,nt = timestep()
 
+    # feedback
+    t0 = feedback_ini()
+
     for i = 1:nt
 
         u1[:],v1[:],η1[:] = u,v,η
@@ -45,7 +48,12 @@ function time_integration(u,v,η)
         end
 
         u[:],v[:],η[:] = u0,v0,η0
+
+        t0 = feedback(i,t0,nt)        
     end
+
+    # feeback
+    feedback_end(t0)
 
     return u,v,η
 end

@@ -1,5 +1,5 @@
 # define constants
-const Numtype = Posit{32,2}
+const Numtype = Float32
 
 const nx = 64                   # number of grid cells in x-direction
 const Lx = 3840e3               # length of the domain in x-direction
@@ -10,7 +10,7 @@ const H = 500.                  # layer thickness at rest
 const ρ = 1e3                   # density
 
 const cfl = 0.9                 # CFL number
-const Ndays = 100                # number of days to integrate for
+const Ndays = 500                # number of days to integrate for
 
 # boundary condtions
 const bc_x = "nonperiodic"      # "periodic" or anything else for nonperiodic
