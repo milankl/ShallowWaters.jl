@@ -38,10 +38,10 @@ const nqx = if (bc_x == "periodic") nx else nx+1 end
 const nqy = ny+1
 
 # total number of T,u,v,q-points
-const NT = nx*ny
-const Nu = nux*nuy
-const Nv = nvx*nvy
-const Nq = nqx*nqy
+const nT = nx*ny
+const nu = nux*nuy
+const nv = nvx*nvy
+const nq = nqx*nqy
 
 # grid vectors
 const x_T = Array(1:nx)*dx - dx/2

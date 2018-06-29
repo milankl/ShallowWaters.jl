@@ -1,7 +1,7 @@
 # renames the operator functions according to the boundary conditions set
 # by bc_x
 
-if bc_x == 1    # i.e. periodic
+if bc_x == "periodic"    # i.e. periodic
 
     # GRADIENTS
     GTx = GTx_periodic

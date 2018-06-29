@@ -1,4 +1,4 @@
-const ν = 100.
+const ν = Numtype.(500.)
 
 #=
 function viscosity()
