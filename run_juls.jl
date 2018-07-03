@@ -2,8 +2,7 @@
 etc, and runs the model =#
 
 using Base.Dates
-#using JLD
-#using netCDF4 at some point in the future for output
+using NetCDF
 #using SigmoidNumbers
 
 # PARAMETERS, GRID and CONSTANTS
@@ -22,8 +21,9 @@ include("src/viscosity.jl")
 include("src/rhs.jl")
 include("src/time_integration.jl")
 
-#include("src/output.jl")
+# OUTPUT AND FEEDBACK
 include("src/feedback.jl")
+include("src/output.jl")
 
 # INITILIASE
 include("src/initial_conditions.jl")

@@ -1,4 +1,5 @@
 const ν = Numtype.(500.)
+const νB = ν*dx^2
 
 #=
 function viscosity()

@@ -14,5 +14,5 @@ const four = Numtype(4.)
 const four_plus_α = Numtype(4. + α)
 const four_minus_α = Numtype(4. - α)
 
-const gg = Numtype(g)
-const HH = Numtype(H)
+const g = Numtype(gravity)
+const H = Numtype(water_depth)

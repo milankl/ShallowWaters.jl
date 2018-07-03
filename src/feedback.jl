@@ -26,6 +26,16 @@ function duration_estimate(i::Int,t::Real,nt::Int)
     println("and is hopefully done on "*Dates.format(now() + Dates.Second(time_to_go),Dates.RFC1123Format))
 end
 
+function nan_detection(u::Array,v::Array,η::Array)
+    # TODO include a check for Posit, Integers?
+    n_nan = sum(isnan.(u)) + sum(isnan.(v)) + sum(isnan.(η))
+    if n_nan > 0
+        return true
+    else
+        return false
+    end
+end
+
 function feedback_ini()
     println("Starting juls on "*Dates.format(now(),Dates.RFC1123Format))
     return time()
@@ -35,13 +45,21 @@ function feedback_end(t::Real)
     println("Integration done in "*readable_secs(time()-t)*".")
 end
 
-function feedback(i::Int,t::Real,nt::Int)
+function feedback(u::Array,v::Array,η::Array,i::Int,t::Real,nt::Int,nans_detected::Bool)
     if i == 10
-        return time()    # measure time after 10 loops to avoid overhead
+        t = time()    # measure time after 10 loops to avoid overhead
     elseif i == 100
         duration_estimate(i,t,nt)
-        return t
-    else
-        return t
     end
+
+    if !nans_detected
+        if i % nout == 0    # only check for nans when output is produced
+            nans_detected = nan_detection(u,v,η)
+            if nans_detected
+                println("NaNs detected.")
+            end
+        end
+    end
+
+    return t,nans_detected
 end

@@ -28,6 +28,18 @@ function meshgrid(x,y)
     return xx,yy
 end
 
+function timestep()
+    # shallow water gravity wave phase speed
+    c_phase = sqrt(gravity*water_depth)
+
+    # the model timestep dt based on cfl stability criterion to resolve gravity waves
+    # converting to integer, i.e. rounding up (ceil)
+    dtint = Int(floor(cfl*dx/c_phase))  # make the timestep slightly shorter due to floor
+    nt = Int(ceil(Ndays*3600*24/dtint)) # number of time steps to integrate
+    dt = Numtype(dtint)                 # convert to Numtype for multiplication of the RHS
+    return dt,dtint,nt
+end
+
 const dx,ny,Ly = domain_ratio(nx,Lx,L_ratio)
 
 # number of grid points for u,v,q-grid in either x or y-direction
@@ -55,3 +67,9 @@ const y_v = Array(1:ny-1)*dx
 
 const x_q = if bc_x == "periodic" x_u else Array(1:nx+1)*dx - dx end
 const y_q = Array(1:ny+1)*dx - dx
+
+# time and output
+const dt,dtint,nt = timestep()
+const nout = Int(floor(output_dt*3600/dtint))   # output every nout time steps
+const nout_total = (nt ÷ nout)+1                # total number of time steps for output
+const t_vec = Array(0:nout_total-1)*dtint            # time vector for output

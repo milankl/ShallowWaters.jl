@@ -1,8 +1,28 @@
-function rhs(du,dv,dη,u,v,η,Fx,f_u,f_v,v_u,u_v,dηdx,dηdy,dLu,dLv,dudx,dvdy)
+function rhs(du,dv,dη,u,v,η,Fx,f_q,
+             dpdx,dpdy,dLu,dLv,dudx,dvdy,
+             p,KEu,KEv,
+             h,h_u,h_v,U,V,U_v,V_u,
+             q,dvdx,dudy,h_q,q_u,q_v,
+             adv_u,adv_v)
 
-    du[:] = f_u.*Ivu(v_u,v) - gg*GTx(dηdx,η) + ν*Lu(dLu,u) + Fx
-    dv[:] = -f_v.*Iuv(u_v,u) - gg*GTy(dηdy,η) + ν*Lv(dLv,v)
-    dη[:] = -HH*(Gux(dudx,u) + Gvy(dvdy,v))
+    h[:] = η+H
+
+    U[:] = u.*ITu(h_u,h)
+    V[:] = v.*ITv(h_v,h)
+
+    # Bernoulli potential
+    p[:] = .5*(IuT(KEu,u.^2) + IvT(KEv,v.^2)) + g*h
+
+    # Potential vorticity
+    q[:] = (f_q + Gvx(dvdx,v) - Guy(dudy,u)) ./ ITq(h_q,h)
+
+    # Sadourny, 1975 enstrophy conserving scheme
+    adv_u[:] = Iqu(q_u,q) .* Ivu(V_u,V)
+    adv_v[:] = -Iqv(q_v,q) .* Iuv(U_v,U)
+
+    du[:] = adv_u - GTx(dpdx,p) + ν*Lu(dLu,u) + Fx
+    dv[:] = adv_v - GTy(dpdy,p) + ν*Lv(dLv,v)
+    dη[:] = -H*(Gux(dudx,u) + Gvy(dvdy,v))
 
     return du,dv,dη
 end
