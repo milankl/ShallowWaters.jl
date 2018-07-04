@@ -38,9 +38,10 @@ end
 
 function IuT_nonperiodic(T,u)
     #= Interpolates a variable u from the u-grid to a variable T on the T-grid. =#
-    T[1,:] = one_half*u[1,:]    # +0, kinematic boundary condition
+    #TODO test whether the order matters
     T[2:end-1,:] = one_half*(u[2:end,:] + u[1:end-1,:])
-    T[end,:] = one_half*u[end,:] # +0, kinematic bc
+    T[1,:] = one_half*u[1,:]        # +0, kinematic boundary condition
+    T[end,:] = one_half*u[end,:]    # +0, kinematic bc
     return T
 end
 
@@ -54,8 +55,8 @@ end
 function IvT(T,v)
     #= Interpolates a variable v from the v-grid to a variable T on the T-grid. =#
     T[:,2:end-1] = one_half*(v[:,2:end] + v[:,1:end-1])
-    T[:,1] = one_half*v[:,1] # +0, kinematic bc
-    T[:,end] = one_half*v[:,end] # +0, kinematic bc
+    T[:,1] = one_half*v[:,1]        # +0, kinematic bc
+    T[:,end] = one_half*v[:,end]    # +0, kinematic bc
     return T
 end
 
@@ -91,7 +92,7 @@ function Ivq_nonperiodic(q,v)
     q[2:end-1,2:end-1] = one_half*(v[1:end-1,:] + v[2:end,:])
     q[1,2:end-1] = one_minus_α_half*v[1,:]
     q[end,2:end-1] = one_minus_α_half*v[end,:]
-    q[:,1] = zeero
+    q[:,1] = zeero      # if initialised with zero these lines are redundant
     q[:,end] = zeero
     return q
 end
@@ -100,7 +101,7 @@ function Ivq_periodic(q,v)
     #= Interpolates a variable v from the v-grid to a variable q on the q-grid. =#
     q[2:end,2:end-1] = one_half*(v[1:end-1,:] + v[2:end,:])
     q[1,2:end-1] = one_half*(v[1,:] + v[end,:])
-    q[:,1] = zeero    # if initialised with zero these lines are redundant
+    q[:,1] = zeero      # if initialised with zero these lines are redundant
     q[:,end] = zeero
     return q
 end

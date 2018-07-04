@@ -13,8 +13,9 @@ function preallocate_u_vars(u)
     adv_u = zeros(u)
 
     dLu = zeros(u)
+    dLu2 = zeros(u)
 
-    return du,u0,u1,dpdx,U,V_u,h_u,q_u,adv_u,dLu
+    return du,u0,u1,dpdx,U,V_u,h_u,q_u,adv_u,dLu,dLu2
 end
 
 function preallocate_v_vars(v)
@@ -32,8 +33,9 @@ function preallocate_v_vars(v)
     adv_v = zeros(v)
 
     dLv = zeros(v)
+    dLv2 = zeros(v)
 
-    return dv,v0,v1,dpdy,V,U_v,h_v,q_v,adv_v,dLv
+    return dv,v0,v1,dpdy,V,U_v,h_v,q_v,adv_v,dLv,dLv2
 end
 
 function preallocate_T_variables(η)
