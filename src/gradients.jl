@@ -5,13 +5,22 @@ gradient for variables on either of the grids u,v,T or q.
     the departure grid and b the direction.
 
 Each function takes the return variable as first argument and the variable to be
-differentiated as second argument. =#
+differentiated as second argument.
+
+x is assumed to be the first dimension, y the second.
+Both are increasing for increasing index.
+
+α is the lateral boundary condition parameter
+
+    α = 0       free-slip
+    0 < α < 2   partial-slip
+    α = 2       no-slip
+=#
 
 function GTx_nonperiodic(dTdx,T)
     #= Calculates the gradient in x-direction on the T-grid.
     The result dTdx sits on the u-grid. =#
 
-    # non-periodic version, assumes x is the first dimension
     dTdx[:,:] = one_over_dx*(T[2:end,:] - T[1:end-1,:])
     return dTdx
 end
@@ -20,7 +29,6 @@ function GTx_periodic(dTdx,T)
     #= Calculates the gradient in x-direction on the T-grid.
     The result dTdx sits on the u-grid. =#
 
-    # periodic version, assumes x is the first dimesion
     dTdx[2:end,:] = one_over_dx*(T[2:end,:] - T[1:end-1,:])
     dTdx[1,:] = one_over_dx*(T[1,:] - T[end,:])
     return dTdx
@@ -30,8 +38,6 @@ function GTy(dTdy,T)
     #= Calculates the gradient in y-direction on the T-grid.
     The result dTdy sits on the v-grid. =#
 
-    # non-periodic version, y is second dimension increasing for increasing
-    # index
     dTdy[:,:] = one_over_dx*(T[:,2:end] - T[:,1:end-1])
     return dTdy
 end
@@ -40,9 +46,9 @@ function Gux_nonperiodic(dudx,u)
     #= Calculates the gradient in x-direction on the u-grid.
     The result dudx sits on the T-grid. =#
 
-    dudx[2:end-1,:] = one_over_dx*(u[2:end,:]-u[1:end-1,:])
-    dudx[1,:] = one_over_dx*u[1,:]    # -0, kinematic boundary condition
-    dudx[end,:] = (-one_over_dx)*u[end,:] # +0, kinematic bc
+    dudx[2:end-1,:] = one_over_dx*(u[2:end,:] - u[1:end-1,:])
+    dudx[1,:] = one_over_dx*u[1,:]              # -0, kinematic boundary condition
+    dudx[end,:] = (-one_over_dx)*u[end,:]       # +0, kinematic bc
     return dudx
 end
 
@@ -51,7 +57,7 @@ function Gux_periodic(dudx,u)
     The result dudx sits on the T-grid. =#
 
     dudx[1:end-1,:] = one_over_dx*(u[2:end,:]-u[1:end-1,:])
-    dudx[end,:] = one_over_dx*(u[end,:]-u[1,:])
+    dudx[end,:] = one_over_dx*(u[1,:]-u[end,:])
     return dudx
 end
 
@@ -60,8 +66,8 @@ function Gvy(dvdy,v)
     The result dvdy sits on the T-grid. =#
 
     dvdy[:,2:end-1] = one_over_dx*(v[:,2:end] - v[:,1:end-1])
-    dvdy[:,1] = one_over_dx*v[:,1] # -0, kinematic bc
-    dvdy[:,end] = (-one_over_dx)*v[:,end] # +0, kinematic bc
+    dvdy[:,1] = one_over_dx*v[:,1]              # -0, kinematic bc
+    dvdy[:,end] = (-one_over_dx)*v[:,end]       # +0, kinematic bc
     return dvdy
 end
 
@@ -72,7 +78,7 @@ function Guy_nonperiodic(dudy,u)
     dudy[2:end-1,2:end-1] = one_over_dx*(u[:,2:end] - u[:,1:end-1])
     dudy[2:end-1,1] = one_over_dx_α*u[:,1] #  α is the lateral boundary condition parameter
     dudy[2:end-1,end] = -one_over_dx_α*u[:,end]
-    dudy[1,:] = zeero
+    dudy[1,:] = zeero       #TODO probably redundant if initialised with zeros
     dudy[end,:] = zeero
     return dudy
 end
@@ -94,7 +100,7 @@ function Gvx_nonperiodic(dvdx,v)
     dvdx[2:end-1,2:end-1] = one_over_dx*(v[2:end,:] - v[1:end-1,:])
     dvdx[1,2:end-1] = one_over_dx_α*v[1,:] #  α is the lateral boundary condition parameter
     dvdx[end,2:end-1] = -one_over_dx_α*v[end,:]
-    dvdx[:,1] = zeero      # redundant if initialised with zeros
+    dvdx[:,1] = zeero      #TODO redundant if initialised with zeros
     dvdx[:,end] = zeero
     return dvdx
 end
@@ -105,7 +111,7 @@ function Gvx_periodic(dvdx,v)
 
     dvdx[2:end,2:end-1] = one_over_dx*(v[2:end,:] - v[1:end-1,:])
     dvdx[1,2:end-1] = one_over_dx*(v[1,:]-v[end,:])
-    dvdx[:,1] = zeero      # redundant if initialised with zeros
+    dvdx[:,1] = zeero      #TODO redundant if initialised with zeros
     dvdx[:,end] = zeero
     return dvdx
 end

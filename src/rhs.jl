@@ -1,5 +1,5 @@
 function rhs(du,dv,dη,u,v,η,Fx,f_q,
-             dpdx,dpdy,dLu,dLv,dudx,dvdy,
+             dpdx,dpdy,dLu,dLu2,dLv,dLv2,dudx,dvdy,
              p,KEu,KEv,
              h,h_u,h_v,U,V,U_v,V_u,
              q,dvdx,dudy,h_q,q_u,q_v,

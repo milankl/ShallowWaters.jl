@@ -2,7 +2,7 @@
 # according to the used number type Numtype
 
 const one_over_dx = Numtype(1/dx)
-const one_over_dx² = Numtype(1/dx^2)
+const one_over_dx² = one(Numtype)
 const zeero = Numtype(0.)
 const oone = Numtype(1.)
 const twoo = Numtype(2.)

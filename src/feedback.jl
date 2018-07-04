@@ -37,12 +37,17 @@ function nan_detection(u::Array,v::Array,η::Array)
 end
 
 function feedback_ini()
-    println("Starting juls on "*Dates.format(now(),Dates.RFC1123Format))
+    if output == 1
+        println("Starting juls run $run_id on "*Dates.format(now(),Dates.RFC1123Format))
+    else
+        println("Starting juls on "*Dates.format(now(),Dates.RFC1123Format))
+    end
+
     return time()
 end
 
 function feedback_end(t::Real)
-    println("Integration done in "*readable_secs(time()-t)*".")
+    println(" Integration done in "*readable_secs(time()-t)*".")
 end
 
 function feedback(u::Array,v::Array,η::Array,i::Int,t::Real,nt::Int,nans_detected::Bool)
@@ -56,10 +61,22 @@ function feedback(u::Array,v::Array,η::Array,i::Int,t::Real,nt::Int,nans_detect
         if i % nout == 0    # only check for nans when output is produced
             nans_detected = nan_detection(u,v,η)
             if nans_detected
-                println("NaNs detected.")
+                println(" NaNs detected.")
             end
         end
     end
 
+    if i > 100      # show percentage only after duration is estimated
+        progress(i,nt)
+    end
+
     return t,nans_detected
+end
+
+function progress(i::Int,nt::Int)
+    if ((i+1)/nt*100 % 1) < (i/nt*100 % 1)  # update every 1 percent steps.
+        percent = Int(round((i+1)/nt*100))
+        print("\r\u1b[K")
+        print("$percent%")
+    end
 end
