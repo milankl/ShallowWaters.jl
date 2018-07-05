@@ -5,41 +5,41 @@ function Lu_nonperiodic(du,u)
     The 1/dx^2 factor is omitted and moved into the viscosity coefficient. =#
 
     # five-point stencil (1,1,-4,1,1) for the interior
-    du[2:end-1,2:end-1] = -four*u[2:end-1,2:end-1] +                  # central point
+    du[2:end-1,2:end-1] = minus_four*u[2:end-1,2:end-1] +             # central point
                           u[3:end,2:end-1] + u[2:end-1,3:end] +       # RIGHT + UP
                           u[1:end-2,2:end-1] + u[2:end-1,1:end-2]     # LEFT + DOWN
 
     # left edge, replace LEFT with zeros (kinematic BC)
-    du[1,2:end-1] = -four*u[1,2:end-1] +                              # central point
+    du[1,2:end-1] = minus_four*u[1,2:end-1] +                         # central point
                     u[2,2:end-1] + u[1,3:end] +                       # RIGHT + UP
                     u[1,1:end-2]                                      # DOWN
 
     # right edge, replace RIGHT with zeros (kinematic BC)
-    du[end,2:end-1] = -four*u[end,2:end-1] +                          # central point
+    du[end,2:end-1] = minus_four*u[end,2:end-1] +                     # central point
                       u[end-1,2:end-1] + u[end,3:end] +               # LEFT + UP
                       u[end,1:end-2]                                  # DOWN
 
     # top edge (use boundary condition parameter α)
-    du[2:end-1,end] = -four_plus_α*u[2:end-1,end] +                   # central point + TOP
+    du[2:end-1,end] = minus_three_minus_α*u[2:end-1,end] +            # central point + TOP
                       u[1:end-2,end] + u[3:end,end] +                 # LEFT + RIGHT
                       u[2:end-1,end-1]                                # DOWN
 
     # bottom edge (use boundary condition parameter α)
-    du[2:end-1,1] = -four_minus_α*u[2:end-1,1] +                      # central point + DOWN
+    du[2:end-1,1] = minus_three_minus_α*u[2:end-1,1] +                # central point + DOWN
                     u[1:end-2,1] + u[3:end,1] +                       # LEFT + RIGHT
                     u[2:end-1,2]                                      # UP
 
     # bottom left (use boundary condition parameter α)
-    du[1,1] = -four_minus_α*u[1,1] + u[2,1] + u[1,2]                  # central + RIGHT + UP
+    du[1,1] = minus_three_minus_α*u[1,1] + u[2,1] + u[1,2]                   # central + RIGHT + UP
 
     # bottom right
-    du[end,1] = -four_minus_α*u[end,1] + u[end,2] + u[end-1,1]        # central + UP + LEFT
+    du[end,1] = minus_three_minus_α*u[end,1] + u[end,2] + u[end-1,1]         # central + UP + LEFT
 
     # top left
-    du[1,end] = -four_plus_α*u[1,end] + u[2,end] + u[1,end-1]         # central + RIGHT + DOWN
+    du[1,end] = minus_three_minus_α*u[1,end] + u[2,end] + u[1,end-1]         # central + RIGHT + DOWN
 
     # top right
-    du[end,end] = -four_plus_α*u[end,end]+u[end-1,end] + u[end,end-1] # central + LEFT + DOWN
+    du[end,end] = minus_three_minus_α*u[end,end]+u[end-1,end] + u[end,end-1] # central + LEFT + DOWN
 
     return du
 end
@@ -51,44 +51,44 @@ function Lu_periodic(du,u)
     The 1/dx^2 factor is omitted and moved into the viscosity coefficient.=#
 
     # five-point stencil (1,1,-4,1,1) for the interior
-    du[2:end-1,2:end-1] = -four*u[2:end-1,2:end-1] +      # central point
+    du[2:end-1,2:end-1] = minus_four*u[2:end-1,2:end-1] +               # central point
                             u[3:end,2:end-1] + u[2:end-1,3:end] +       # RIGHT + UP
-                            u[1:end-2,2:end-1] + u[2:end-1,1:end-2]    # LEFT + DOWN
+                            u[1:end-2,2:end-1] + u[2:end-1,1:end-2]     # LEFT + DOWN
 
     # left edge - periodic BC
-    du[1,2:end-1] = -four*u[1,2:end-1] +                  # central point
+    du[1,2:end-1] = minus_four*u[1,2:end-1] +                           # central point
                             u[2,2:end-1] + u[1,3:end] +                 # RIGHT + UP
-                            u[end,2:end-1] + u[1,1:end-2]              # LEFT + DOWN
+                            u[end,2:end-1] + u[1,1:end-2]               # LEFT + DOWN
 
     # right edge - periodic BC
-    du[end,2:end-1] = -four*u[end,2:end-1] +              # central point
+    du[end,2:end-1] = minus_four*u[end,2:end-1] +                       # central point
                             u[end-1,2:end-1] + u[end,3:end] +           # LEFT + UP
-                            u[1,2:end-1] + u[end,1:end-2]              # RIGHT + DOWN
+                            u[1,2:end-1] + u[end,1:end-2]               # RIGHT + DOWN
 
     # top edge (use boundary condition parameter α)
-    du[2:end-1,end] = -four_plus_α*u[2:end-1,end] +   # central point + TOP
-                            u[1:end-2,end] + u[3:end,end] +        # LEFT + RIGHT
-                            u[2:end-1,end-1]                      # DOWN
+    du[2:end-1,end] = minus_three_minus_α*u[2:end-1,end] +              # central point + TOP
+                            u[1:end-2,end] + u[3:end,end] +             # LEFT + RIGHT
+                            u[2:end-1,end-1]                            # DOWN
 
     # bottom edge (use boundary condition parameter α)
-    du[2:end-1,1] = -four_minus_α*u[2:end-1,1] +   # central point + DOWN
-                            u[1:end-2,1] + u[3:end,1] +        # LEFT + RIGHT
-                            u[2:end-1,2]                      # UP
+    du[2:end-1,1] = minus_three_minus_α*u[2:end-1,1] +                  # central point + DOWN
+                            u[1:end-2,1] + u[3:end,1] +                 # LEFT + RIGHT
+                            u[2:end-1,2]                                # UP
 
     # bottom left
-    du[1,1] = -four_minus_α*u[1,1] +
-                            u[end,1] + u[2,1]  + u[1,2]       # LEFT + RIGHT + UP
+    du[1,1] = minus_three_minus_α*u[1,1] +
+                            u[end,1] + u[2,1]  + u[1,2]                 # LEFT + RIGHT + UP
     # bottom right
-    du[end,1] = -four_minus_α*u[end,1] +
-                            u[1,1] + u[end,2] + u[end-1,1]    # RIGHT + UP + LEFT
+    du[end,1] = minus_three_minus_α*u[end,1] +
+                            u[1,1] + u[end,2] + u[end-1,1]              # RIGHT + UP + LEFT
 
     # top left
-    du[1,end] = -four_plus_α*u[1,end] +
-                            u[end,end] + u[2,end] + u[1,end-1]  # LEFT + RIGHT + DOWN
+    du[1,end] = minus_three_minus_α*u[1,end] +
+                            u[end,end] + u[2,end] + u[1,end-1]          # LEFT + RIGHT + DOWN
 
     # top right
-    du[end,end] = -four_plus_α*u[end,end] +
-                            u[1,end] + u[end-1,end] + u[end,end-1] # RIGHT + LEFT + DOWN
+    du[end,end] = minus_three_minus_α*u[end,end] +
+                            u[1,end] + u[end-1,end] + u[end,end-1]      # RIGHT + LEFT + DOWN
     return du
 end
 
@@ -99,44 +99,44 @@ function Lv_nonperiodic(dv,v)
     The 1/dx^2 factor is omitted and moved into the viscosity coefficient.=#
 
     # five-point stencil (1,1,-4,1,1) for the interior
-    dv[2:end-1,2:end-1] = -four*v[2:end-1,2:end-1] +      # central point
+    dv[2:end-1,2:end-1] = minus_four*v[2:end-1,2:end-1] +               # central point
                             v[3:end,2:end-1] + v[2:end-1,3:end] +       # RIGHT + UP
-                            v[1:end-2,2:end-1] + v[2:end-1,1:end-2]    # LEFT + DOWN
+                            v[1:end-2,2:end-1] + v[2:end-1,1:end-2]     # LEFT + DOWN
 
     # left edge, use boundary condition parameter α
-    dv[1,2:end-1] = -four_minus_α*v[1,2:end-1] +            # central point
+    dv[1,2:end-1] = minus_three_minus_α*v[1,2:end-1] +                  # central point
                             v[2,2:end-1] + v[1,3:end] +                 # RIGHT + UP
-                            v[1,1:end-2]                               # DOWN
+                            v[1,1:end-2]                                # DOWN
 
     # right edge, use boundary condition parameter α
-    dv[end,2:end-1] = -four_plus_α*v[end,2:end-1] +        # central point
+    dv[end,2:end-1] = minus_three_minus_α*v[end,2:end-1] +              # central point
                             v[end-1,2:end-1] + v[end,3:end] +           # LEFT + UP
-                            v[end,1:end-2]                             # DOWN
+                            v[end,1:end-2]                              # DOWN
 
     # top edge (use kinematic BC)
-    dv[2:end-1,end] = -four*v[2:end-1,end] +         # central point + TOP
-                            v[1:end-2,end] + v[3:end,end] +        # LEFT + RIGHT
-                            v[2:end-1,end-1]                      # DOWN
+    dv[2:end-1,end] = minus_four*v[2:end-1,end] +                       # central point + TOP
+                            v[1:end-2,end] + v[3:end,end] +             # LEFT + RIGHT
+                            v[2:end-1,end-1]                            # DOWN
 
     # bottom edge (use kinematic BC)
-    dv[2:end-1,1] = -four*v[2:end-1,1] +         # central point + DOWN
-                            v[1:end-2,1] + v[3:end,1] +        # LEFT + RIGHT
-                            v[2:end-1,2]                      # UP
+    dv[2:end-1,1] = minus_four*v[2:end-1,1] +                           # central point + DOWN
+                            v[1:end-2,1] + v[3:end,1] +                 # LEFT + RIGHT
+                            v[2:end-1,2]                                # UP
 
     # bottom left (use boundary condition parameter α)
-    dv[1,1] = -four_minus_α*v[1,1] +
-                            v[2,1]  + v[1,2]       # RIGHT + UP
+    dv[1,1] = minus_three_minus_α*v[1,1] +
+                            v[2,1]  + v[1,2]                            # RIGHT + UP
     # bottom right
-    dv[end,1] = -four_minus_α*v[end,1] +
-                            v[end,2] + v[end-1,1]    # UP + LEFT
+    dv[end,1] = minus_three_minus_α*v[end,1] +
+                            v[end,2] + v[end-1,1]                       # UP + LEFT
 
     # top left
-    dv[1,end] = -four_plus_α*v[1,end] +
-                            v[2,end] + v[1,end-1]  # RIGHT + DOWN
+    dv[1,end] = minus_three_minus_α*v[1,end] +
+                            v[2,end] + v[1,end-1]                       # RIGHT + DOWN
 
     # top right
-    dv[end,end] = -four_plus_α*v[end,end] +
-                            v[end-1,end] + v[end,end-1] # LEFT + DOWN
+    dv[end,end] = minus_three_minus_α*v[end,end] +
+                            v[end-1,end] + v[end,end-1]                 # LEFT + DOWN
     return dv
 end
 
@@ -147,44 +147,44 @@ function Lv_periodic(dv,v)
     The 1/dx^2 factor is omitted and moved into the viscosity coefficient.=#
 
     # five-point stencil (1,1,-4,1,1) for the interior
-    dv[2:end-1,2:end-1] = -four*v[2:end-1,2:end-1] +      # central point
+    dv[2:end-1,2:end-1] = minus_four*v[2:end-1,2:end-1] +               # central point
                             v[3:end,2:end-1] + v[2:end-1,3:end] +       # RIGHT + UP
-                            v[1:end-2,2:end-1] + v[2:end-1,1:end-2]    # LEFT + DOWN
+                            v[1:end-2,2:end-1] + v[2:end-1,1:end-2]     # LEFT + DOWN
 
     # left edge - periodic BC
-    dv[1,2:end-1] = -four*v[1,2:end-1] +                  # central point
+    dv[1,2:end-1] = minus_four*v[1,2:end-1] +                           # central point
                             v[2,2:end-1] + v[1,3:end] +                 # RIGHT + UP
-                            v[end,2:end-1] + v[1,1:end-2]              # LEFT + DOWN
+                            v[end,2:end-1] + v[1,1:end-2]               # LEFT + DOWN
 
     # right edge - periodic BC
-    dv[end,2:end-1] = -four*v[end,2:end-1] +              # central point
+    dv[end,2:end-1] = minus_four*v[end,2:end-1] +                       # central point
                             v[end-1,2:end-1] + v[end,3:end] +           # LEFT + UP
-                            v[1,2:end-1] + v[end,1:end-2]              # RIGHT + DOWN
+                            v[1,2:end-1] + v[end,1:end-2]               # RIGHT + DOWN
 
     # top edge (use kinematic BC)
-    dv[2:end-1,end] = -four*v[2:end-1,end] +         # central point + TOP
-                            v[1:end-2,end] + v[3:end,end] +        # LEFT + RIGHT
-                            v[2:end-1,end-1]                      # DOWN
+    dv[2:end-1,end] = minus_four*v[2:end-1,end] +                       # central point + TOP
+                            v[1:end-2,end] + v[3:end,end] +             # LEFT + RIGHT
+                            v[2:end-1,end-1]                            # DOWN
 
     # bottom edge (use kinematic BC)
-    dv[2:end-1,1] = -four*v[2:end-1,1] +         # central point + DOWN
-                            v[1:end-2,1] + v[3:end,1] +        # LEFT + RIGHT
-                            v[2:end-1,2]                      # UP
+    dv[2:end-1,1] = minus_four*v[2:end-1,1] +                           # central point + DOWN
+                            v[1:end-2,1] + v[3:end,1] +                 # LEFT + RIGHT
+                            v[2:end-1,2]                                # UP
 
     # bottom left
-    dv[1,1] = -four_minus_α*v[1,1] +
-                            v[end,1] + v[2,1]  + v[1,2]       # LEFT + RIGHT + UP
+    dv[1,1] = minus_three_minus_α*v[1,1] +
+                            v[end,1] + v[2,1]  + v[1,2]                 # LEFT + RIGHT + UP
     # bottom right
-    dv[end,1] = -four_minus_α*v[end,1] +
-                            v[1,1] + v[end,2] + v[end-1,1]    # RIGHT + UP + LEFT
+    dv[end,1] = minus_three_minus_α*v[end,1] +
+                            v[1,1] + v[end,2] + v[end-1,1]              # RIGHT + UP + LEFT
 
     # top left
-    dv[1,end] = -four_plus_α*v[1,end] +
-                            v[end,end] + v[2,end] + v[1,end-1]  # LEFT + RIGHT + DOWN
+    dv[1,end] = minus_three_minus_α*v[1,end] +
+                            v[end,end] + v[2,end] + v[1,end-1]          # LEFT + RIGHT + DOWN
 
     # top right
-    dv[end,end] = -four_plus_α*v[end,end] +
-                            v[1,end] + v[end-1,end] + v[end,end-1] # RIGHT + LEFT + DOWN
+    dv[end,end] = minus_three_minus_α*v[end,end] +
+                            v[1,end] + v[end-1,end] + v[end,end-1]      # RIGHT + LEFT + DOWN
     return dv
 end
 
