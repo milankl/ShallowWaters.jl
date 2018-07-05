@@ -13,6 +13,16 @@ if bc_x == "periodic"    # i.e. periodic
     Gqx = Gqx_periodic
     Gqy = Gqy_periodic
 
+    # GRADIENTS - nondimensional
+    GTx_nd = GTx_periodic_nd
+    # GTy same for periodic/nonperiodic
+    Gux_nd = Gux_periodic_nd
+    # Gvy same for periodic/nonperiodic
+    Guy_nd = Guy_periodic_nd
+    Gvx_nd = Gvx_periodic_nd
+    Gqx_nd = Gqx_periodic_nd
+    Gqy_nd = Gqy_periodic_nd
+
     # INTERPOLATIONS
     ITu = ITu_periodic
     # ITv same for periodic/nonperiodic
@@ -27,7 +37,7 @@ if bc_x == "periodic"    # i.e. periodic
     Iuv = Iuv_periodic
     Ivu = Ivu_periodic
 
-    # Laplacians
+    # Laplacians - always dimensionless
     Lu = Lu_periodic
     Lv = Lv_periodic
     LLu = LLu_periodic
@@ -45,6 +55,16 @@ else            # i.e. non-periodic
     Gqx = Gqx_nonperiodic
     Gqy = Gqy_nonperiodic
 
+    # GRADIENTS - nondimensional
+    GTx_nd = GTx_nonperiodic_nd
+    # GTy same for periodic/nonperiodic
+    Gux_nd = Gux_nonperiodic_nd
+    # Gvy same for periodic/nonperiodic
+    Guy_nd = Guy_nonperiodic_nd
+    Gvx_nd = Gvx_nonperiodic_nd
+    Gqx_nd = Gqx_nonperiodic_nd
+    Gqy_nd = Gqy_nonperiodic_nd
+
     # INTERPOLATIONS
     ITu = ITu_nonperiodic
     # ITv same for periodic/nonperiodic
@@ -59,7 +79,7 @@ else            # i.e. non-periodic
     Iuv = Iuv_nonperiodic
     Ivu = Ivu_nonperiodic
 
-    # Laplacians
+    # Laplacians - always dimensionless
     Lu = Lu_nonperiodic
     Lv = Lv_nonperiodic
     LLu = LLu_nonperiodic

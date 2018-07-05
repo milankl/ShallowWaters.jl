@@ -74,3 +74,9 @@ function get_run_id_path()
 end
 
 const run_id,runpath = get_run_id_path()
+
+function param_txt_output()
+end
+
+function param_jld_output()
+end

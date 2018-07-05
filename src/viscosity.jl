@@ -3,9 +3,4 @@
 const ν = Numtype(540*128/nx/dx^2)
 
 # Smagorinsky-like biharmonic diffusion
-const cSmag = Numtype(0.01)
-
-#=
-LLu_Smag = dx[ νSmag dx(L(u))] + dy[ νSmag dy(L(u))]
-LLv_Smag = dx[ νSmag dx(L(v))] + dy[ νSmag dy(L(v))]
-=#
+const cSmag = Numtype(-0.06)
