@@ -12,11 +12,10 @@ function preallocate_u_vars(u)
     q_u = zeros(u)
     adv_u = zeros(u)
 
-    dLu = zeros(u)
-    dLu2 = zeros(u)
-    νSmag_u = zeros(u)
+    Lu1 = zeros(u)
+    Lu2 = zeros(u)
 
-    return du,u0,u1,dpdx,U,V_u,h_u,q_u,adv_u,dLu,dLu2,νSmag_u
+    return du,u0,u1,dpdx,U,V_u,h_u,q_u,adv_u,Lu1,Lu2
 end
 
 function preallocate_v_vars(v)
@@ -33,11 +32,10 @@ function preallocate_v_vars(v)
     q_v = zeros(v)
     adv_v = zeros(v)
 
-    dLv = zeros(v)
-    dLv2 = zeros(v)
-    νSmag_v = zeros(v)
+    Lv1 = zeros(v)
+    Lv2 = zeros(v)
 
-    return dv,v0,v1,dpdy,V,U_v,h_v,q_v,adv_v,dLv,dLv2,νSmag_v
+    return dv,v0,v1,dpdy,V,U_v,h_v,q_v,adv_v,Lv1,Lv2
 end
 
 function preallocate_T_variables(η)
@@ -53,19 +51,26 @@ function preallocate_T_variables(η)
     KEu = zeros(η)
     KEv = zeros(η)
     p = zeros(η)
-    νSmag = zeros(η)
 
-    return dη,η0,η1,dudx,dvdy,h,KEu,KEv,p,νSmag
+    νSmag = zeros(η)
+    dLudx = zeros(η)
+    dLvdy = zeros(η)
+    shear = zeros(η) 
+
+    return dη,η0,η1,dudx,dvdy,h,KEu,KEv,p,νSmag,dLudx,dLvdy,shear
 end
 
 function preallocate_q_variables()
 
     # initialise with zeros
-    q = zeros(nqx,nqy)
-    h_q = zeros(nqx,nqy)
-    dvdx = zeros(nqx,nqy)
-    dudy = zeros(nqx,nqy)
-    shear = zeros(nqx,nqy)
+    q = zeros(Numtype,nqx,nqy)
+    h_q = zeros(Numtype,nqx,nqy)
+    dvdx = zeros(Numtype,nqx,nqy)
+    dudy = zeros(Numtype,nqx,nqy)
 
-    return q,h_q,dvdx,dudy,shear
+    νSmag_q = zeros(Numtype,nqx,nqy)
+    dLudy = zeros(Numtype,nqx,nqy)
+    dLvdx = zeros(Numtype,nqx,nqy)
+
+    return q,h_q,dvdx,dudy,νSmag_q,dLudy,dLvdx
 end
