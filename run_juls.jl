@@ -5,7 +5,7 @@ using Base.Dates
 using NetCDF
 using ZipFile
 #using JLD
-#using SigmoidNumbers
+using SigmoidNumbers
 
 # PARAMETERS, GRID and CONSTANTS
 include("parameters.jl")
