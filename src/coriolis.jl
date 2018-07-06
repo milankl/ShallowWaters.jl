@@ -9,8 +9,11 @@ function beta_plane()
     xx_v,yy_v = meshgrid(x_v,y_v)
     xx_q,yy_q = meshgrid(x_q,y_q)
 
-    f_u = Numtype.(f_0 + β*yy_u)
-    f_v = Numtype.(f_0 + β*yy_v)
-    f_q = Numtype.(f_0 + β*yy_q)
+    f_u = Numtype.(Δ*(f_0 + β*yy_u))
+    f_v = Numtype.(Δ*(f_0 + β*yy_v))
+    f_q = Numtype.(Δ*(f_0 + β*yy_q))
+    #f_u = Numtype.(f_0 + β*yy_u)
+    #f_v = Numtype.(f_0 + β*yy_v)
+    #f_q = Numtype.(f_0 + β*yy_q)
     return f_u,f_v,f_q
 end

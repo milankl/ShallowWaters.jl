@@ -3,7 +3,8 @@ etc, and runs the model =#
 
 using Base.Dates
 using NetCDF
-using JLD
+using ZipFile
+#using JLD
 #using SigmoidNumbers
 
 # PARAMETERS, GRID and CONSTANTS

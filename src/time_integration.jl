@@ -16,6 +16,7 @@ function time_integration(u,v,η)
     # feedback and output
     t0 = feedback_ini()
     ncs, iout = output_nc_ini(u,v,η)
+    scripts_output()
     nans_detected = false
 
     t = 0           # model time
@@ -24,7 +25,7 @@ function time_integration(u,v,η)
         u1[:],v1[:],η1[:] = u,v,η
 
         for rki = 1:4
-            rhs(du,dv,dη,u1,v1,η1,Fx,f_q,
+            rhs!(du,dv,dη,u1,v1,η1,Fx,f_q,
                 dudx,dvdy,dvdx,dudy,dpdx,dpdy,
                 p,KEu,KEv,
                 h,h_u,h_v,h_q,U,V,U_v,V_u,
@@ -34,14 +35,14 @@ function time_integration(u,v,η)
 
 
             if rki < 4
-                u1[:] = u + RKb[rki]*dt*du
-                v1[:] = v + RKb[rki]*dt*dv
-                η1[:] = η + RKb[rki]*dt*dη
+                u1[:] = u + RKb[rki]*Δt*du
+                v1[:] = v + RKb[rki]*Δt*dv
+                η1[:] = η + RKb[rki]*Δt*dη
             end
 
-            u0 += RKa[rki]*dt*du
-            v0 += RKa[rki]*dt*dv
-            η0 += RKa[rki]*dt*dη
+            u0 += RKa[rki]*Δt*du
+            v0 += RKa[rki]*Δt*dv
+            η0 += RKa[rki]*Δt*dη
         end
 
         u[:],v[:],η[:] = u0,v0,η0

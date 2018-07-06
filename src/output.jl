@@ -19,9 +19,9 @@ function output_nc_ini(u,v,η)
         ncη = NetCDF.create(runpath*"eta.nc",ηvar,mode=NC_NETCDF4)
         #println("NC ncfiles created.")
 
-        NetCDF.putvar(ncu,"u",u,start=[1,1,1],count=[-1,-1,1])
-        NetCDF.putvar(ncv,"v",v,start=[1,1,1],count=[-1,-1,1])
-        NetCDF.putvar(ncη,"eta",η,start=[1,1,1],count=[-1,-1,1])
+        NetCDF.putvar(ncu,"u",Float32.(u),start=[1,1,1],count=[-1,-1,1])
+        NetCDF.putvar(ncv,"v",Float32.(v),start=[1,1,1],count=[-1,-1,1])
+        NetCDF.putvar(ncη,"eta",Float32.(η),start=[1,1,1],count=[-1,-1,1])
         #println("Initial conditions written to file.")
 
         iout = 2    # counter for output time steps
@@ -34,9 +34,9 @@ end
 function output_nc(ncs,u,v,η,i,iout)
     if i % nout == 0    # output only every nout time steps
         if output == 1
-            NetCDF.putvar(ncs[1],"u",u,start=[1,1,iout],count=[-1,-1,1])
-            NetCDF.putvar(ncs[2],"v",v,start=[1,1,iout],count=[-1,-1,1])
-            NetCDF.putvar(ncs[3],"eta",η,start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs[1],"u",Float32.(u),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs[2],"v",Float32.(v),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs[3],"eta",Float32.(η),start=[1,1,iout],count=[-1,-1,1])
             #println("Time step $iout written to file.")
             iout += 1
         end
@@ -75,8 +75,18 @@ end
 
 const run_id,runpath = get_run_id_path()
 
-function param_txt_output()
-end
+function scripts_output()
+        if output == 1
+                # copy all files in juls main folder
+                mkdir(runpath*"scripts")
+                for juliafile in filter(x->endswith(x,".jl"),readdir())
+                        cp(juliafile,runpath*"scripts/"*juliafile)
+                end
 
-function param_jld_output()
+                # and also in the src folder
+                mkdir(runpath*"scripts/src")
+                for juliafile in filter(x->endswith(x,".jl"),readdir("src"))
+                        cp("src/"*juliafile,runpath*"scripts/src/"*juliafile)
+                end
+        end
 end
