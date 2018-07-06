@@ -61,7 +61,7 @@ function feedback(u::Array,v::Array,η::Array,i::Int,t::Real,nt::Int,nans_detect
         if i % nout == 0    # only check for nans when output is produced
             nans_detected = nan_detection(u,v,η)
             if nans_detected
-                println(" NaNs detected.")
+                println(" NaNs detected at time step $i")
             end
         end
     end
