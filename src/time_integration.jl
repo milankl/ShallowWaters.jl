@@ -10,6 +10,9 @@ function time_integration(u,v,η)
     dη,η0,η1,dudx,dvdy,h,KEu,KEv,p,νSmag,dLudx,dLvdy,shear = preallocate_T_variables(η)
     q,h_q,dvdx,dudy,νSmag_q,dLudy,dLvdx = preallocate_q_variables()
 
+    # propagate initial conditions
+    u0[:,:],v0[:,:],η0[:,:] = u,v,η
+
     RKa = Numtype.([1/6,1/3,1/3,1/6])
     RKb = Numtype.([.5,.5,1.])
 
@@ -22,7 +25,7 @@ function time_integration(u,v,η)
     t = 0           # model time
     for i = 1:nt
 
-        u1[:],v1[:],η1[:] = u,v,η
+        u1[:,:],v1[:,:],η1[:,:] = u,v,η
 
         for rki = 1:4
             rhs!(du,dv,dη,u1,v1,η1,Fx,f_q,
@@ -35,9 +38,9 @@ function time_integration(u,v,η)
 
 
             if rki < 4
-                u1[:] = u + RKb[rki]*Δt*du
-                v1[:] = v + RKb[rki]*Δt*dv
-                η1[:] = η + RKb[rki]*Δt*dη
+                u1[:,:] = u + RKb[rki]*Δt*du
+                v1[:,:] = v + RKb[rki]*Δt*dv
+                η1[:,:] = η + RKb[rki]*Δt*dη
             end
 
             u0 += RKa[rki]*Δt*du
@@ -45,7 +48,7 @@ function time_integration(u,v,η)
             η0 += RKa[rki]*Δt*dη
         end
 
-        u[:],v[:],η[:] = u0,v0,η0
+        u[:,:],v[:,:],η[:,:] = u0,v0,η0
         t += dtint
 
         # feedback and output
