@@ -3,9 +3,7 @@ etc, and runs the model =#
 
 using Base.Dates
 using NetCDF
-using ZipFile
-#using JLD
-using SigmoidNumbers
+#using SigmoidNumbers
 
 # PARAMETERS, GRID and CONSTANTS
 include("parameters.jl")
@@ -19,6 +17,7 @@ include("src/laplace.jl")
 include("src/boundary_conditions.jl")
 include("src/coriolis.jl")
 include("src/forcing.jl")
+include("src/bottom_topography.jl")
 include("src/viscosity.jl")
 include("src/rhs.jl")
 include("src/time_integration.jl")

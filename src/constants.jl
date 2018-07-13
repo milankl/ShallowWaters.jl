@@ -16,4 +16,3 @@ const minus_3_minus_α = Numtype(-3-lbc)
 
 # will be used in the RHS
 const g = Numtype(gravity)
-const H = Numtype(water_depth)

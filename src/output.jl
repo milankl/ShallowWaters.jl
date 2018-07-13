@@ -1,4 +1,4 @@
-function output_nc_ini(u,v,η)
+function output_ini(u,v,η)
     if output == 1
         xudim = NcDim("x",nux,values=x_u)
         yudim = NcDim("y",nuy,values=y_u)
@@ -25,6 +25,10 @@ function output_nc_ini(u,v,η)
         #println("Initial conditions written to file.")
 
         iout = 2    # counter for output time steps
+
+        # also output scripts
+        scripts_output()
+
         return (ncu,ncv,ncη),iout
     else
         return nothing, nothing
@@ -45,12 +49,14 @@ function output_nc(ncs,u,v,η,i,iout)
     return ncs,iout
 end
 
-function output_nc_close(ncs)
+function output_close(ncs,progrtxt)
     if output == 1
         for nc in ncs
             NetCDF.close(nc)
         end
         println("All data stored.")
+        write(progrtxt,"All data stored.")
+        close(progrtxt)
     end
 end
 
