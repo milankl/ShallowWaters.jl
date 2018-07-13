@@ -47,6 +47,8 @@ function preallocate_T_variables(η)
 
     dudx = zeros(η)
     dvdy = zeros(η)
+    dUdx = zeros(η)
+    dVdy = zeros(η)
     h = zeros(η)
     KEu = zeros(η)
     KEv = zeros(η)
@@ -55,9 +57,9 @@ function preallocate_T_variables(η)
     νSmag = zeros(η)
     dLudx = zeros(η)
     dLvdy = zeros(η)
-    shear = zeros(η) 
+    shear = zeros(η)
 
-    return dη,η0,η1,dudx,dvdy,h,KEu,KEv,p,νSmag,dLudx,dLvdy,shear
+    return dη,η0,η1,dudx,dvdy,dUdx,dVdy,h,KEu,KEv,p,νSmag,dLudx,dLvdy,shear
 end
 
 function preallocate_q_variables()

@@ -1,13 +1,13 @@
-function rhs!(du,dv,dη,u,v,η,Fx,f_q,
+function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
              dudx,dvdy,dvdx,dudy,dpdx,dpdy,
-             p,KEu,KEv,
+             p,KEu,KEv,dUdx,dVdy,
              h,h_u,h_v,h_q,U,V,U_v,V_u,
              adv_u,adv_v,q,q_u,q_v,
              Lu1,Lu2,Lv1,Lv2,dLudx,dLudy,dLvdx,dLvdy,
              shear,νSmag,νSmag_q)
 
     h[:] = η+H
-    ITu!(h_u,h)
+    ITu!(h_u,h)     # use η instead of h preliminary
     ITv!(h_v,h)
     ITq!(h_q,h)
 
@@ -18,6 +18,9 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,
     Gvy!(dvdy,v)
     Gvx!(dvdx,v)
     Guy!(dudy,u)
+
+    Gux!(dUdx,U)
+    Gvy!(dVdy,V)
 
     # Bernoulli potential
     IuT!(KEu,u.^2)
@@ -58,5 +61,5 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,
     # adding the terms
     du[:] = adv_u - dpdx + Lu1+Lu2 + Fx
     dv[:] = adv_v - dpdy + Lv1+Lv2
-    dη[:] = -H*(dudx + dvdy)
+    dη[:] = -(dUdx + dVdy)
 end
