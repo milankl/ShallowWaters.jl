@@ -22,7 +22,7 @@ const lbc = 0.                  # lateral boundary condition parameter
 const c_D = 1e-5                # bottom drag coefficient
 const c_smag = 0.06             # Smagorinsky coefficient
 
-const output = 1                # 1 for nc output 0 for none
+const output = 0                # 1 for nc output 0 for none
 const output_dt = 6             # output time step in hours
 const outpath = "/local/kloewer/julsdata/"
 

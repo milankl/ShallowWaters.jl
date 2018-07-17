@@ -1,4 +1,4 @@
-function preallocate_u_vars(u)
+function preallocate_u_vars(u::AbstractMatrix)
 
     # initialise with zeros
     du = zeros(u)
@@ -18,7 +18,7 @@ function preallocate_u_vars(u)
     return du,u0,u1,dpdx,U,V_u,h_u,q_u,adv_u,Lu1,Lu2
 end
 
-function preallocate_v_vars(v)
+function preallocate_v_vars(v::AbstractMatrix)
 
     # initialise with zeros
     dv = zeros(v)
@@ -38,7 +38,7 @@ function preallocate_v_vars(v)
     return dv,v0,v1,dpdy,V,U_v,h_v,q_v,adv_v,Lv1,Lv2
 end
 
-function preallocate_T_variables(η)
+function preallocate_T_variables(η::AbstractMatrix)
 
     # initialise with zeros
     dη = zeros(η)
