@@ -17,174 +17,160 @@ interpolated as second argument. =#
 
 # ------------- 2-point interpolation between T and u or v. -----------------
 
-function ITu_nonperiodic!(u::Matrix{Numtype},T::Matrix{Numtype})
+function ITu_nonperiodic!(u::AbstractMatrix,T::AbstractMatrix)
     #= Interpolates a variable T from the T-grid to a variable u on the u-grid. =#
-    u[:,:] = one_half*(T[2:end,:] + T[1:end-1,:])
+    @views u[:,:] .= one_half*(T[2:end,:] .+ T[1:end-1,:])
 end
 
-function ITu_periodic!(u::Matrix{Numtype},T::Matrix{Numtype})
+function ITu_periodic!(u::AbstractMatrix,T::AbstractMatrix)
     #= Interpolates a variable T from the T-grid to a variable u on the u-grid. =#
-    u[2:end,:] = one_half*(T[2:end,:] + T[1:end-1,:])
-    u[1,:] = one_half*(T[1,:] + T[end,:])
+    @views u[2:end,:] .= one_half*(T[2:end,:] .+ T[1:end-1,:])
+    @views u[1,:] .= one_half*(T[1,:] .+ T[end,:])
 end
 
-function ITv!(v::Matrix{Numtype},T::Matrix{Numtype})
+function ITv!(v::AbstractMatrix,T::AbstractMatrix)
     #= Interpolates a variable T from the T-grid to a variable v on the v-grid. =#
-    v[:,:] = one_half*(T[:,2:end] + T[:,1:end-1])
+    @views v[:,:] .= one_half*(T[:,2:end] .+ T[:,1:end-1])
 end
 
-function IuT_nonperiodic!(T::Matrix{Numtype},u::Matrix{Numtype})
+function IuT_nonperiodic!(T::AbstractMatrix,u::AbstractMatrix)
     #= Interpolates a variable u from the u-grid to a variable T on the T-grid. =#
-    #TODO test whether the order matters
-    T[2:end-1,:] = one_half*(u[2:end,:] + u[1:end-1,:])
-    T[1,:] = one_half*u[1,:]        # +0, kinematic boundary condition
-    T[end,:] = one_half*u[end,:]    # +0, kinematic bc
+    @views T[2:end-1,:] .= one_half * (u[2:end,:] .+ u[1:end-1,:])
+    @views T[1,:] .= one_half * u[1,:]        # +0, kinematic boundary condition
+    @views T[end,:] .= one_half * u[end,:]    # +0, kinematic bc
 end
 
-function IuT_periodic!(T::Matrix{Numtype},u::Matrix{Numtype})
+function IuT_periodic!(T::AbstractMatrix,u::AbstractMatrix)
     #= Interpolates a variable u from the u-grid to a variable T on the T-grid. =#
-    T[1:end-1,:] = one_half*(u[2:end,:] + u[1:end-1,:])
-    T[end,:] = one_half*(u[1,:]+u[end,:])
+    @views T[1:end-1,:] .= one_half*(u[2:end,:] .+ u[1:end-1,:])
+    @views T[end,:] .= one_half*(u[1,:]+u[end,:])
 end
 
-function IvT!(T::Matrix{Numtype},v::Matrix{Numtype})
+function IvT!(T::AbstractMatrix,v::AbstractMatrix)
     #= Interpolates a variable v from the v-grid to a variable T on the T-grid. =#
-    T[:,2:end-1] = one_half*(v[:,2:end] + v[:,1:end-1])
-    T[:,1] = one_half*v[:,1]        # +0, kinematic bc
-    T[:,end] = one_half*v[:,end]    # +0, kinematic bc
+    @views T[:,2:end-1] .= one_half * (v[:,2:end] .+ v[:,1:end-1])
+    @views T[:,1] .= one_half * v[:,1]        # +0, kinematic bc
+    @views T[:,end] .= one_half * v[:,end]    # +0, kinematic bc
 end
 
 # ------------- 2-point interpolation between q and u or v. -----------------
 
-function Iqu_nonperiodic!(u::Matrix{Numtype},q::Matrix{Numtype})
+function Iqu_nonperiodic!(u::AbstractMatrix,q::AbstractMatrix)
     #= Interpolates a variable q from the q-grid to a variable u on the u-grid. =#
-    u[:,:] = one_half*(q[2:end-1,1:end-1] + q[2:end-1,2:end])
+    @views u[:,:] .= one_half * (q[2:end-1,1:end-1] .+ q[2:end-1,2:end])
 end
 
-function Iqu_periodic!(u::Matrix{Numtype},q::Matrix{Numtype})
+function Iqu_periodic!(u::AbstractMatrix,q::AbstractMatrix)
     #= Interpolates a variable q from the q-grid to a variable u on the u-grid. =#
-    u[:,:] = one_half*(q[:,1:end-1] + q[:,2:end])
+    @views u[:,:] .= one_half * (q[:,1:end-1] .+ q[:,2:end])
 end
 
-function Iqv_nonperiodic!(v::Matrix{Numtype},q::Matrix{Numtype})
+function Iqv_nonperiodic!(v::AbstractMatrix,q::AbstractMatrix)
     #= Interpolates a variable q from the q-grid to a variable v on the v-grid. =#
-    v[:,:] = one_half*(q[1:end-1,2:end-1] + q[2:end,2:end-1])
+    @views v[:,:] .= one_half*(q[1:end-1,2:end-1] .+ q[2:end,2:end-1])
 end
 
-function Iqv_periodic!(v::Matrix{Numtype},q::Matrix{Numtype})
+function Iqv_periodic!(v::AbstractMatrix,q::AbstractMatrix)
     #= Interpolates a variable q from the q-grid to a variable v on the v-grid. =#
-    v[1:end-1,:] = one_half*(q[1:end-1,2:end-1] + q[2:end,2:end-1])
-    v[end,:] = one_half*(q[1,2:end-1] + q[end,2:end-1])
+    @views v[1:end-1,:] .= one_half * (q[1:end-1,2:end-1] .+ q[2:end,2:end-1])
+    @views v[end,:] .= one_half * (q[1,2:end-1] .+ q[end,2:end-1])
 end
 
-function Ivq_nonperiodic!(q::Matrix{Numtype},v::Matrix{Numtype})
+function Ivq_nonperiodic!(q::AbstractMatrix,v::AbstractMatrix)
     #= Interpolates a variable v from the v-grid to a variable q on the q-grid. =#
-    q[2:end-1,2:end-1] = one_half*(v[1:end-1,:] + v[2:end,:])
-    q[1,2:end-1] = one_minus_α_half*v[1,:]
-    q[end,2:end-1] = one_minus_α_half*v[end,:]
-    q[:,1] = zeero      # if initialised with zero these lines are redundant
-    q[:,end] = zeero
+    @views q[2:end-1,2:end-1] .= one_half * (v[1:end-1,:] .+ v[2:end,:])
+    @views q[1,2:end-1] .= one_minus_α_half * v[1,:]
+    @views q[end,2:end-1] .= one_minus_α_half * v[end,:]
+    @views q[:,1] .= zeero      # if initialised with zero these lines are redundant
+    @views q[:,end] .= zeero
 end
 
-function Ivq_periodic!(q::Matrix{Numtype},v::Matrix{Numtype})
+function Ivq_periodic!(q::AbstractMatrix,v::AbstractMatrix)
     #= Interpolates a variable v from the v-grid to a variable q on the q-grid. =#
-    q[2:end,2:end-1] = one_half*(v[1:end-1,:] + v[2:end,:])
-    q[1,2:end-1] = one_half*(v[1,:] + v[end,:])
-    q[:,1] = zeero      # if initialised with zero these lines are redundant
-    q[:,end] = zeero
+    @views q[2:end,2:end-1] .= one_half * (v[1:end-1,:] .+ v[2:end,:])
+    @views q[1,2:end-1] .= one_half * (v[1,:] .+ v[end,:])
+    @views q[:,1] .= zeero      # if initialised with zero these lines are redundant
+    @views q[:,end] .= zeero
 end
 
-function Iuq_nonperiodic!(q::Matrix{Numtype},u::Matrix{Numtype})
+function Iuq_nonperiodic!(q::AbstractMatrix,u::AbstractMatrix)
     #= Interpolates a variable u from the u-grid to a variable q on the q-grid. =#
-    q[2:end-1,2:end-1] = one_half*(u[:,1:end-1] + u[:,2:end])
-    q[1,:] = zeero     # if initialised with zero these lines are redundant
-    q[end,:] = zeero
-    q[2:end-1,1] = one_minus_α_half*u[:,1]
-    q[2:end-1,end] = one_minus_α_half*u[:,end]
+    @views q[2:end-1,2:end-1] .= one_half * (u[:,1:end-1] .+ u[:,2:end])
+    @views q[1,:] .= zeero     # if initialised with zero these lines are redundant
+    @views q[end,:] .= zeero
+    @views q[2:end-1,1] .= one_minus_α_half * u[:,1]
+    @views q[2:end-1,end] .= one_minus_α_half * u[:,end]
 end
 
-function Iuq_periodic!(q::Matrix{Numtype},u::Matrix{Numtype})
+function Iuq_periodic!(q::AbstractMatrix,u::AbstractMatrix)
     #= Interpolates a variable u from the u-grid to a variable q on the q-grid. =#
-    q[:,2:end-1] = one_half*(u[:,1:end-1] + u[:,2:end])
-    q[:,1] = one_minus_α_half*u[:,1]
-    q[:,end] = one_minus_α_half*u[:,end]
+    @views q[:,2:end-1] .= one_half * (u[:,1:end-1] .+ u[:,2:end])
+    @views q[:,1] .= one_minus_α_half * u[:,1]
+    @views q[:,end] .= one_minus_α_half * u[:,end]
 end
 
 # ------------- 4-point interpolation between (T and q) and (u and v). ---------
 
-function ITq_nonperiodic!(q::Matrix{Numtype},T::Matrix{Numtype})
+function ITq_nonperiodic!(q::AbstractMatrix,T::AbstractMatrix)
     #= Interpolates a variable T from the T-grid to a variable q on the q-grid. =#
-    q[2:end-1,2:end-1] = one_quarter*(T[1:end-1,1:end-1] + T[1:end-1,2:end]
-                                + T[2:end,1:end-1] + T[2:end,2:end])
-    q[1,2:end-1] = one_half*(T[1,1:end-1] + T[1,2:end])
-    q[end,2:end-1] = one_half*(T[end,1:end-1] + T[end,2:end])
-    q[2:end-1,1] = one_half*(T[1:end-1,1] + T[2:end,1])
-    q[2:end-1,end] = one_half*(T[1:end-1,end] + T[2:end,end])
-    q[1,1] = T[1,1]         # no gradients of T across the boundaries
-    q[1,end] = T[1,end]
-    q[end,1] = T[end,1]
-    q[end,end] = T[end,end]
+    @views q[2:end-1,2:end-1] .= one_quarter * (T[1:end-1,1:end-1] .+ T[1:end-1,2:end] .+ T[2:end,1:end-1] .+ T[2:end,2:end])
+    @views q[1,2:end-1] .= one_half * (T[1,1:end-1] .+ T[1,2:end])
+    @views q[end,2:end-1] .= one_half * (T[end,1:end-1] .+ T[end,2:end])
+    @views q[2:end-1,1] .= one_half * (T[1:end-1,1] .+ T[2:end,1])
+    @views q[2:end-1,end] .= one_half * (T[1:end-1,end] .+ T[2:end,end])
+    @views q[1,1] .= T[1,1]         # no gradients of T across the boundaries
+    @views q[1,end] .= T[1,end]
+    @views q[end,1] .= T[end,1]
+    @views q[end,end] .= T[end,end]
 end
 
-function ITq_periodic!(q::Matrix{Numtype},T::Matrix{Numtype})
+function ITq_periodic!(q::AbstractMatrix,T::AbstractMatrix)
     #= Interpolates a variable T from the T-grid to a variable q on the q-grid. =#
-    q[2:end,2:end-1] = one_quarter*(T[1:end-1,1:end-1] + T[1:end-1,2:end]
-                                + T[2:end,1:end-1] + T[2:end,2:end])
-    q[1,2:end-1] = one_quarter*(T[1,1:end-1] + T[1,2:end]
-                                + T[end,1:end-1] + T[end,2:end])
-    q[2:end,1] = one_half*(T[1:end-1,1] + T[2:end,1])
-    q[2:end,end] = one_half*(T[1:end-1,end] + T[2:end,end])
-
-    q[1,1] = one_half*(T[1,1] + T[end,1])
-    q[1,end] = one_half*(T[1,end] + T[end,end])
+    @views q[2:end,2:end-1] .= one_quarter * (T[1:end-1,1:end-1] .+ T[1:end-1,2:end] .+ T[2:end,1:end-1] .+ T[2:end,2:end])
+    @views q[1,2:end-1] .= one_quarter * (T[1,1:end-1] .+ T[1,2:end] .+ T[end,1:end-1] .+ T[end,2:end])
+    @views q[2:end,1] .= one_half * (T[1:end-1,1] .+ T[2:end,1])
+    @views q[2:end,end] .= one_half * (T[1:end-1,end] .+ T[2:end,end])
+    @views q[1,1] .= one_half * (T[1,1] .+ T[end,1])
+    @views q[1,end] .= one_half * (T[1,end] .+ T[end,end])
 end
 
-function IqT_nonperiodic!(T::Matrix{Numtype},q::Matrix{Numtype})
+function IqT_nonperiodic!(T::AbstractMatrix,q::AbstractMatrix)
     #= Interpolates a variable q from the q-grid to a variable T on the T-grid. =#
-    T[:,:] = one_quarter*(q[1:end-1,1:end-1] + q[1:end-1,2:end]
-                                + q[2:end,1:end-1] + q[2:end,2:end])
+    @views T[:,:] .= one_quarter * (q[1:end-1,1:end-1] .+ q[1:end-1,2:end] .+ q[2:end,1:end-1] .+ q[2:end,2:end])
 end
 
-function IqT_periodic!(T::Matrix{Numtype},q::Matrix{Numtype})
+function IqT_periodic!(T::AbstractMatrix,q::AbstractMatrix)
     #= Interpolates a variable q from the q-grid to a variable T on the T-grid. =#
-    T[1:end-1,:] = one_quarter*(q[1:end-1,1:end-1] + q[1:end-1,2:end]
-                                + q[2:end,1:end-1] + q[2:end,2:end])
-    T[end,:] = one_quarter*(q[end,1:end-1] + q[end,2:end]
-                                + q[1,1:end-1] + q[1,2:end])
+    @views T[1:end-1,:] .= one_quarter * (q[1:end-1,1:end-1] .+ q[1:end-1,2:end] .+ q[2:end,1:end-1] .+ q[2:end,2:end])
+    @views T[end,:] .= one_quarter * (q[end,1:end-1] .+ q[end,2:end] .+ q[1,1:end-1] .+ q[1,2:end])
 end
 
-function Iuv_nonperiodic!(v::Matrix{Numtype},u::Matrix{Numtype})
+function Iuv_nonperiodic!(v::AbstractMatrix,u::AbstractMatrix)
     #= Interpolates a variable u from the u-grid to a variable v on the v-grid. =#
-    v[2:end-1,:] = one_quarter*(u[1:end-1,1:end-1] + u[1:end-1,2:end]
-                                + u[2:end,1:end-1] + u[2:end,2:end])
-    v[1,:] = one_quarter*(u[1,1:end-1] + u[1,2:end])
-    v[end,:] = one_quarter*(u[end,1:end-1] + u[end,2:end])
+    @views v[2:end-1,:] .= one_quarter * (u[1:end-1,1:end-1] .+ u[1:end-1,2:end] .+ u[2:end,1:end-1] .+ u[2:end,2:end])
+    @views v[1,:] .= one_quarter * (u[1,1:end-1] .+ u[1,2:end])
+    @views v[end,:] .= one_quarter * (u[end,1:end-1] .+ u[end,2:end])
 end
 
-function Iuv_periodic!(v::Matrix{Numtype},u::Matrix{Numtype})
+function Iuv_periodic!(v::AbstractMatrix,u::AbstractMatrix)
     #= Interpolates a variable u from the u-grid to a variable v on the v-grid. =#
-    v[1:end-1,:] = one_quarter*(u[1:end-1,1:end-1] + u[1:end-1,2:end] +
-                         u[2:end,1:end-1] + u[2:end,2:end])
-    v[end,:] = one_quarter*(u[1,1:end-1] + u[1,2:end] +
-                     u[end,1:end-1] + u[end,2:end])
+    @views v[1:end-1,:] .= one_quarter * (u[1:end-1,1:end-1] .+ u[1:end-1,2:end] .+ u[2:end,1:end-1] .+ u[2:end,2:end])
+    @views v[end,:] .= one_quarter * (u[1,1:end-1] .+ u[1,2:end] .+ u[end,1:end-1] .+ u[end,2:end])
 end
 
-function Ivu_nonperiodic!(u::Matrix{Numtype},v::Matrix{Numtype})
+function Ivu_nonperiodic!(u::AbstractMatrix,v::AbstractMatrix)
     #= Interpolates a variable v from the v-grid to a variable u on the u-grid. =#
-    u[:,2:end-1] = one_quarter*(v[1:end-1,1:end-1] + v[1:end-1,2:end]
-                                + v[2:end,1:end-1] + v[2:end,2:end])
-    u[:,1] = one_quarter*(v[1:end-1,1] + v[2:end,1])
-    u[:,end] = one_quarter*(v[1:end-1,end] + v[2:end,end])
+    @views u[:,2:end-1] .= one_quarter * (v[1:end-1,1:end-1] .+ v[1:end-1,2:end] .+ v[2:end,1:end-1] .+ v[2:end,2:end])
+    @views u[:,1] .= one_quarter * (v[1:end-1,1] .+ v[2:end,1])
+    @views u[:,end] .= one_quarter * (v[1:end-1,end] .+ v[2:end,end])
 end
 
-function Ivu_periodic!(u::Matrix{Numtype},v::Matrix{Numtype})
+function Ivu_periodic!(u::AbstractMatrix,v::AbstractMatrix)
     #= Interpolates a variable u from the u-grid to a variable v on the v-grid. =#
-    u[2:end,2:end-1] = one_quarter*(v[1:end-1,1:end-1] + v[1:end-1,2:end] +
-                         v[2:end,1:end-1] + v[2:end,2:end])
-    u[1,2:end-1] = one_quarter*(v[1,1:end-1] + v[1,2:end] +
-                     v[end,1:end-1] + v[end,2:end])
-    u[2:end,1] = one_quarter*(v[1:end-1,1] + v[2:end,1])
-    u[2:end,end] = one_quarter*(v[1:end-1,end] + v[2:end,end])
-    u[1,1] = one_quarter*(v[1,1] + v[end,1])
-    u[1,end] = one_quarter*(v[1,end] + v[end,end])
+    @views u[2:end,2:end-1] .= one_quarter * (v[1:end-1,1:end-1] .+ v[1:end-1,2:end] .+ v[2:end,1:end-1] .+ v[2:end,2:end])
+    @views u[1,2:end-1] .= one_quarter * (v[1,1:end-1] .+ v[1,2:end] .+ v[end,1:end-1] .+ v[end,2:end])
+    @views u[2:end,1] .= one_quarter * (v[1:end-1,1] .+ v[2:end,1])
+    @views u[2:end,end] .= one_quarter * (v[1:end-1,end] .+ v[2:end,end])
+    @views u[1,1] .= one_quarter * (v[1,1] .+ v[end,1])
+    @views u[1,end] .= one_quarter * (v[1,end] .+ v[end,end])
 end

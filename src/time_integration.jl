@@ -1,4 +1,4 @@
-function time_integration(u,v,η)
+function time_integration(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix)
 
     # FORCING
     Fx = channel_wind()
@@ -38,14 +38,14 @@ function time_integration(u,v,η)
 
 
             if rki < 4
-                u1[:,:] = u + RKb[rki]*Δt*du
-                v1[:,:] = v + RKb[rki]*Δt*dv
-                η1[:,:] = η + RKb[rki]*Δt*dη
+                @views u1[:,:] .= u .+ RKb[rki]*Δt*du
+                @views v1[:,:] .= v .+ RKb[rki]*Δt*dv
+                @views η1[:,:] .= η .+ RKb[rki]*Δt*dη
             end
 
-            u0 += RKa[rki]*Δt*du
-            v0 += RKa[rki]*Δt*dv
-            η0 += RKa[rki]*Δt*dη
+            @views u0 .+= RKa[rki]*Δt*du
+            @views v0 .+= RKa[rki]*Δt*dv
+            @views η0 .+= RKa[rki]*Δt*dη
         end
 
         u[:,:],v[:,:],η[:,:] = u0,v0,η0
