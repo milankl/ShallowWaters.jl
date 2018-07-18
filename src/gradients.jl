@@ -58,6 +58,21 @@ function Gux_periodic!(dudx::AbstractMatrix,u::AbstractMatrix)
     @views dudx[end,:] .= u[1,:] .- u[end,:]
 end
 
+function Gux_periodic_loop!(dudx::AbstractMatrix,u::AbstractMatrix)
+    #= Calculates the gradient in x-direction on the u-grid.
+    The result dudx sits on the T-grid.=#
+
+    m, n = size(dudx)
+    @boundscheck (m,n) == size(u) || throw(BoundsError())
+
+    @inbounds for i in 1:n
+        for j in 1:m-1
+            dudx[j,i] = u[j+1,i]-u[j,i]
+        end
+        dudx[m,i] = u[1,i] - u[m,i]
+    end
+end
+
 function Gvy!(dvdy::AbstractMatrix,v::AbstractMatrix)
     #= Calculates the gradient in y-direction on the v-grid.
     The result dvdy sits on the T-grid. =#

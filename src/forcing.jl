@@ -8,6 +8,15 @@ function channel_wind()
     return Numtype.(Fx)
 end
 
+function shear_wind()
+    # amplitude
+    Fx0 = 0.12
+    xx_u,yy_u = meshgrid(x_u,y_u)
+
+    Fx = (Δ*Fx0/ρ/water_depth)*tanh.(2π*(yy_u/Ly-1/2))
+    return Numtype.(Fx)
+end
+
 
 function double_gyre_wind()
 
