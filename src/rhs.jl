@@ -6,13 +6,13 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
              Lu1,Lu2,Lv1,Lv2,dLudx,dLudy,dLvdx,dLvdy,
              shear,νSmag,νSmag_q)
 
-    h[:] = η+H
+    @views h[:,:] .= η .+ H
     ITu!(h_u,h)     # use η instead of h preliminary
     ITv!(h_v,h)
     ITq!(h_q,h)
 
-    U[:] = u.*h_u
-    V[:] = v.*h_v
+    @views U[:,:] .= u.*h_u
+    @views V[:,:] .= v.*h_v
 
     Gux!(dudx,u)
     Gvy!(dvdy,v)
@@ -23,29 +23,32 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
     Gvy!(dVdy,V)
 
     # Bernoulli potential
-    IuT!(KEu,u.^2)
-    IvT!(KEv,v.^2)
-    p[:] = one_half*(KEu + KEv) + g*η
+    @views Lu1[:,:] .= u.^2         # reuse Lu1, Lv1
+    @views Lv1[:,:] .= v.^2
+    IuT!(KEu,Lu1)
+    IvT!(KEv,Lv1)
+    @views p[:,:] .= one_half*(KEu .+ KEv) .+ g*η
     GTx!(dpdx,p)
     GTy!(dpdy,p)
 
     # Potential vorticity
-    q[:] = (f_q + dvdx - dudy) ./ h_q
+    @views q[:,:] .= (f_q .+ dvdx .- dudy) ./ h_q
 
     # Sadourny, 1975 enstrophy conserving scheme
     Iqu!(q_u,q)
     Iqv!(q_v,q)
     Ivu!(V_u,V)
     Iuv!(U_v,U)
-    adv_u[:] = q_u.*V_u
-    adv_v[:] = -q_v.*U_v
+    @views adv_u[:,:] .= q_u.*V_u
+    @views adv_v[:,:] .= -q_v.*U_v
 
     #= Smagorinsky-like biharmonic diffusion
     Lu1 + Lu2 = dx[ νSmag dx(L(u))] + dy[ νSmag dy(L(u))]
     Lv1 + Lv2 = dx[ νSmag dx(L(v))] + dy[ νSmag dy(L(v))]
     =#
-    IqT!(shear,(dudy + dvdx).^2)
-    νSmag[:] = cSmag*sqrt.((dudx-dvdy).^2 + shear)
+    @views νSmag_q[:,:] .= (dudy .+ dvdx).^2     # reuse variable νSmag_q
+    IqT!(shear,νSmag_q)
+    @views νSmag[:,:] .= cSmag*sqrt.((dudx .- dvdy).^2 .+ shear)
     ITq!(νSmag_q,νSmag)
     ∇²u!(Lu1,u)
     ∇²v!(Lv1,v)
@@ -53,13 +56,17 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
     Guy!(dLudy,Lu1)
     Gvx!(dLvdx,Lv1)
     Gvy!(dLvdy,Lv1)
-    GTx!(Lu1,νSmag.*dLudx)        # reuse intermediate variable Lu1
-    Gqy!(Lu2,νSmag_q.*dLudy)
-    GTy!(Lv1,νSmag.*dLvdy)
-    Gqx!(Lv2,νSmag_q.*dLvdx)
+    @views dLudx[:,:] .= νSmag.*dLudx
+    @views dLudy[:,:] .= νSmag_q.*dLudy
+    @views dLvdy[:,:] .= νSmag.*dLvdy
+    @views dLvdx[:,:] .= νSmag_q.*dLvdx
+    GTx!(Lu1,dLudx)        # reuse intermediate variable Lu1
+    Gqy!(Lu2,dLudy)
+    GTy!(Lv1,dLvdy)
+    Gqx!(Lv2,dLvdx)
 
     # adding the terms
-    du[:] = adv_u - dpdx + Lu1+Lu2 + Fx
-    dv[:] = adv_v - dpdy + Lv1+Lv2
-    dη[:] = -(dUdx + dVdy)
+    @views du[:,:] .= adv_u .- dpdx .+ Lu1.+Lu2 .+ Fx
+    @views dv[:,:] .= adv_v .- dpdy .+ Lv1.+Lv2
+    @views dη[:,:] .= -(dUdx .+ dVdy)
 end
