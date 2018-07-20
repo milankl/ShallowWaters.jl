@@ -3,7 +3,7 @@ etc, and runs the model =#
 
 using Base.Dates
 using NetCDF
-using SigmoidNumbers
+#using SigmoidNumbers
 
 # PARAMETERS, GRID and CONSTANTS
 include("parameters.jl")
@@ -26,7 +26,7 @@ include("src/time_integration.jl")
 include("src/feedback.jl")
 include("src/output.jl")
 
-# INITILIASE
+# INITIALISE
 include("src/initial_conditions.jl")
 include("src/preallocate.jl")
 u,v,η = initial_conditions()

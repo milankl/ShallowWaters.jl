@@ -8,7 +8,7 @@ function seamount()
     bumpx = exp.(-((xx_T - Lx/2).^2)/(2*σx^2))
     bumpy = exp.(-((yy_T - Ly/2).^2)/(2*σy^2))
 
-    H = water_depth - seamount_heigth*bumpx.*bumpy
+    H = water_depth - seamount_height*bumpx.*bumpy
     return Numtype.(H)
 end
 
