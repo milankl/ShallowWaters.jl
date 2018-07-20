@@ -21,7 +21,7 @@ function output_ini(u,v,η)
         NetCDF.putvar(ncv,"v",Float32.(v),start=[1,1,1],count=[-1,-1,1])
         NetCDF.putvar(ncη,"eta",Float32.(η),start=[1,1,1],count=[-1,-1,1])
 
-        NetCDF.putvar(ncu,"t",Array(1:10))
+        NetCDF.putvar(ncu,"t",Array(0:nout_total-1)*dtint*nout)
         #NetCDF.putvar(ncv,"t",Array(0:nout_total-1)*dtint*nout)
         #NetCDF.putvar(ncη,"t",Array(0:nout_total-1)*dtint*nout)
 
