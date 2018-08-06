@@ -3,7 +3,8 @@ function time_integration(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix
     # FORCING
     Fx = channel_wind()
     f_u,f_v,f_q = beta_plane()
-    H = seamount()
+    #H = seamount()
+    H = ridge()
 
     # PREALLOCATE
     du,u0,u1,dpdx,U,V_u,h_u,q_u,adv_u,Lu1,Lu2 = preallocate_u_vars(u)
