@@ -8,7 +8,7 @@ const L_ratio = 2               # Domain aspect ratio of Lx/Ly
 
 const gravity = 10.             # gravitational acceleration
 const water_depth = 500.        # layer thickness at rest
-const seamount_height = 150.    # height of seamount
+const seamount_height = 50.    # height of seamount
 const ρ = 1e3                   # density
 
 const cfl = 0.9                 # CFL number
@@ -27,6 +27,6 @@ const output_dt = 6             # output time step in hours
 const outpath = "/local/kloewer/julsdata/"
 
 const initial_cond = "rest"    # "rest" or "ncfile"
-const init_run_id = 0           # only for starting from ncfile
+const init_run_id = 10           # only for starting from ncfile
 
 const ϕ = 30.                   # central latitue of the domain

@@ -12,6 +12,20 @@ function seamount()
     return Numtype.(H)
 end
 
+function ridge()
+    # A gaussian ridge
+    xx_T,yy_T = meshgrid(x_T,y_T)
+
+    σx = 200e3
+    σy = 200e3
+
+    bumpx = exp.(-((xx_T - Lx/2).^2)/(2*σx^2))
+
+    H = water_depth - seamount_height*bumpx
+    return Numtype.(H)
+end
+
+
 function flat_bottom()
     return Numtype(water_depth)
 end
