@@ -11,11 +11,13 @@ function output_ini(u,v,η)
         uvar = NcVar("u",[xudim,yudim,tdim],t=Float32)
         vvar = NcVar("v",[xvdim,yvdim,tdim],t=Float32)
         ηvar = NcVar("eta",[xTdim,yTdim,tdim],t=Float32)
-        tvar = NcVar("t",tdim,t=Int64)
+        tvaru = NcVar("t",tdim,t=Int64)
+        tvarv = NcVar("t",tdim,t=Int64)
+        tvarη = NcVar("t",tdim,t=Int64)
 
-        ncu = NetCDF.create(runpath*"u.nc",[uvar,tvar],mode=NC_NETCDF4)
-        ncv = NetCDF.create(runpath*"v.nc",[vvar,tvar],mode=NC_NETCDF4)
-        ncη = NetCDF.create(runpath*"eta.nc",[ηvar,tvar],mode=NC_NETCDF4)
+        ncu = NetCDF.create(runpath*"u.nc",[uvar,tvaru],mode=NC_NETCDF4)
+        ncv = NetCDF.create(runpath*"v.nc",[vvar,tvarv],mode=NC_NETCDF4)
+        ncη = NetCDF.create(runpath*"eta.nc",[ηvar,tvarη],mode=NC_NETCDF4)
 
         # Attributes
         Dictu = Dict{String,Any}("description"=>"Data from shallow-water model juls.")
