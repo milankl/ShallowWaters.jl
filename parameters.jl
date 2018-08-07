@@ -2,7 +2,7 @@
 const Numtype = Float32
 #const Numtype = Posit{16,0}
 
-const nx = 100                  # number of grid cells in x-direction
+const nx = 50                  # number of grid cells in x-direction
 const Lx = 2000e3               # length of the domain in x-direction
 const L_ratio = 2               # Domain aspect ratio of Lx/Ly
 
