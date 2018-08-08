@@ -69,6 +69,22 @@ const y_v = Array(1:ny-1)*Δ
 const x_q = if bc_x == "periodic" x_u else Array(1:nx+1)*Δ - Δ end
 const y_q = Array(1:ny+1)*Δ - Δ
 
+# halo of ghost points (because of the biharmonic operator) - don't change.
+const halo = 2      # halo for η,T is always 1
+
+# halo versions with additional ghost points
+const x_T_halo = Array(0:nx+1)*Δ - Δ/2
+const y_T_halo = Array(0:ny+1)*Δ - Δ/2
+
+const x_u_halo = if (bc_x == "periodic") Array(-2:nx+1)*Δ else const x_u = Array(-1:nx+1)*Δ end
+const y_u_halo = Array(-1:ny+2)*Δ - Δ/2
+
+const x_v_halo = Array(-1:nx+2)*Δ - Δ/2
+const y_v_halo = Array(-1:ny+1)*Δ
+
+const x_q_halo = if bc_x == "periodic" x_u_halo else Array(-1:nx+3)*Δ - Δ end
+const y_q_halo = Array(-1:ny+3)*Δ - Δ
+
 # time and output
 const dt,Δt,dtint,nt = timestep()
 const nout = Int(floor(output_dt*3600/dtint))   # output every nout time steps

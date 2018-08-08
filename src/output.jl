@@ -33,7 +33,7 @@ function output_ini(u,v,η)
         Dictu["initial_cond"] = initial_cond
         Dictu["init_run_id"] = init_run_id
         Dictu["phi"] = ϕ
-        Dictu["seamount_height"] = 150.
+        Dictu["seamount_height"] = seamount_height
         Dictu["Numtype"] = string(Numtype)
         Dictu["output_dt"] = nout*dtint
 
@@ -72,19 +72,19 @@ function output_ini(u,v,η)
 end
 
 function output_nc(ncs,u,v,η,i,iout)
-    if i % nout == 0    # output only every nout time steps
-        if output == 1
-            NetCDF.putvar(ncs[1],"u",Float32.(u),start=[1,1,iout],count=[-1,-1,1])
-            NetCDF.putvar(ncs[2],"v",Float32.(v),start=[1,1,iout],count=[-1,-1,1])
-            NetCDF.putvar(ncs[3],"eta",Float32.(η),start=[1,1,iout],count=[-1,-1,1])
+    if i % nout == 0 && output == 1     # output only every nout time steps
 
-            for nc in ncs
+        # cut off the halo (always 1 for η)
+        NetCDF.putvar(ncs[1],"u",Float32.(u[halo+1:end-halo,halo+1:end-halo]),start=[1,1,iout],count=[-1,-1,1])
+        NetCDF.putvar(ncs[2],"v",Float32.(v[halo+1:end-halo,halo+1:end-halo]),start=[1,1,iout],count=[-1,-1,1])
+        NetCDF.putvar(ncs[3],"eta",Float32.(η[2:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+
+        for nc in ncs
                 NetCDF.putvar(nc,"t",Int64[i*dtint],start=[iout])
                 NetCDF.sync(nc)
-            end
-
-            iout += 1
         end
+
+        iout += 1
     end
 
     return ncs,iout

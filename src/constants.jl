@@ -5,8 +5,10 @@
 const one_over_Δ = Numtype(1/Δ)
 const zeero = Numtype(0.)
 
+#TODO check what is actually used
 const α = Numtype(lbc)
 const minus_α = Numtype(-lbc)
+const one_minus_α = Numtype(1-lbc)
 const one_minus_α_half = Numtype(1-0.5*lbc)
 const α_over_Δ = Numtype(lbc/Δ)
 const one_half = Numtype(0.5)
