@@ -29,3 +29,6 @@ end
 function flat_bottom()
     return Numtype(water_depth)
 end
+
+# set the desired topography here
+topography = ridge

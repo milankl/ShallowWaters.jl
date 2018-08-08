@@ -1,3 +1,19 @@
+function add_halo(u,v,η)
+
+    u = cat(1,zeros(Numtype,halo,nux),u,zeros(Numtype,halo,nux))
+    u = cat(2,zeros(Numtype,nuy+2*halo,halo),u,zeros(Numtype,nuy+2*halo,halo))
+
+    v = cat(1,zeros(Numtype,halo,nvx),v,zeros(Numtype,halo,nvx))
+    v = cat(2,zeros(Numtype,nvy+2*halo,halo),v,zeros(Numtype,nvy+2*halo,halo))
+
+    # halo is always 1 for η
+    η = cat(1,zeros(Numtype,1,nx),η,zeros(Numtype,1,nx))
+    η = cat(2,zeros(Numtype,ny+2,1),η,zeros(Numtype,ny+2,1))
+
+    #ghost_points!(u,v,η)
+    return u,v,η
+end
+
 function ghost_points_u_nonperiodic_halo1!(u)
 
     # kinematic boundary condition
@@ -118,17 +134,55 @@ function ghost_points_η_periodic_halo1!(η)
     @views η[:,end] .= η[:,end-1]
 end
 
-function ghost_points!(u,v,η)
+## GATHER AND RENAME FUNCTIONS FOR CONVENIENCE
 
-    ghost_points_u!(u)
-    ghost_points_v!(v)
-    ghost_points_η!(η)
+function ghost_points_periodic_halo1!(u,v,η)
+
+    ghost_points_u_periodic_halo1!(u)
+    ghost_points_v_periodic_halo1!(v)
+    ghost_points_η_periodic_halo1!(η)
 
 end
 
+function ghost_points_periodic_halo2!(u,v,η)
 
+    ghost_points_u_periodic_halo2!(u)
+    ghost_points_v_periodic_halo2!(v)
+    ghost_points_η_periodic_halo1!(η)   # always halo=1
 
+end
 
+function ghost_points_nonperiodic_halo1!(u,v,η)
+
+    ghost_points_u_nonperiodic_halo1!(u)
+    ghost_points_v_nonperiodic_halo1!(v)
+    ghost_points_η_nonperiodic_halo1!(η)
+
+end
+
+function ghost_points_nonperiodic_halo2!(u,v,η)
+
+    ghost_points_u_nonperiodic_halo2!(u)
+    ghost_points_v_nonperiodic_halo2!(v)
+    ghost_points_η_nonperiodic_halo1!(η)   # always halo=1
+
+end
+
+# pick the right set of functions depending on boundary conditions and halo size
+
+if bc_x == "periodic"
+    if halo == 1
+        ghost_points! = ghost_points_periodic_halo1!
+    elseif halo == 2
+        ghost_points! = ghost_points_periodic_halo2!
+    end
+else
+    if halo == 1
+        ghost_points! = ghost_points_nonperiodic_halo1!
+    elseif halo == 2
+        ghost_points! = ghost_points_nonperiodic_halo2!
+    end
+end
 
 # function ghost_points_η_nonperiodic_loop!(η)
 #
