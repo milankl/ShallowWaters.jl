@@ -1,14 +1,14 @@
 function add_halo(u,v,η)
 
-    u = cat(1,zeros(Numtype,halo,nux),u,zeros(Numtype,halo,nux))
-    u = cat(2,zeros(Numtype,nuy+2*halo,halo),u,zeros(Numtype,nuy+2*halo,halo))
+    u = cat(1,zeros(Numtype,halo,nuy),u,zeros(Numtype,halo,nuy))
+    u = cat(2,zeros(Numtype,nux+2*halo,halo),u,zeros(Numtype,nux+2*halo,halo))
 
-    v = cat(1,zeros(Numtype,halo,nvx),v,zeros(Numtype,halo,nvx))
-    v = cat(2,zeros(Numtype,nvy+2*halo,halo),v,zeros(Numtype,nvy+2*halo,halo))
+    v = cat(1,zeros(Numtype,halo,nvy),v,zeros(Numtype,halo,nvy))
+    v = cat(2,zeros(Numtype,nvx+2*halo,halo),v,zeros(Numtype,nvx+2*halo,halo))
 
     # halo is always 1 for η
-    η = cat(1,zeros(Numtype,1,nx),η,zeros(Numtype,1,nx))
-    η = cat(2,zeros(Numtype,ny+2,1),η,zeros(Numtype,ny+2,1))
+    η = cat(1,zeros(Numtype,1,ny),η,zeros(Numtype,1,ny))
+    η = cat(2,zeros(Numtype,nx+2,1),η,zeros(Numtype,nx+2,1))
 
     #ghost_points!(u,v,η)
     return u,v,η

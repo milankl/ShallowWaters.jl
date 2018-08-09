@@ -8,7 +8,6 @@ function preallocate_u_vars()
 
     # one less in x-direction
     U = zeros(Numtype,nux+2*halo-1,nuy+2*halo)
-    h_u = zeros(U)
     KEu = zeros(U)
     dudx = zeros(U)
 
@@ -18,17 +17,18 @@ function preallocate_u_vars()
     # two less in x-direction
     dUdx = zeros(Numtype,nux+2*halo-2,nuy+2*halo)
 
+    # two less in x-direction one less in y-direction
+    U_v = zeros(Numtype,nux+2*halo-2,nuy+2*halo-1)
+
+    # two less in both directions
+    Lu = zeros(Numtype,nux+2*halo-2,nuy+2*halo-2)
+
 
     #TODO
-    V_u = zeros(u)
+    #Lu1 = zeros(u)
+    #Lu2 = zeros(u)
 
-    q_u = zeros(u)
-    adv_u = zeros(u)
-
-    Lu1 = zeros(u)
-    Lu2 = zeros(u)
-
-    return
+    return du,u0,u1,u²,U,KEu,dudx,dudy,dUdx,U_v,Lu
 end
 
 function preallocate_v_vars()
@@ -41,7 +41,6 @@ function preallocate_v_vars()
 
     # one less in y-direction
     V = zeros(Numtype,nvx+2*halo,nvy+2*halo-1)
-    h_v = zeros(V)
     KEv = zeros(V)
     dvdy = zeros(V)
 
@@ -51,24 +50,23 @@ function preallocate_v_vars()
     # two less in y-direction
     dVdy = zeros(Numtype,nvx+2*halo,nvy+2*halo-2)
 
+    # two less in y-direction one less in x-direction
+    V_u = zeros(Numtype,nvx+2*halo-1,nvy+2*halo-2)
+
+    # two less in both directions
+    Lv = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-2)
+
     #TODO
-    dpdy = zeros(v)
+    #Lv1 = zeros(v)
+    #Lv2 = zeros(v)
 
-    U_v = zeros(v)
-
-    q_v = zeros(v)
-    adv_v = zeros(v)
-
-    Lv1 = zeros(v)
-    Lv2 = zeros(v)
-
-    return
+    return dv,v0,v1,v²,V,KEv,dvdy,dvdx,dVdy,V_u,Lv
 end
 
 function preallocate_T_variables()
 
     # full halo
-    dη = zeros(Numtype,nx+2,nvy+2)  # halo for η is always 1
+    dη = zeros(Numtype,nx+2,ny+2)  # halo for η is always 1
     η0 = zeros(dη)
     η1 = zeros(dη)
     p = zeros(dη)
@@ -76,18 +74,29 @@ function preallocate_T_variables()
 
     # one less in x and y-direction
     h_q = zeros(Numtype,nx+1,ny+1)
+    q = zeros(h_q)
 
     # one less in x direction
     dpdx = zeros(Numtype,nx+1,ny+2)
+    h_u = zeros(dpdx)
 
     # one less in y-direction
     dpdy = zeros(Numtype,nx+2,ny+1)
+    h_v = zeros(dpdy)
+
+    # two less in x direction, one less in y
+    q_v = zeros(Numtype,nx,ny+1)
+    adv_v = zeros(q_v)
+
+    # two less in y direction, one less in x
+    q_u = zeros(Numtype,nx+1,ny)
+    adv_u = zeros(q_u)
 
     #TODO
-    νSmag = zeros(η)
-    dLudx = zeros(η)
-    dLvdy = zeros(η)
-    shear = zeros(η)
+    #νSmag = zeros(η)
+    #dLudx = zeros(η)
+    #dLvdy = zeros(η)
+    #shear = zeros(η)
 
-    return
+    return dη,η0,η1,p,h,h_q,q,dpdx,h_u,dpdy,h_v,q_v,adv_v,q_u,adv_u
 end

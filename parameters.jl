@@ -2,7 +2,7 @@
 const Numtype = Float32
 #const Numtype = Posit{16,0}
 
-const nx = 50                  # number of grid cells in x-direction
+const nx = 100                  # number of grid cells in x-direction
 const Lx = 2000e3               # length of the domain in x-direction
 const L_ratio = 2               # Domain aspect ratio of Lx/Ly
 
@@ -22,7 +22,7 @@ const lbc = 0.                  # lateral boundary condition parameter
 const c_D = 1e-5                # bottom drag coefficient (not used yet)
 const c_smag = 0.06             # Smagorinsky coefficient
 
-const output = 1                # 1 for nc output 0 for none
+const output = 0                # 1 for nc output 0 for none
 const output_dt = 6             # output time step in hours
 const outpath = "/local/kloewer/julsdata/"
 

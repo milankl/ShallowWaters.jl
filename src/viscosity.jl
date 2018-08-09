@@ -4,3 +4,4 @@
 
 # Smagorinsky-like biharmonic diffusion
 const cSmag = Numtype(-c_smag)
+const νA = 500./Δ^2

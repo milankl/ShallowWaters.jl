@@ -1,6 +1,6 @@
 function seamount()
     # A gaussian seamount
-    xx_T,yy_T = meshgrid(x_T,y_T)
+    xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
 
     σx = 200e3
     σy = 200e3
@@ -14,7 +14,7 @@ end
 
 function ridge()
     # A gaussian ridge
-    xx_T,yy_T = meshgrid(x_T,y_T)
+    xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
 
     σx = 200e3
     σy = 200e3
