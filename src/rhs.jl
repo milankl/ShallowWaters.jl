@@ -11,8 +11,8 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
     Iy!(h_v,h)
     Ixy!(h_q,h)
 
-    @views U .= u[2:end,:].*h_u
-    @views V .= v[:,2:end].*h_v
+    Uflux!(U,u,h_u)
+    Vflux!(V,v,h_v)
 
     ∂x!(dudx,u)
     ∂y!(dvdy,v)
@@ -27,20 +27,19 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
     @views v² .= v.^2
     Ix!(KEu,u²)
     Iy!(KEv,v²)
-    @views p .= one_half*(KEu .+ KEv) .+ g*η
-    GTx!(dpdx,p)
-    GTy!(dpdy,p)
+    Bernoulli!(p,KEu,KEv,η)
+    ∂x!(dpdx,p)
+    ∂y!(dpdy,p)
 
     # Potential vorticity
-    @views q .= (f_q .+ dvdx .- dudy) ./ h_q
+    PV!(q,f_q,dvdx,dudy,h_q)
 
     # Sadourny, 1975 enstrophy conserving scheme
-    Iqu!(q_u,q)
-    Iqv!(q_v,q)
-    Ivu!(V_u,V)
-    Iuv!(U_v,U)
-    @views adv_u .= q_u.*V_u
-    @views adv_v .= -q_v.*U_v
+    Iy!(q_u,q)
+    Ix!(q_v,q)
+    Ixy!(V_u,V)
+    Ixy!(U_v,U)
+    PV_adv!(adv_u,adv_v,q_u,q_v,V_u,U_v)
 
     #= Smagorinsky-like biharmonic diffusion
     Lu1 + Lu2 = dx[ νSmag dx(L(u))] + dy[ νSmag dy(L(u))]
@@ -66,7 +65,76 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
     Gqx!(Lv2,dLvdx)
 
     # adding the terms
-    @views du .= adv_u .- dpdx .+ Lu1.+Lu2 .+ Fx
-    @views dv .= adv_v .- dpdy .+ Lv1.+Lv2
-    @views dη .= -(dUdx .+ dVdy)
+    momentum_u!(du,adv_u,dpdx,Lu1,Lu2,Fx)
+    momentum_v!(dv.adv_v,dpdy,Lv1,Lv2)
+    continuity!(dη,dUdx,dVdy)
 end
+
+function Uflux_nonperiodic!(U,u,h_u)
+    @views U .= u[2:end-1,2:end-1].*h_u
+end
+
+function Uflux_periodic!(U,u,h_u)
+    @views U .= u[3:end-1,2:end-1].*h_u
+end
+
+function Vflux!(V,v,h_v)
+    @views V .= v[2:end-1,2:end-1].*h_v
+end
+
+function Bernoulli_nonperiodic!(p,KEu,KEv,η)
+     @views p .= one_half*(KEu[:,2:end-1] .+ KEv[2:end-1,:]) .+ g*η
+end
+
+function Bernoulli_periodic!(p,KEu,KEv,η)
+     @views p .= one_half*(KEu[2:end,2:end-1] .+ KEv[2:end-1,:]) .+ g*η
+end
+
+
+function PV_nonperiodic!(q,f_q,dvdx,dudy,h_q)
+    #TODO this depends on the boundary conditions
+    @views q .= (f_q .+ dvdx .- dudy) ./ h_q
+end
+
+function PV_periodic!(q,f_q,dvdx,dudy,h_q)
+    #TODO this depends on the boundary conditions
+    @views q .= (f_q .+ dvdx .- dudy) ./ h_q
+end
+
+
+function PV_adv!(adv_u,adv_v,q_u,q_v,V_u,U_v)
+    @views adv_u .= q_u.*V_u
+    @views adv_v .= -q_v.*U_v
+end
+
+function momentum_u!(du,adv_u,dpdx,Lu1,Lu2,Fx)
+    @views du[3:end-2,3:end-2] .= adv_u .- dpdx[:,2:end-1] .+ Lu1 .+ Lu2 .+ Fx
+end
+
+function momentum_v!(dv,adv_v,dpdy,Lv1,Lv2)
+    @views dv[3:end-2,3:end-2] .= adv_v .- dpdy[2:end-1,:] .+ Lv1.+Lv2
+end
+
+function continuity!(dη,dUdx,dVdy)
+    # cut off the redundant halo and only copy the non-halo points into dη
+    @inbounds for i ∈ 2:ny+1
+        for j ∈ 2:nx+1
+            dη[j,i] = -(dUdx[j-1,i] + dVdy[j,i-1])
+        end
+    end
+end
+
+if bc_x == "periodic"
+    Uflux! = Uflux_periodic!
+    Bernoulli! = Bernoulli_periodic!
+else
+    Uflux! = Uflux_nonperiodic!
+    Bernoulli! = Bernoulli_nonperiodic!
+end
+
+
+
+# function continuity_mat!(dη,dUdx,dVdy)
+#     # cut off the redundant halo and only copy the non-halo points into dη
+#     @views @inbounds dη[2:end-1,2:end-1] .= -(dUdx[:,2:end-1] .+ dVdy[2:end-1,:])
+# end

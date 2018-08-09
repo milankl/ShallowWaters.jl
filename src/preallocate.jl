@@ -19,8 +19,7 @@ function preallocate_u_vars()
     dUdx = zeros(Numtype,nux+2*halo-2,nuy+2*halo)
 
 
-    dpdx = zeros(u)
-
+    #TODO
     V_u = zeros(u)
 
     q_u = zeros(u)
@@ -32,7 +31,7 @@ function preallocate_u_vars()
     return
 end
 
-function preallocate_v_vars(v::AbstractMatrix)
+function preallocate_v_vars()
 
     # with full halo
     dv = zeros(Numtype,nvx+2*halo,nvy+2*halo)
@@ -52,7 +51,7 @@ function preallocate_v_vars(v::AbstractMatrix)
     # two less in y-direction
     dVdy = zeros(Numtype,nvx+2*halo,nvy+2*halo-2)
 
-
+    #TODO
     dpdy = zeros(v)
 
     U_v = zeros(v)
@@ -66,30 +65,25 @@ function preallocate_v_vars(v::AbstractMatrix)
     return
 end
 
-function preallocate_T_variables(η::AbstractMatrix)
+function preallocate_T_variables()
 
     # full halo
     dη = zeros(Numtype,nx+2,nvy+2)  # halo for η is always 1
     η0 = zeros(dη)
     η1 = zeros(dη)
+    p = zeros(dη)
+    h = zeros(dη)
 
     # one less in x and y-direction
     h_q = zeros(Numtype,nx+1,ny+1)
 
+    # one less in x direction
+    dpdx = zeros(Numtype,nx+1,ny+2)
 
+    # one less in y-direction
+    dpdy = zeros(Numtype,nx+2,ny+1)
 
-
-
-
-    dudx = zeros(η)
-    dvdy = zeros(η)
-    dUdx = zeros(η)
-    dVdy = zeros(η)
-    h = zeros(η)
-    KEu = zeros(η)
-    KEv = zeros(η)
-    p = zeros(η)
-
+    #TODO
     νSmag = zeros(η)
     dLudx = zeros(η)
     dLvdy = zeros(η)
@@ -97,18 +91,3 @@ function preallocate_T_variables(η::AbstractMatrix)
 
     return
 end
-
-# function preallocate_q_variables()
-#
-#     # initialise with zeros
-#     q = zeros(Numtype,nqx,nqy)
-#     h_q = zeros(Numtype,nqx,nqy)
-#     dvdx = zeros(Numtype,nqx,nqy)
-#     dudy = zeros(Numtype,nqx,nqy)
-#
-#     νSmag_q = zeros(Numtype,nqx,nqy)
-#     dLudy = zeros(Numtype,nqx,nqy)
-#     dLvdx = zeros(Numtype,nqx,nqy)
-#
-#     return q,h_q,dvdx,dudy,νSmag_q,dLudy,dLvdx
-# end
