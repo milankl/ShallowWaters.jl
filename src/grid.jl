@@ -72,6 +72,10 @@ const y_q = Array(1:ny+1)*Δ - Δ
 # halo of ghost points (because of the biharmonic operator) - don't change.
 const halo = 2      # halo for η,T is always 1
 
+# is there a point on the left edge?
+# used in some functions of rhs.jl to avoid an if
+const ep = if bc_x == "periodic" 1 else 0 end
+
 # halo versions with additional ghost points
 const x_T_halo = Array(0:nx+1)*Δ - Δ/2
 const y_T_halo = Array(0:ny+1)*Δ - Δ/2

@@ -9,12 +9,14 @@ function time_integration(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix
     u,v,η = add_halo(u,v,η)
 
     # PREALLOCATE
-    ... = preallocate_u_vars()
-    ... = preallocate_v_vars()
-    ... = preallocate_T_variables()
+    du,u0,u1,u²,U,KEu,dudx,dudy,dUdx,U_v,Lu = preallocate_u_vars()
+    dv,v0,v1,v²,V,KEv,dvdy,dvdx,dVdy,V_u,Lv = preallocate_v_vars()
+    dη,η0,η1,p,h,h_q,q,dpdx,h_u,dpdy,h_v,q_v,adv_v,q_u,adv_u = preallocate_T_variables()
 
     # propagate initial conditions
-    u0,v0,η0 .= u,v,η
+    u0 .= u
+    v0 .= v
+    η0 .= η
 
     RKa = Numtype.([1/6,1/3,1/3,1/6])
     RKb = Numtype.([.5,.5,1.])
@@ -28,7 +30,9 @@ function time_integration(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix
     for i = 1:nt
 
         ghost_points!(u,v,η)
-        u1,v1,η1 .= u,v,η
+        u1 .= u
+        v1 .= v
+        η1 .= η
 
         for rki = 1:4
             if rki > 1
@@ -40,8 +44,9 @@ function time_integration(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix
                 p,KEu,KEv,dUdx,dVdy,
                 h,h_u,h_v,h_q,U,V,U_v,V_u,
                 adv_u,adv_v,q,q_u,q_v,
-                Lu1,Lu2,Lv1,Lv2,dLudx,dLudy,dLvdx,dLvdy,
-                shear,νSmag,νSmag_q)
+                Lu,Lv)
+                #Lu1,Lu2,Lv1,Lv2,dLudx,dLudy,dLvdx,dLvdy,
+                #shear,νSmag,νSmag_q)
 
 
             if rki < 4
@@ -55,7 +60,9 @@ function time_integration(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix
             η0 .+= RKa[rki]*Δt*dη
         end
 
-        u,v,η .= u0,v0,η0
+        u .= u0
+        v .= v0
+        η .= η0
         t += dtint
 
         # feedback and output
