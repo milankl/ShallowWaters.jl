@@ -42,8 +42,6 @@ function preallocate_v_vars()
     # one less in x-direction
     dvdx = zeros(Numtype,nvx+2*halo-1,nvy+2*halo)
 
-
-
     # two less in both directions
     Lv = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-2)
 

@@ -87,6 +87,7 @@ const y_u_halo = Array(-1:ny+2)*Δ - Δ/2
 const x_v_halo = Array(-1:nx+2)*Δ - Δ/2
 const y_v_halo = Array(-1:ny+1)*Δ
 
+# also two halo for q
 const x_q_halo = if bc_x == "periodic" x_u_halo else Array(-1:nx+3)*Δ - Δ end
 const y_q_halo = Array(-1:ny+3)*Δ - Δ
 
