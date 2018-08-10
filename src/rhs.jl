@@ -88,11 +88,7 @@ function Bernoulli!(p,KEu,KEv,η)
 end
 
 function PV!(q,f_q,dvdx,dudy,h_q)
-    @inbounds for i ∈ 1:nqy
-        for j ∈ 1:nqx
-            q[j,i] = (f_q[j,i] + dvdx[j+1,i+1] - dudy[j+1+ep,i+1]) / h_q[j,i]
-        end
-    end
+    @views q .= (f_q .+ dvdx[2:end-1,2:end-1] .- dudy[2+ep:end-1,2:end-1]) ./ h_q
 end
 
 function PV_adv!(adv_u,adv_v,q_u,q_v,V_u,U_v)
@@ -110,19 +106,32 @@ end
 
 function continuity!(dη,dUdx,dVdy)
     # cut off the redundant halo and only copy the non-halo points into dη
-    @inbounds for i ∈ 2:ny+1
-        for j ∈ 2:nx+1
+    m,n = size(dη)
+
+    @inbounds for i ∈ 2:n-1
+        for j ∈ 2:m-1
             dη[j,i] = -(dUdx[j-1,i] + dVdy[j,i-1])
         end
     end
 end
 
-
 # function continuity_mat!(dη,dUdx,dVdy)
 #     # cut off the redundant halo and only copy the non-halo points into dη
-#     @views @inbounds dη[2:end-1,2:end-1] .= -(dUdx[:,2:end-1] .+ dVdy[2:end-1,:])
+#     @views dη[2:end-1,2:end-1] .= -(dUdx[:,2:end-1] .+ dVdy[2:end-1,:])
 # end
-
-# function PV_mat!(q,f_q,dvdx,dudy,h_q)
-#     @views q .= (f_q .+ dvdx[2:end-1,2:end-1] .- dudy[2+ep:end-1,2:end-1]) ./ h_q
+#
+#
+# function PV_loop!(q,f_q,dvdx,dudy,h_q)
+#     m,n = size(q)
+#     #
+#     # @boundscheck (m,n) == size(f_q) || throw(BoundsError())
+#     # @boundscheck (m,n) == size(h_q) || throw(BoundsError())
+#     # @boundscheck (m+2,n+2) == size(dvdx) || throw(BoundsError())
+#     # @boundscheck (m+2+ep,n+2) == size(dudy) || throw(BoundsError())
+#
+#     for i ∈ 1:nqy
+#         for j ∈ 1:nqx+1
+#             q[j,i] = (f_q[j,i] + dvdx[j+1,i+1] - dudy[j+1+ep,i+1]) / h_q[j,i]
+#         end
+#     end
 # end

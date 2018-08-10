@@ -5,7 +5,12 @@ const β = 2*ω/R*cosd(ϕ)     # Coriolis derivative wrt latitude [(ms)^-1]
 
 function beta_plane()
 
-    xx_q,yy_q = meshgrid(x_q,y_q)
+    if bc_x == "periodic"
+        # points on the right edge needed too
+        xx_q,yy_q = meshgrid(x_q_halo[3:end-1],y_q_halo[3:end-2])
+    else
+        xx_q,yy_q = meshgrid(x_q,y_q)
+    end
 
     # for non-dimensional gradient operators f contains the grid spacing Δ
     f_q = Numtype.(Δ*(f₀ + β*yy_q))

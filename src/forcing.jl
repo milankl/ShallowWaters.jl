@@ -33,3 +33,4 @@ end
 
 # change wind forcing here
 wind = channel_wind
+#wind = double_gyre_wind

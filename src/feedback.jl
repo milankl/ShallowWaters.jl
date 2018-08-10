@@ -95,8 +95,10 @@ function feedback(u::Array,v::Array,η::Array,i::Int,t::Real,nt::Int,nans_detect
             nans_detected = nan_detection(u,v,η)
             if nans_detected
                 println(" NaNs detected at time step $i")
-                write(progrtxt," NaNs detected at time step $i")
-                flush(progrtxt)
+                if output == 1
+                    write(progrtxt," NaNs detected at time step $i")
+                    flush(progrtxt)
+                end
             end
         end
     end
