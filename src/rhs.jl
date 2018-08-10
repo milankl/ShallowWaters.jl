@@ -1,6 +1,6 @@
 function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
              dudx,dvdy,dvdx,dudy,dpdx,dpdy,
-             p,KEu,KEv,dUdx,dVdy,
+             p,u²,v²,KEu,KEv,dUdx,dVdy,
              h,h_u,h_v,h_q,U,V,U_v,V_u,
              adv_u,adv_v,q,q_u,q_v,
              Lu,Lv)
@@ -71,7 +71,7 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
 
     # adding the terms
     momentum_u!(du,adv_u,dpdx,Lu,Fx)
-    momentum_v!(dv.adv_v,dpdy,Lv)
+    momentum_v!(dv,adv_v,dpdy,Lv)
     continuity!(dη,dUdx,dVdy)
 end
 
@@ -101,11 +101,11 @@ function PV_adv!(adv_u,adv_v,q_u,q_v,V_u,U_v)
 end
 
 function momentum_u!(du,adv_u,dpdx,Lu,Fx)
-    @views du[3:end-2,3:end-2] .= adv_u[1:end-ep,:] .- dpdx[:,2:end-1] .+ νA*Lu[2:end-1,2:end-1] .+ Fx
+    @views du[3:end-2,3:end-2] .= adv_u[2-ep:end-1,:] .- dpdx[2-ep:end-1,2:end-1] .+ νA*Lu[2:end-1,2:end-1] .+ Fx
 end
 
 function momentum_v!(dv,adv_v,dpdy,Lv)
-    @views dv[3:end-2,3:end-2] .= adv_v[:,2:end-1] .- dpdy[2:end-1,:] .+ νA*Lv[2:end-1,2:end-1]
+    @views dv[3:end-2,3:end-2] .= adv_v[:,2:end-1] .- dpdy[2:end-1,2:end-1] .+ νA*Lv[2:end-1,2:end-1]
 end
 
 function continuity!(dη,dUdx,dVdy)
