@@ -44,56 +44,66 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
     Ixy!(U_v,U)
     PV_adv!(adv_u,adv_v,q_u,q_v,V_u,U_v)
 
-    #= Smagorinsky-like biharmonic diffusion
-    Lu1 + Lu2 = dx[ νSmag dx(L(u))] + dy[ νSmag dy(L(u))]
-    Lv1 + Lv2 = dx[ νSmag dx(L(v))] + dy[ νSmag dy(L(v))]
-    =#
-    # @views νSmag_q .= (dudy .+ dvdx).^2     # reuse variable νSmag_q
-    # IqT!(shear,νSmag_q)
-    # @views νSmag .= cSmag*sqrt.((dudx .- dvdy).^2 .+ shear)
-    # ITq!(νSmag_q,νSmag)
-    # ∇²u!(Lu1,u)
-    # ∇²v!(Lv1,v)
-    # Gux!(dLudx,Lu1)
-    # Guy!(dLudy,Lu1)
-    # Gvx!(dLvdx,Lv1)
-    # Gvy!(dLvdy,Lv1)
-    # @views dLudx .= νSmag.*dLudx
-    # @views dLudy .= νSmag_q.*dLudy
-    # @views dLvdy .= νSmag.*dLvdy
-    # @views dLvdx .= νSmag_q.*dLvdx
-    # GTx!(Lu1,dLudx)        # reuse intermediate variable Lu1
-    # Gqy!(Lu2,dLudy)
-    # GTy!(Lv1,dLvdy)
-    # Gqx!(Lv2,dLvdx)
+    # Smagorinsky-like biharmonic diffusion
+    Smag_coefficient!(νSmag,νSmag_q,dudx,dvdy,dudy,dvdx)
     ∇²!(Lu,u)
     ∇²!(Lv,v)
+    ∂x!(dLudx,Lu)
+    ∂y!(dLudy,Lu)
+    ∂x!(dLvdx,Lv)
+    ∂y!(dLvdy,Lv)
+    @views dLudx .= νSmag.*dLudx
+    @views dLudy .= νSmag_q.*dLudy
+    @views dLvdy .= νSmag.*dLvdy
+    @views dLvdx .= νSmag_q.*dLvdx
+
+    GTx!(LLu1,dLudx)        # reuse intermediate variable Lu1
+    Gqy!(LLu2,dLudy)
+    GTy!(LLv1,dLvdy)
+    Gqx!(LLv2,dLvdx)
 
     # adding the terms
-    momentum_u!(du,adv_u,dpdx,Lu,Fx)
-    momentum_v!(dv,adv_v,dpdy,Lv)
+    momentum_u!(du,adv_u,dpdx,LLu1,LLu2,Fx)
+    momentum_v!(dv,adv_v,dpdy,LLv1,LLv2)
     continuity!(dη,dUdx,dVdy)
 end
 
 function Uflux!(U,u,h_u)
+    # U = uh
     @views U .= u[2+ep:end-1,2:end-1].*h_u
 end
 
 function Vflux!(V,v,h_v)
+    # V = vh
     @views V .= v[2:end-1,2:end-1].*h_v
 end
 
 function Bernoulli!(p,KEu,KEv,η)
-     @views p .= one_half*(KEu[1+ep:end,2:end-1] .+ KEv[2:end-1,:]) .+ g*η
+    # p = 1/2*(u^2 + v^2) + gη
+    @views p .= one_half*(KEu[1+ep:end,2:end-1] .+ KEv[2:end-1,:]) .+ g*η
 end
 
 function PV!(q,f_q,dvdx,dudy,h_q)
+    # q = (f + dvdx - dudy)/h
     @views q .= (f_q .+ dvdx[2:end-1,2:end-1] .- dudy[2+ep:end-1,2:end-1]) ./ h_q
 end
 
 function PV_adv!(adv_u,adv_v,q_u,q_v,V_u,U_v)
+    # qhv,-qhu
     @views adv_u .= q_u.*V_u
     @views adv_v .= -q_v.*U_v
+end
+
+function Smag_coefficient!(νSmag,νSmag_q,dudx,dvdy,dudy,dvdx)
+    #=
+    Lu1 + Lu2 = dx[ νSmag dx(L(u))] + dy[ νSmag dy(L(u))]
+    Lv1 + Lv2 = dx[ νSmag dx(L(v))] + dy[ νSmag dy(L(v))]
+    =#
+    #TODO
+    @views νSmag_q .= (dudy .+ dvdx).^2     # reuse variable νSmag_q
+    IqT!(shear,νSmag_q)
+    @views νSmag .= cSmag*sqrt.((dudx .- dvdy).^2 .+ shear)
+    ITq!(νSmag_q,νSmag)
 end
 
 function momentum_u!(du,adv_u,dpdx,Lu,Fx)
@@ -114,6 +124,9 @@ function continuity!(dη,dUdx,dVdy)
         end
     end
 end
+
+
+
 
 # function continuity_mat!(dη,dUdx,dVdy)
 #     # cut off the redundant halo and only copy the non-halo points into dη
