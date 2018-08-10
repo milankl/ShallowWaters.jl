@@ -9,9 +9,9 @@ function time_integration(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix
     u,v,η = add_halo(u,v,η)
 
     # PREALLOCATE
-    du,u0,u1,u²,U,KEu,dudx,dudy,dUdx,U_v,Lu = preallocate_u_vars()
-    dv,v0,v1,v²,V,KEv,dvdy,dvdx,dVdy,V_u,Lv = preallocate_v_vars()
-    dη,η0,η1,p,h,h_q,q,dpdx,h_u,dpdy,h_v,q_v,adv_v,q_u,adv_u = preallocate_T_variables()
+    du,u0,u1,u²,KEu,dudx,dudy,Lu = preallocate_u_vars()
+    dv,v0,v1,v²,KEv,dvdy,dvdx,Lv = preallocate_v_vars()
+    dη,η0,η1,p,h,h_q,q,dpdx,h_u,U,dpdy,h_v,V,dUdx,dVdy,q_v,adv_v,U_v,q_u,adv_u,V_u = preallocate_T_variables()
 
     # propagate initial conditions
     u0 .= u
@@ -41,7 +41,7 @@ function time_integration(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix
 
             rhs!(du,dv,dη,u1,v1,η1,Fx,f_q,H,
                 dudx,dvdy,dvdx,dudy,dpdx,dpdy,
-                p,KEu,KEv,dUdx,dVdy,
+                p,u²,v²,KEu,KEv,dUdx,dVdy,
                 h,h_u,h_v,h_q,U,V,U_v,V_u,
                 adv_u,adv_v,q,q_u,q_v,
                 Lu,Lv)

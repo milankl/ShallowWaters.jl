@@ -77,8 +77,10 @@ end
 function feedback_end(progrtxt,t::Real)
     s = " Integration done in "*readable_secs(time()-t)*"."
     println(s)
-    write(progrtxt,"\n"*s[2:end]*"\n")  # close txt file with last output
-    flush(progrtxt)
+    if output == 1
+        write(progrtxt,"\n"*s[2:end]*"\n")  # close txt file with last output
+        flush(progrtxt)
+    end
 end
 
 function feedback(u::Array,v::Array,η::Array,i::Int,t::Real,nt::Int,nans_detected::Bool,progrtxt)

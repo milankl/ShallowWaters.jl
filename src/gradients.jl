@@ -21,7 +21,7 @@ function ∂y!(dudy::AbstractMatrix,u::AbstractMatrix)
 
     @inbounds for i ∈ 1:n
         for j ∈ 1:m
-            dudx[j,i] = u[j,i+1] - u[j,i]
+            dudy[j,i] = u[j,i+1] - u[j,i]
         end
     end
 end

@@ -2,8 +2,8 @@ function seamount()
     # A gaussian seamount
     xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
 
-    σx = 200e3
-    σy = 200e3
+    σx = 200e3  # extent in x [m]
+    σy = 200e3  # extent in y [m]
 
     bumpx = exp.(-((xx_T - Lx/2).^2)/(2*σx^2))
     bumpy = exp.(-((yy_T - Ly/2).^2)/(2*σy^2))
@@ -16,8 +16,7 @@ function ridge()
     # A gaussian ridge
     xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
 
-    σx = 200e3
-    σy = 200e3
+    σx = 200e3  # extent in x [m]
 
     bumpx = exp.(-((xx_T - Lx/2).^2)/(2*σx^2))
 

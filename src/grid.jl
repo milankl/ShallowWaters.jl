@@ -60,7 +60,7 @@ const nq = nqx*nqy
 const x_T = Array(1:nx)*Δ - Δ/2
 const y_T = Array(1:ny)*Δ - Δ/2
 
-const x_u = if (bc_x == "periodic") Array(0:nx-1)*Δ else const x_u = Array(1:nx-1)*Δ end
+const x_u = if (bc_x == "periodic") Array(0:nx-1)*Δ else Array(1:nx-1)*Δ end
 const y_u = y_T
 
 const x_v = x_T
@@ -70,7 +70,8 @@ const x_q = if bc_x == "periodic" x_u else Array(1:nx+1)*Δ - Δ end
 const y_q = Array(1:ny+1)*Δ - Δ
 
 # halo of ghost points (because of the biharmonic operator) - don't change.
-const halo = 2      # halo for η,T is always 1
+const halo = 2
+const haloη = 1
 
 # is there a point on the left edge?
 # used in some functions of rhs.jl to avoid an if
@@ -80,7 +81,7 @@ const ep = if bc_x == "periodic" 1 else 0 end
 const x_T_halo = Array(0:nx+1)*Δ - Δ/2
 const y_T_halo = Array(0:ny+1)*Δ - Δ/2
 
-const x_u_halo = if (bc_x == "periodic") Array(-2:nx+1)*Δ else const x_u = Array(-1:nx+1)*Δ end
+const x_u_halo = if (bc_x == "periodic") Array(-2:nx+1)*Δ else Array(-1:nx+1)*Δ end
 const y_u_halo = Array(-1:ny+2)*Δ - Δ/2
 
 const x_v_halo = Array(-1:nx+2)*Δ - Δ/2
