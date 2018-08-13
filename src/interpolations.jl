@@ -39,13 +39,3 @@ function Ixy!(uxy::AbstractMatrix,u::AbstractMatrix)
         end
     end
 end
-
-# function Ixy_mat!(uxy::AbstractMatrix,u::AbstractMatrix)
-#     #= Interpolates a variable u from any grid (u,v,T,q) to a variable uxy in x and y-direction.
-#     m,n = size(uxy) must be m+1,n+1 = size(u). =#
-#
-#     m, n = size(uxy)
-#     @boundscheck (m+1,n+1) == size(u) || throw(BoundsError())
-#
-#     @inbounds @views uxy .= one_quarter*(u[1:end-1,1:end-1] .+ u[1:end-1,2:end] .+ u[2:end,1:end-1] .+ u[2:end,2:end])
-# end
