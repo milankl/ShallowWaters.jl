@@ -12,11 +12,11 @@ const seamount_height = 50.     # height of seamount
 const ρ = 1e3                   # density
 
 const cfl = 0.9                 # CFL number
-const Ndays = 200                # number of days to integrate for
+const Ndays = 100                # number of days to integrate for
 
 # boundary condtions
 const bc_x = "periodic"         # "periodic" or anything else for nonperiodic
-const lbc = 0.                  # lateral boundary condition parameter
+const lbc = 2.                  # lateral boundary condition parameter
                                 # 0 free-slip, 0<lbc<2 partial-slip, 2 no-slip
 
 const c_D = 1e-5                # bottom drag coefficient (not used yet)

@@ -16,15 +16,7 @@ function preallocate_u_vars()
     # two less in x-direction one less in y-direction
     U_v = zeros(Numtype,nux+2*halo-2,nuy+2*halo-1)
 
-    # two less in both directions
-    Lu = zeros(Numtype,nux+2*halo-2,nuy+2*halo-2)
-
-
-    #TODO
-    #Lu1 = zeros(u)
-    #Lu2 = zeros(u)
-
-    return du,u0,u1,u²,KEu,dudx,dudy,Lu
+    return du,u0,u1,u²,KEu,dudx,dudy
 end
 
 function preallocate_v_vars()
@@ -42,14 +34,7 @@ function preallocate_v_vars()
     # one less in x-direction
     dvdx = zeros(Numtype,nvx+2*halo-1,nvy+2*halo)
 
-    # two less in both directions
-    Lv = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-2)
-
-    #TODO
-    #Lv1 = zeros(v)
-    #Lv2 = zeros(v)
-
-    return dv,v0,v1,v²,KEv,dvdy,dvdx,Lv
+    return dv,v0,v1,v²,KEv,dvdy,dvdx
 end
 
 function preallocate_T_variables()
@@ -61,7 +46,7 @@ function preallocate_T_variables()
     p = zeros(dη)
     h = zeros(dη)
 
-    # one less in x and y-direction
+    # one less in both directions
     h_q = zeros(Numtype,nx+1,ny+1)
     q = zeros(h_q)
 
@@ -83,19 +68,63 @@ function preallocate_T_variables()
 
     # two less in x direction, one less in y
     q_v = zeros(Numtype,nx,ny+1)
-    adv_v = zeros(q_v)
+    qhu = zeros(q_v)
     U_v = zeros(q_v)
 
     # two less in y direction, one less in x
     q_u = zeros(Numtype,nx+1,ny)
-    adv_u = zeros(q_u)
+    qhv = zeros(q_u)
     V_u = zeros(q_u)
 
-    #TODO
-    #νSmag = zeros(η)
-    #dLudx = zeros(η)
-    #dLvdy = zeros(η)
-    #shear = zeros(η)
+    return dη,η0,η1,p,h,h_q,q,dpdx,h_u,U,dpdy,h_v,V,dUdx,dVdy,q_v,qhu,U_v,q_u,qhv,V_u
+end
 
-    return dη,η0,η1,p,h,h_q,q,dpdx,h_u,U,dpdy,h_v,V,dUdx,dVdy,q_v,adv_v,U_v,q_u,adv_u,V_u
+function preallocate_Sadourny()
+    #TODO
+end
+
+function preallocate_Smagorinsky()
+    # on the T-grid including halo
+    DT = zeros(Numtype,nx+2,ny+2)
+    DS = zeros(DT)
+    νSmag = zeros(DT)
+
+    # DS_q has same size as dvdx
+    DS_q = zeros(Numtype,nvx+2*halo-1,nvy+2*halo)
+
+    # one less in both directions, the q-grid
+    νSmag_q = zeros(Numtype,nx+1,ny+1)
+    S12 = zeros(νSmag_q)
+    S21 = zeros(νSmag_q)
+
+    # Laplace operator: two less in both directions
+    Lu = zeros(Numtype,nux+2*halo-2,nuy+2*halo-2)
+    Lv = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-2)
+
+    # 3 less in x, two less in y
+    dLudx = zeros(Numtype,nux+2*halo-3,nuy+2*halo-2)
+    S11 = zeros(dLudx)
+
+    # 4 less in x, two less in y
+    LLu1 = zeros(Numtype,nux+2*halo-4,nuy+2*halo-2)
+
+    # 2 less in x, 3 less in y
+    dLudy = zeros(Numtype,nux+2*halo-2,nuy+2*halo-3)
+
+    LLu2 = zeros(Numtype,nx+1,ny)
+
+    # three less in x, two less in y
+    dLvdx = zeros(Numtype,nvx+2*halo-3,nvy+2*halo-2)
+
+    # 4 less in x, two less in y
+    LLv1 = zeros(Numtype,nx,ny+1)
+
+    # two less in x, three less in y
+    dLvdy = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-3)
+    S22 = zeros(dLvdy)
+
+    # 2 less in x, 4 less in y
+    LLv2 = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-4)
+
+    return DT,DS,DS_q,νSmag,νSmag_q,Lu,Lv,dLudx,dLudy,dLvdx,dLvdy,S11,S12,S21,S22,LLu1,LLu2,LLv1,LLv2
 end
