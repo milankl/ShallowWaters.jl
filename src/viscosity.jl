@@ -1,7 +1,15 @@
-# the dx^2 factor is removed from the Laplace operators
-# ν can be used for harmonic as well as for biharmonic
-#const ν = Numtype(540*128/nx/Δ^2)
+#= Smagorinsky-like biharmonic viscosity
 
-# Smagorinsky-like biharmonic diffusion
+    Viscosity = ∇ ⋅ (cSmag Δ⁴ |D| ∇∇² ⃗u)
+
+The Δ⁴-scaling is omitted as gradient operators are dimensionless. =#
+
 const cSmag = Numtype(-c_smag)
-const νA = 1000.0/Δ^2
+
+#= Constant viscosity coefficient that can be used for harmonic or biharmonic
+diffusion operators
+
+    Viscosity = ν∇² ⃗u      or  = ν∇⁴ ⃗u
+=#
+
+# const ν = Numtype(540*128/nx/Δ^2)

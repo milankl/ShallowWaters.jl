@@ -1,5 +1,9 @@
 function output_ini(u,v,η)
+    # initialises netcdf files for data output
+
     if output == 1
+
+        # Dimensions
         xudim = NcDim("x",nux,values=x_u)
         yudim = NcDim("y",nuy,values=y_u)
         xvdim = NcDim("x",nvx,values=x_v)
@@ -8,9 +12,12 @@ function output_ini(u,v,η)
         yTdim = NcDim("y",ny,values=y_T)
         tdim = NcDim("t",0,unlimited=true)
 
+        # Variables
         uvar = NcVar("u",[xudim,yudim,tdim],t=Float32)
         vvar = NcVar("v",[xvdim,yvdim,tdim],t=Float32)
         ηvar = NcVar("eta",[xTdim,yTdim,tdim],t=Float32)
+
+        # current bug in NetCDF package - tvar has to be defined for every variable separately
         tvaru = NcVar("t",tdim,t=Int64)
         tvarv = NcVar("t",tdim,t=Int64)
         tvarη = NcVar("t",tdim,t=Int64)
@@ -37,21 +44,13 @@ function output_ini(u,v,η)
         Dictu["Numtype"] = string(Numtype)
         Dictu["output_dt"] = nout*dtint
 
-        NetCDF.putatt(ncu,"global",Dictu)
-        NetCDF.putatt(ncv,"global",Dictu)
-        NetCDF.putatt(ncη,"global",Dictu)
-
-        NetCDF.putatt(ncu,"t",Dict("units"=>"s","long_name"=>"time"))
-        NetCDF.putatt(ncv,"t",Dict("units"=>"s","long_name"=>"time"))
-        NetCDF.putatt(ncη,"t",Dict("units"=>"s","long_name"=>"time"))
-
-        NetCDF.putatt(ncu,"x",Dict("units"=>"m","long_name"=>"zonal coordinate"))
-        NetCDF.putatt(ncv,"x",Dict("units"=>"m","long_name"=>"zonal coordinate"))
-        NetCDF.putatt(ncη,"x",Dict("units"=>"m","long_name"=>"zonal coordinate"))
-
-        NetCDF.putatt(ncu,"y",Dict("units"=>"m","long_name"=>"meridional coordinate"))
-        NetCDF.putatt(ncv,"y",Dict("units"=>"m","long_name"=>"meridional coordinate"))
-        NetCDF.putatt(ncη,"y",Dict("units"=>"m","long_name"=>"meridional coordinate"))
+        # Write attributes and units
+        for nc in (ncu,ncv,ncη)
+            NetCDF.putatt(nc,"global",Dictu)
+            NetCDF.putatt(nc,"t",Dict("units"=>"s","long_name"=>"time"))
+            NetCDF.putatt(nc,"x",Dict("units"=>"m","long_name"=>"zonal coordinate"))
+            NetCDF.putatt(nc,"y",Dict("units"=>"m","long_name"=>"meridional coordinate"))
+        end
 
         NetCDF.putatt(ncu,"u",Dict("units"=>"m/s","long_name"=>"zonal velocity"))
         NetCDF.putatt(ncv,"v",Dict("units"=>"m/s","long_name"=>"meridional velocity"))
@@ -72,16 +71,18 @@ function output_ini(u,v,η)
 end
 
 function output_nc(ncs,u,v,η,i,iout)
+    # write data output to netcdf
+
     if i % nout == 0 && output == 1     # output only every nout time steps
 
-        # cut off the halo (always 1 for η)
+        # cut off the halo
         NetCDF.putvar(ncs[1],"u",Float32.(u[halo+1:end-halo,halo+1:end-halo]),start=[1,1,iout],count=[-1,-1,1])
         NetCDF.putvar(ncs[2],"v",Float32.(v[halo+1:end-halo,halo+1:end-halo]),start=[1,1,iout],count=[-1,-1,1])
-        NetCDF.putvar(ncs[3],"eta",Float32.(η[2:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        NetCDF.putvar(ncs[3],"eta",Float32.(η[haloη+1:end-haloη,haloη+1:end-haloη]),start=[1,1,iout],count=[-1,-1,1])
 
         for nc in ncs
                 NetCDF.putvar(nc,"t",Int64[i*dtint],start=[iout])
-                NetCDF.sync(nc)
+                NetCDF.sync(nc)     # sync to view netcdf while model is still running
         end
 
         iout += 1
@@ -91,6 +92,7 @@ function output_nc(ncs,u,v,η,i,iout)
 end
 
 function output_close(ncs,progrtxt)
+    # finalise netcdf files
     if output == 1
         for nc in ncs
             NetCDF.close(nc)
@@ -102,6 +104,8 @@ function output_close(ncs,progrtxt)
 end
 
 function get_run_id_path()
+    # check output folders to determine a 4-digit run id number
+
     if output == 1
         runlist = filter(x->startswith(x,"run"),readdir(outpath))
         existing_runs = [parse(Int,id[4:end]) for id in runlist]
@@ -109,7 +113,7 @@ function get_run_id_path()
             runpath = outpath*"run0000/"
             mkdir(runpath)
             return 0,runpath
-        else
+        else                                    # create next folder
             run_id = maximum(existing_runs)+1
             runpath = outpath*"run"*@sprintf("%04d",run_id)*"/"
             mkdir(runpath)
@@ -120,9 +124,9 @@ function get_run_id_path()
     end
 end
 
-const run_id,runpath = get_run_id_path()
-
 function scripts_output()
+    # archives all .jl files of juls in the output folder to make runs reproducible
+    
     if output == 1
         # copy all files in juls main folder
         mkdir(runpath*"scripts")
@@ -137,3 +141,6 @@ function scripts_output()
         end
     end
 end
+
+# get the run id number and create folders
+const run_id,runpath = get_run_id_path()

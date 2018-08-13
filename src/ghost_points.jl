@@ -1,4 +1,5 @@
 function add_halo(u,v,η)
+    # extends the matrices u,v,η with a halo of ghost points
 
     u = cat(1,zeros(Numtype,halo,nuy),u,zeros(Numtype,halo,nuy))
     u = cat(2,zeros(Numtype,nux+2*halo,halo),u,zeros(Numtype,nux+2*halo,halo))
@@ -18,11 +19,12 @@ function ghost_points_u_nonperiodic!(u)
 
     # kinematic boundary condition
     # these values shouldn't change during a time step
-    # u[1,:] = 0.
-    # u[2,:] = 0.
-    # u[end-1,:] = 0.
-    # u[end,:] = 0.
+    # u[1,:] = zeero
+    # u[2,:] = zeero
+    # u[end-1,:] = zeero
+    # u[end,:] = zeero
 
+    # tangential boundary condition
     @views @inbounds u[:,1] .= one_minus_α*u[:,4]
     @views @inbounds u[:,2] .= one_minus_α*u[:,3]
     @views @inbounds u[:,end-1] .= one_minus_α*u[:,end-2]
@@ -48,11 +50,12 @@ function ghost_points_v_nonperiodic!(v)
 
     # kinematic boundary condition
     # these values shouldn't change during a time step
-    v[:,1] .= zeero
-    v[:,2] .= zeero
-    v[:,end-1] .= zeero
-    v[:,end] .= zeero
+    # v[:,1] .= zeero
+    # v[:,2] .= zeero
+    # v[:,end-1] .= zeero
+    # v[:,end] .= zeero
 
+    # tangential boundary condition
     @views @inbounds v[1,:] .= one_minus_α*v[4,:]
     @views @inbounds v[2,:] .= one_minus_α*v[3,:]
     @views @inbounds v[end-1,:] .= one_minus_α*v[end-2,:]
@@ -63,11 +66,12 @@ function ghost_points_v_periodic!(v)
 
     # kinematic boundary condition
     # these values shouldn't change during a time step
-    v[:,1] .= 0.
-    v[:,2] .= 0.
-    v[:,end-1] .= 0.
-    v[:,end] .= 0.
+    # v[:,1] .= zeero
+    # v[:,2] .= zeero
+    # v[:,end-1] .= zeero
+    # v[:,end] .= zeero
 
+    # tangential boundary condition
     @views @inbounds v[1,:] .= v[end-3,:]
     @views @inbounds v[2,:] .= v[end-2,:]
     @views @inbounds v[end-1,:] .= v[3,:]
@@ -76,7 +80,8 @@ end
 
 function ghost_points_η_nonperiodic!(η)
 
-    # corner points are copied twice, but it's faster!
+    # assume no gradients of η across solid boundaries
+    # the 4 corner points are copied twice, but it's faster!
     @views @inbounds η[1,:] .= η[2,:]
     @views @inbounds η[end,:] .= η[end-1,:]
 
@@ -94,7 +99,7 @@ function ghost_points_η_periodic!(η)
     @views @inbounds η[:,end] .= η[:,end-1]
 end
 
-## GATHER AND RENAME FUNCTIONS FOR CONVENIENCE
+# gather and rename functions for convenience
 
 function ghost_points_periodic!(u,v,η)
 
@@ -112,7 +117,7 @@ function ghost_points_nonperiodic!(u,v,η)
 
 end
 
-# pick the right set of functions depending on boundary conditions and halo size
+# pick the right set of functions depending on boundary conditions
 
 if bc_x == "periodic"
     ghost_points! = ghost_points_periodic!

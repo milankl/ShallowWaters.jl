@@ -1,4 +1,4 @@
-function time_integration(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix)
+function time_integration(u,v,η)
 
     # FORCING
     Fx = wind()
@@ -19,6 +19,7 @@ function time_integration(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix
     v0 .= v
     η0 .= η
 
+    # Runge-Kutta 4th order coefficients
     RKa = Numtype.([1/6,1/3,1/3,1/6])
     RKb = Numtype.([.5,.5,1.])
 
@@ -30,11 +31,13 @@ function time_integration(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix
     t = 0           # model time
     for i = 1:nt
 
+        # ghost point copy for boundary conditions
         ghost_points!(u,v,η)
         u1 .= u
         v1 .= v
         η1 .= η
 
+        # Runge-Kutta 4th order
         for rki = 1:4
             if rki > 1
                 ghost_points!(u1,v1,η1)
@@ -46,7 +49,8 @@ function time_integration(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix
                 h,h_u,h_v,h_q,U,V,U_v,V_u,
                 qhv,qhu,q,q_u,q_v,
                 DS,DS_q,DT,νSmag,νSmag_q,
-                Lu,Lv,dLudx,dLudy,dLvdx,dLvdy,S11,S12,S21,S22,
+                Lu,Lv,dLudx,dLudy,dLvdx,dLvdy,
+                S11,S12,S21,S22,
                 LLu1,LLu2,LLv1,LLv2)
 
 
@@ -56,6 +60,7 @@ function time_integration(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix
                 η1 .= η .+ RKb[rki]*Δt*dη
             end
 
+            # sum RK-substeps on the go
             u0 .+= RKa[rki]*Δt*du
             v0 .+= RKa[rki]*Δt*dv
             η0 .+= RKa[rki]*Δt*dη
@@ -71,7 +76,7 @@ function time_integration(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix
         ncs,iout = output_nc(ncs,u,v,η,i,iout)
     end
 
-    # feeback and output
+    # finalise feeback and output
     feedback_end(progrtxt,t0)
     output_close(ncs,progrtxt)
 
