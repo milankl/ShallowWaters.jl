@@ -1,6 +1,6 @@
 function ∇²!(du::AbstractMatrix,u::AbstractMatrix)
-    #= ∇² is the Laplace-operator d/dx^2 + d/dy^2.
-    The 1/dx^2 factor is omitted and moved into the viscosity coefficient. =#
+    #= ∇² is the Laplace-operator ∂/∂x^2 + ∂/∂y^2.
+    The 1/Δ²-factor is omitted and moved into the viscosity coefficient. =#
 
     m, n = size(du)
     @boundscheck (m+2,n+2) == size(u) || throw(BoundsError())
@@ -11,13 +11,3 @@ function ∇²!(du::AbstractMatrix,u::AbstractMatrix)
         end
     end
 end
-
-# function ∇²_mat!(du::AbstractMatrix,u::AbstractMatrix)
-#     #= ∇² is the Laplace-operator d/dx^2 + d/dy^2.
-#     The 1/dx^2 factor is omitted and moved into the viscosity coefficient. =#
-#
-#     m, n = size(du)
-#     @boundscheck (m+2,n+2) == size(u) || throw(BoundsError())
-#
-#     @views @inbounds du .= minus_4*u[2:end-1,2:end-1] .+ u[3:end,2:end-1] .+ u[2:end-1,3:end] .+ u[1:end-2,2:end-1] .+ u[2:end-1,1:end-2]
-# end

@@ -1,4 +1,5 @@
 function initial_conditions()
+    # initialise the state matrices u,v,η and set their initial conditions
 
     if initial_cond == "rest"
         u = zeros(Numtype,nux,nuy)
@@ -8,6 +9,7 @@ function initial_conditions()
     elseif initial_cond == "ncfile"
         inipath = outpath*"run"*@sprintf("%04d",init_run_id)*"/"
 
+        # take last time step from existing netcdf files
         ncu = NetCDF.open(inipath*"u.nc")
         u = ncu.vars["u"][:,:,end]
         NetCDF.close(ncu)

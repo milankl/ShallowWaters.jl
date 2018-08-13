@@ -34,9 +34,9 @@ function timestep()
 
     # the model timestep dt based on cfl stability criterion to resolve gravity waves
     # converting to integer, i.e. rounding up (ceil)
-    dtint = Int(floor(cfl*Δ/c_phase))  # make the timestep slightly shorter due to floor
-    nt = Int(ceil(Ndays*3600*24/dtint)) # number of time steps to integrate
-    dt = Numtype(dtint)                 # convert to Numtype for multiplication of the RHS
+    dtint = Int(floor(cfl*Δ/c_phase))      # make the timestep slightly shorter due to floor
+    nt = Int(ceil(Ndays*3600*24/dtint))    # number of time steps to integrate
+    dt = Numtype(dtint)                    # convert to Numtype for multiplication of the RHS
     Δt = Numtype(dtint/Δ)                  # timestep combined with grid spacing Δ
     return dt,Δt,dtint,nt
 end
@@ -73,7 +73,7 @@ const y_q = Array(1:ny+1)*Δ - Δ
 const halo = 2
 const haloη = 1
 
-# is there a point on the left edge?
+# is there a point on the left edge? ep - egde points
 # used in some functions of rhs.jl to avoid an if
 const ep = if bc_x == "periodic" 1 else 0 end
 

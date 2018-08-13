@@ -31,3 +31,5 @@ end
 
 # set the desired topography here
 topography = ridge
+# topography = seamount
+# topography = flat_bottom

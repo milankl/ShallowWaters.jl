@@ -17,7 +17,7 @@ function readable_secs(secs::Real)
     end
 end
 
-function duration_estimate(i::Int,t::Real,nt::Int,progrtxt)
+function duration_estimate(i,t,nt,progrtxt)
     #= Estimates the total time the model integration will take.=#
     time_per_step = (time()-t) / (i-10)
     time_total = Int(round(time_per_step*nt))
@@ -35,8 +35,11 @@ function duration_estimate(i::Int,t::Real,nt::Int,progrtxt)
     end
 end
 
-function nan_detection(u::Array,v::Array,η::Array)
-    # TODO include a check for Posit, Integers?
+function nan_detection(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix)
+    #= Returns a boolean  input matrices u,v,η contains a NaN.
+    E
+    TODO include a check for Posits
+    =#
     n_nan = sum(isnan.(u)) + sum(isnan.(v)) + sum(isnan.(η))
     if n_nan > 0
         return true
@@ -46,11 +49,13 @@ function nan_detection(u::Array,v::Array,η::Array)
 end
 
 function progress_txt_ini()
+    # initialises a txt file for progress feedback
     progrtxt = open(runpath*"progress.txt","w")
     return progrtxt
 end
 
 function feedback_ini()
+    # initialising the progress txt file in case of output
     if output == 1
         progrtxt = progress_txt_ini()
         s = "Starting juls run $run_id on "*Dates.format(now(),Dates.RFC1123Format)
@@ -75,6 +80,7 @@ function feedback_ini()
 end
 
 function feedback_end(progrtxt,t::Real)
+    # finalise the progress txt file.
     s = " Integration done in "*readable_secs(time()-t)*"."
     println(s)
     if output == 1
@@ -83,7 +89,9 @@ function feedback_end(progrtxt,t::Real)
     end
 end
 
-function feedback(u::Array,v::Array,η::Array,i::Int,t::Real,nt::Int,nans_detected::Bool,progrtxt)
+function feedback(u,v,η,i,t,nt,nans_detected,progrtxt)
+
+
     if i == 10
         t = time()    # measure time after 10 loops to avoid overhead
     elseif i == 100
@@ -110,7 +118,8 @@ function feedback(u::Array,v::Array,η::Array,i::Int,t::Real,nt::Int,nans_detect
     return t,nans_detected
 end
 
-function progress(i::Int,nt::Int,progrtxt)
+function progress(i,nt,progrtxt)
+    # progress feedback in percent
     if ((i+1)/nt*100 % 1) < (i/nt*100 % 1)  # update every 1 percent steps.
         percent = Int(round((i+1)/nt*100))
         print("\r\u1b[K")
