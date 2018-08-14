@@ -4,19 +4,12 @@ function preallocate_u_vars()
     du = zeros(Numtype,nux+2*halo,nuy+2*halo)
     u0 = zeros(du)
     u1 = zeros(du)
-    u² = zeros(du)
 
-    # one less in x-direction
-    KEu = zeros(Numtype,nux+2*halo-1,nuy+2*halo)
-    dudx = zeros(KEu)
-
-    # one less in y-direction
+    # derivative: one less in x or y direction
+    dudx = zeros(Numtype,nux+2*halo-1,nuy+2*halo)
     dudy = zeros(Numtype,nux+2*halo,nuy+2*halo-1)
 
-    # two less in x-direction one less in y-direction
-    U_v = zeros(Numtype,nux+2*halo-2,nuy+2*halo-1)
-
-    return du,u0,u1,u²,KEu,dudx,dudy
+    return du,u0,u1,dudx,dudy
 end
 
 function preallocate_v_vars()
@@ -25,67 +18,78 @@ function preallocate_v_vars()
     dv = zeros(Numtype,nvx+2*halo,nvy+2*halo)
     v0 = zeros(dv)
     v1 = zeros(dv)
-    v² = zeros(dv)
 
-    # one less in y-direction
-    KEv = zeros(Numtype,nvx+2*halo,nvy+2*halo-1)
-    dvdy = zeros(KEv)
-
-    # one less in x-direction
+    # derivative: one less in x or y direction
     dvdx = zeros(Numtype,nvx+2*halo-1,nvy+2*halo)
+    dvdy = zeros(Numtype,nvx+2*halo,nvy+2*halo-1)
 
-    return dv,v0,v1,v²,KEv,dvdy,dvdx
+    return dv,v0,v1,dvdx,dvdy
 end
 
-function preallocate_T_variables()
+function preallocate_η_vars()
 
-    # full halo
-    dη = zeros(Numtype,nx+2,ny+2)  # halo for η is always 1
+    dη = zeros(Numtype,nx+2*haloη,ny+2*haloη)
     η0 = zeros(dη)
     η1 = zeros(dη)
-    p = zeros(dη)
     h = zeros(dη)
 
-    # one less in both directions
-    h_q = zeros(Numtype,nx+1,ny+1)
+    return dη,η0,η1,h
+end
+
+function preallocate_continuity()
+
+    # interpolation: one less in x-direction
+    h_u = zeros(Numtype,nx+2*haloη-1,ny+2*haloη)
+    U = zeros(h_u)
+
+    # interpolation: one less in y-direction
+    h_v = zeros(Numtype,nx+2*haloη,ny+2*haloη-1)
+    V = zeros(h_v)
+
+    # Derivatives: two less in x- or y-direction
+    dUdx = zeros(Numtype,nx+2*haloη-2,ny+2*haloη)
+    dVdy = zeros(Numtype,nx+2*haloη,ny+2*haloη-2)
+
+    return h_u,U,h_v,V,dUdx,dVdy
+end
+
+function preallocate_Sadourny()
+
+    # interpolation from h: ones less in both directions
+    h_q = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-1)
     q = zeros(h_q)
 
-    # one less in x direction
-    dpdx = zeros(Numtype,nx+1,ny+2)
-    h_u = zeros(dpdx)
-    U = zeros(dpdx)
-
-    # one less in y-direction
-    dpdy = zeros(Numtype,nx+2,ny+1)
-    h_v = zeros(dpdy)
-    V = zeros(dpdy)
-
-    # two less in x-direction
-    dUdx = zeros(Numtype,nx,ny+2)
-
-    # two less in y-direction
-    dVdy = zeros(Numtype,nx+2,ny)
-
     # two less in x direction, one less in y
-    q_v = zeros(Numtype,nx,ny+1)
+    q_v = zeros(Numtype,nx+2*haloη-2,ny+2*haloη-1)
     qhu = zeros(q_v)
     U_v = zeros(q_v)
 
     # two less in y direction, one less in x
-    q_u = zeros(Numtype,nx+1,ny)
+    q_u = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-2)
     qhv = zeros(q_u)
     V_u = zeros(q_u)
 
-    return dη,η0,η1,p,h,h_q,q,dpdx,h_u,U,dpdy,h_v,V,dUdx,dVdy,q_v,qhu,U_v,q_u,qhv,V_u
+    return h_q,q,q_v,qhu,U_v,q_u,qhv,V_u
 end
 
-function preallocate_Sadourny()
-    #TODO
+function preallocate_Bernoulli()
+
+    u² = zeros(Numtype,nux+2*halo,nuy+2*halo)
+    v² = zeros(Numtype,nvx+2*halo,nvy+2*halo)
+
+    KEu = zeros(Numtype,nux+2*halo-1,nuy+2*halo)
+    KEv = zeros(Numtype,nvx+2*halo,nvy+2*halo-1)
+
+    p = zeros(Numtype,nx+2*haloη,ny+2*haloη)
+    dpdx = zeros(Numtype,nx+2*haloη-1,ny+2*haloη)
+    dpdy = zeros(Numtype,nx+2*haloη,ny+2*haloη-1)
+
+    return u²,v²,KEu,KEv,p,dpdx,dpdy
 end
 
 function preallocate_Smagorinsky()
     # on the T-grid including halo
-    DT = zeros(Numtype,nx+2,ny+2)
+    DT = zeros(Numtype,nx+2*haloη,ny+2*haloη)
     DS = zeros(DT)
     νSmag = zeros(DT)
 
@@ -93,38 +97,46 @@ function preallocate_Smagorinsky()
     DS_q = zeros(Numtype,nvx+2*halo-1,nvy+2*halo)
 
     # one less in both directions, the q-grid
-    νSmag_q = zeros(Numtype,nx+1,ny+1)
+    νSmag_q = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-1)
     S12 = zeros(νSmag_q)
     S21 = zeros(νSmag_q)
 
-    # Laplace operator: two less in both directions
+    S11 = zeros(Numtype,nux+2*halo-3,nuy+2*halo-2)
+    S22 = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-3)
+
+    LLu1 = zeros(Numtype,nux+2*halo-4,nuy+2*halo-2)
+    LLu2 = zeros(Numtype,nx+1,ny)
+
+    LLv1 = zeros(Numtype,nx,ny+1)
+    LLv2 = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-4)
+
+    return DT,DS,DS_q,νSmag,νSmag_q,S11,S12,S21,S22,LLu1,LLu2,LLv1,LLv2
+end
+
+function preallocate_Laplace()
+    # two less in both directions
     Lu = zeros(Numtype,nux+2*halo-2,nuy+2*halo-2)
     Lv = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-2)
 
-    # 3 less in x, two less in y
+    # Derivatives of Lu,Lv
     dLudx = zeros(Numtype,nux+2*halo-3,nuy+2*halo-2)
-    S11 = zeros(dLudx)
-
-    # 4 less in x, two less in y
-    LLu1 = zeros(Numtype,nux+2*halo-4,nuy+2*halo-2)
-
-    # 2 less in x, 3 less in y
     dLudy = zeros(Numtype,nux+2*halo-2,nuy+2*halo-3)
-
-    LLu2 = zeros(Numtype,nx+1,ny)
-
-    # three less in x, two less in y
     dLvdx = zeros(Numtype,nvx+2*halo-3,nvy+2*halo-2)
-
-    # 4 less in x, two less in y
-    LLv1 = zeros(Numtype,nx,ny+1)
-
-    # two less in x, three less in y
     dLvdy = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-3)
-    S22 = zeros(dLvdy)
 
-    # 2 less in x, 4 less in y
-    LLv2 = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-4)
+    return Lu,Lv,dLudx,dLudy,dLvdx,dLvdy
+end
 
-    return DT,DS,DS_q,νSmag,νSmag_q,Lu,Lv,dLudx,dLudy,dLvdx,dLvdy,S11,S12,S21,S22,LLu1,LLu2,LLv1,LLv2
+function preallocate_Laplace()
+    # two less in both directions
+    Lu = zeros(Numtype,nux+2*halo-2,nuy+2*halo-2)
+    Lv = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-2)
+
+    # Derivatives of Lu,Lv
+    dLudx = zeros(Numtype,nux+2*halo-3,nuy+2*halo-2)
+    dLudy = zeros(Numtype,nux+2*halo-2,nuy+2*halo-3)
+    dLvdx = zeros(Numtype,nvx+2*halo-3,nvy+2*halo-2)
+    dLvdy = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-3)
+
+    return Lu,Lv,dLudx,dLudy,dLvdx,dLvdy
 end
