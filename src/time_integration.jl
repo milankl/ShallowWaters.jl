@@ -9,10 +9,14 @@ function time_integration(u,v,η)
     u,v,η = add_halo(u,v,η)
 
     # PREALLOCATE
-    du,u0,u1,u²,KEu,dudx,dudy = preallocate_u_vars()
-    dv,v0,v1,v²,KEv,dvdy,dvdx = preallocate_v_vars()
-    dη,η0,η1,p,h,h_q,q,dpdx,h_u,U,dpdy,h_v,V,dUdx,dVdy,q_v,qhu,U_v,q_u,qhv,V_u = preallocate_T_variables()
-    DT,DS,DS_q,νSmag,νSmag_q,Lu,Lv,dLudx,dLudy,dLvdx,dLvdy,S11,S12,S21,S22,LLu1,LLu2,LLv1,LLv2 = preallocate_Smagorinsky()
+    du,u0,u1,dudx,dudy = preallocate_u_vars()
+    dv,v0,v1,dvdx,dvdy = preallocate_v_vars()
+    dη,η0,η1,h = preallocate_η_vars()
+    h_u,U,h_v,V,dUdx,dVdy = preallocate_continuity()
+    h_q,q,q_v,qhu,U_v,q_u,qhv,V_u = preallocate_Sadourny()
+    u²,v²,KEu,KEv,p,dpdx,dpdy = preallocate_Bernoulli()
+    Lu,Lv,dLudx,dLudy,dLvdx,dLvdy = preallocate_Laplace()
+    DT,DS,DS_q,νSmag,νSmag_q,S11,S12,S21,S22,LLu1,LLu2,LLv1,LLv2 = preallocate_Smagorinsky()
 
     # propagate initial conditions
     u0 .= u

@@ -13,11 +13,3 @@ const one_quarter = Numtype(0.25)
 
 # will be used for the Bernoulli potential
 const g = Numtype(gravity)
-
-# currently not used
-# const zeero = Numtype(0.)
-# const α = Numtype(lbc)
-# const minus_α = Numtype(-lbc)
-# const one_minus_α_half = Numtype(1-0.5*lbc)
-# const α_over_Δ = Numtype(lbc/Δ)
-# const minus_3_minus_α = Numtype(-3-lbc)
