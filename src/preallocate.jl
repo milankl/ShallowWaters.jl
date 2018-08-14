@@ -87,8 +87,33 @@ function preallocate_Bernoulli()
     return u²,v²,KEu,KEv,p,dpdx,dpdy
 end
 
+function preallocate_bottomdrag()
+    sqrtKE = zeros(Numtype,nx+2*haloη,ny+2*haloη)
+    sqrtKE_u = zeros(Numtype,nx+2*haloη-1,ny+2*haloη)
+    sqrtKE_v = zeros(Numtype,nx+2*haloη,ny+2*haloη-1)
+
+    Bu = zeros(Numtype,nx+2*haloη-1,ny+2*haloη)
+    Bv = zeros(Numtype,nx+2*haloη,ny+2*haloη-1)
+
+    return sqrtKE,sqrtKE_u,sqrtKE_v,Bu,Bv
+end
+
+function preallocate_Laplace()
+    # two less in both directions
+    Lu = zeros(Numtype,nux+2*halo-2,nuy+2*halo-2)
+    Lv = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-2)
+
+    # Derivatives of Lu,Lv
+    dLudx = zeros(Numtype,nux+2*halo-3,nuy+2*halo-2)
+    dLudy = zeros(Numtype,nux+2*halo-2,nuy+2*halo-3)
+    dLvdx = zeros(Numtype,nvx+2*halo-3,nvy+2*halo-2)
+    dLvdy = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-3)
+
+    return Lu,Lv,dLudx,dLudy,dLvdx,dLvdy
+end
+
 function preallocate_Smagorinsky()
-    # on the T-grid including halo
+    # on the η-grid including halo
     DT = zeros(Numtype,nx+2*haloη,ny+2*haloη)
     DS = zeros(DT)
     νSmag = zeros(DT)
@@ -111,32 +136,4 @@ function preallocate_Smagorinsky()
     LLv2 = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-4)
 
     return DT,DS,DS_q,νSmag,νSmag_q,S11,S12,S21,S22,LLu1,LLu2,LLv1,LLv2
-end
-
-function preallocate_Laplace()
-    # two less in both directions
-    Lu = zeros(Numtype,nux+2*halo-2,nuy+2*halo-2)
-    Lv = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-2)
-
-    # Derivatives of Lu,Lv
-    dLudx = zeros(Numtype,nux+2*halo-3,nuy+2*halo-2)
-    dLudy = zeros(Numtype,nux+2*halo-2,nuy+2*halo-3)
-    dLvdx = zeros(Numtype,nvx+2*halo-3,nvy+2*halo-2)
-    dLvdy = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-3)
-
-    return Lu,Lv,dLudx,dLudy,dLvdx,dLvdy
-end
-
-function preallocate_Laplace()
-    # two less in both directions
-    Lu = zeros(Numtype,nux+2*halo-2,nuy+2*halo-2)
-    Lv = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-2)
-
-    # Derivatives of Lu,Lv
-    dLudx = zeros(Numtype,nux+2*halo-3,nuy+2*halo-2)
-    dLudy = zeros(Numtype,nux+2*halo-2,nuy+2*halo-3)
-    dLvdx = zeros(Numtype,nvx+2*halo-3,nvy+2*halo-2)
-    dLvdy = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-3)
-
-    return Lu,Lv,dLudx,dLudy,dLvdx,dLvdy
 end

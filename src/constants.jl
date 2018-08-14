@@ -13,3 +13,6 @@ const one_quarter = Numtype(0.25)
 
 # will be used for the Bernoulli potential
 const g = Numtype(gravity)
+
+# for the bottom friction
+const c_D = Numtype(drag)

@@ -3,6 +3,7 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
             p,u²,v²,KEu,KEv,dUdx,dVdy,
             h,h_u,h_v,h_q,U,V,U_v,V_u,
             qhv,qhu,q,q_u,q_v,
+            sqrtKE,sqrtKE_u,sqrtKE_v,Bu,Bv,
             DS,DS_q,DT,νSmag,νSmag_q,
             Lu,Lv,dLudx,dLudy,dLvdx,dLvdy,
             S11,S12,S21,S22,
@@ -44,6 +45,9 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
     Ixy!(U_v,U)
     PV_adv!(qhv,qhu,q_u,q_v,V_u,U_v)
 
+    # bottom drag
+    bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
+
     # Smagorinsky-like biharmonic diffusion
     Smagorinsky_coeff!(νSmag,νSmag_q,DS,DS_q,DT,dudx,dvdy,dudy,dvdx)
     stress_tensor!(dLudx,dLudy,dLvdx,dLvdy,Lu,Lv,u,v)
@@ -55,8 +59,8 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
     ∂y!(LLv2,S22)
 
     # adding the terms
-    momentum_u!(du,qhv,dpdx,LLu1,LLu2,Fx)
-    momentum_v!(dv,qhu,dpdy,LLv1,LLv2)
+    momentum_u!(du,qhv,dpdx,Bu,LLu1,LLu2,Fx)
+    momentum_v!(dv,qhu,dpdy,Bv,LLv1,LLv2)
     continuity!(dη,dUdx,dVdy)
 end
 
@@ -76,12 +80,12 @@ function speed!(u²,v²,u,v)
 end
 
 function Bernoulli!(p,KEu,KEv,η)
-    # Bernoulli potential p = 1/2*(u^2 + v^2) + gη
+    # Bernoulli potential p = 1/2*(u² + v²) + gη
     @views p .= one_half*(KEu[1+ep:end,2:end-1] .+ KEv[2:end-1,:]) .+ g*η
 end
 
 function PV!(q,f_q,dvdx,dudy,h_q)
-    # Potential vorticity q = (f + dvdx - dudy)/h
+    # Potential vorticity q = (f + ∂v/∂x - ∂u/∂y)/h
     @views q .= (f_q .+ dvdx[2:end-1,2:end-1] .- dudy[2+ep:end-1,2:end-1]) ./ h_q
 end
 
@@ -91,8 +95,18 @@ function PV_adv!(qhv,qhu,q_u,q_v,V_u,U_v)
     @views qhu .= q_v.*U_v
 end
 
+function bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
+    # quadratic bottom drag Bu,Bv = c_D/h * | u⃗ | * u⃗
+    @views sqrtKE .= sqrt.(KEu[1+ep:end,2:end-1] .+ KEv[2:end-1,:])
+    Ix!(sqrtKE_u,sqrtKE)
+    Iy!(sqrtKE_v,sqrtKE)
+    @views Bu .= c_D*sqrtKE_u .* u[2+ep:end-1,2:end-1] ./ h_u
+    @views Bv .= c_D*sqrtKE_v .* v[2:end-1,2:end-1] ./ h_v
+end
+
+
 function Smagorinsky_coeff!(νSmag,νSmag_q,DS,DS_q,DT,dudx,dvdy,dudy,dvdx)
-    # νSmag = cSmag * |D|, where deformation rate |D| = sqrt((dudx - dvdy)^2 + (dudy + dvdx)^2)
+    # νSmag = cSmag * |D|, where deformation rate |D| = √((∂u/∂x - ∂v/∂y)^2 + (∂u/∂y + ∂v/∂x)^2)
     # the grid spacing Δ is omitted here as the operators are dimensionless
 
     # horizontal shearing strain squared
@@ -108,7 +122,7 @@ function Smagorinsky_coeff!(νSmag,νSmag_q,DS,DS_q,DT,dudx,dvdy,dudy,dvdx)
 end
 
 function stress_tensor!(dLudx,dLudy,dLvdx,dLvdy,Lu,Lv,u,v)
-    # Biharmonic stress tensor ∇∇² ⃗u = (∂/∂x(∇²u), ∂/∂y(∇²u); ∂/∂x(∇²v), ∂/∂y(∇²v))
+    # Biharmonic stress tensor ∇∇²u⃗ = (∂/∂x(∇²u), ∂/∂y(∇²u); ∂/∂x(∇²v), ∂/∂y(∇²v))
     ∇²!(Lu,u)
     ∇²!(Lv,v)
     ∂x!(dLudx,Lu)
@@ -126,14 +140,14 @@ function viscous_tensor!(S11,S12,S21,S22,νSmag,νSmag_q,dLudx,dLudy,dLvdx,dLvdy
     @views S22 .= νSmag[:,2:end-1].*dLvdy
 end
 
-function momentum_u!(du,qhv,dpdx,LLu1,LLu2,Fx)
+function momentum_u!(du,qhv,dpdx,Bu,LLu1,LLu2,Fx)
     # Sum up the tendency terms of the right-hand side for the u-component
-    @views du[3:end-2,3:end-2] .= qhv[2-ep:end-1,:] .- dpdx[2-ep:end-1,2:end-1] .+ LLu1[:,2:end-1] .+ LLu2[2-ep:end-1,:] .+ Fx
+    @views du[3:end-2,3:end-2] .= qhv[2-ep:end-1,:] .- dpdx[2-ep:end-1,2:end-1] .- Bu[2-ep:end-1,2:end-1] .+ LLu1[:,2:end-1] .+ LLu2[2-ep:end-1,:] .+ Fx
 end
 
-function momentum_v!(dv,qhu,dpdy,LLv1,LLv2)
+function momentum_v!(dv,qhu,dpdy,Bv,LLv1,LLv2)
     # Sum up the tendency terms of the right-hand side for the v-component
-    @views dv[3:end-2,3:end-2] .= -qhu[:,2:end-1] .- dpdy[2:end-1,2:end-1] .+ LLv1[:,2:end-1] + LLv2[2:end-1,:]
+    @views dv[3:end-2,3:end-2] .= -qhu[:,2:end-1] .- dpdy[2:end-1,2:end-1] .- Bv[2:end-1,2:end-1] .+ LLv1[:,2:end-1] + LLv2[2:end-1,:]
 end
 
 function continuity!(dη,dUdx,dVdy)
