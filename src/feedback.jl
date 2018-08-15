@@ -37,7 +37,6 @@ end
 
 function nan_detection(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix)
     #= Returns a boolean  input matrices u,v,η contains a NaN.
-    E
     TODO include a check for Posits
     =#
     n_nan = sum(isnan.(u)) + sum(isnan.(v)) + sum(isnan.(η))
