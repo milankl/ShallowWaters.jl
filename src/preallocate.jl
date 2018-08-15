@@ -72,6 +72,16 @@ function preallocate_Sadourny()
     return h_q,q,q_v,qhu,U_v,q_u,qhv,V_u
 end
 
+function preallocate_ArakawaHsu()
+
+    qα = zeros(Numtype,nx+2*haloη-2,ny+2*haloη-2)
+    qβ = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-2)
+    qγ = zeros(Numtype,nx+2*haloη-2,ny+2*haloη-2)
+    qδ = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-2)
+
+    return qα,qβ,qγ,qδ
+end
+
 function preallocate_Bernoulli()
 
     u² = zeros(Numtype,nux+2*halo,nuy+2*halo)

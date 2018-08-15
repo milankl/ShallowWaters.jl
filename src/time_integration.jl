@@ -14,6 +14,7 @@ function time_integration(u,v,η)
     dη,η0,η1,h = preallocate_η_vars()
     h_u,U,h_v,V,dUdx,dVdy = preallocate_continuity()
     h_q,q,q_v,qhu,U_v,q_u,qhv,V_u = preallocate_Sadourny()
+    qα,qβ,qγ,qδ = preallocate_ArakawaHsu()
     u²,v²,KEu,KEv,p,dpdx,dpdy = preallocate_Bernoulli()
     sqrtKE,sqrtKE_u,sqrtKE_v,Bu,Bv = preallocate_bottomdrag()
     Lu,Lv,dLudx,dLudy,dLvdx,dLvdy = preallocate_Laplace()
@@ -53,6 +54,7 @@ function time_integration(u,v,η)
                 p,u²,v²,KEu,KEv,dUdx,dVdy,
                 h,h_u,h_v,h_q,U,V,U_v,V_u,
                 qhv,qhu,q,q_u,q_v,
+                qα,qβ,qγ,qδ,
                 sqrtKE,sqrtKE_u,sqrtKE_v,Bu,Bv,
                 DS,DS_q,DT,νSmag,νSmag_q,
                 Lu,Lv,dLudx,dLudy,dLvdx,dLvdy,

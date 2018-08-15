@@ -3,6 +3,7 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
             p,u²,v²,KEu,KEv,dUdx,dVdy,
             h,h_u,h_v,h_q,U,V,U_v,V_u,
             qhv,qhu,q,q_u,q_v,
+            qα,qβ,qγ,qδ,
             sqrtKE,sqrtKE_u,sqrtKE_v,Bu,Bv,
             DS,DS_q,DT,νSmag,νSmag_q,
             Lu,Lv,dLudx,dLudy,dLvdx,dLvdy,
@@ -39,11 +40,7 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
     PV!(q,f_q,dvdx,dudy,h_q)
 
     # Sadourny, 1975 enstrophy conserving scheme
-    Iy!(q_u,q)
-    Ix!(q_v,q)
-    Ixy!(V_u,V)
-    Ixy!(U_v,U)
-    PV_adv!(qhv,qhu,q_u,q_v,V_u,U_v)
+    PV_adv_Sadourny!(qhv,qhu,q,q_u,q_v,U,V,V_u,U_v)
 
     # bottom drag
     bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
@@ -89,10 +86,32 @@ function PV!(q,f_q,dvdx,dudy,h_q)
     @views q .= (f_q .+ dvdx[2:end-1,2:end-1] .- dudy[2+ep:end-1,2:end-1]) ./ h_q
 end
 
-function PV_adv!(qhv,qhu,q_u,q_v,V_u,U_v)
-    # Advection of potential voriticity qhv,qhu
+function PV_adv_Sadourny!(qhv,qhu,q,q_u,q_v,U,V,V_u,U_v)
+    #= Advection of potential voriticity qhv,qhu as in Sadourny, 1975
+    enstrophy conserving scheme =#
+
+    Iy!(q_u,q)
+    Ix!(q_v,q)
+    Ixy!(V_u,V)
+    Ixy!(U_v,U)
+
     @views qhv .= q_u.*V_u
     @views qhu .= q_v.*U_v
+end
+
+function PV_adv_ArakawaHsu!(qhv,qhu,q,qα,qβ,qγ,qδ,U,V)
+    #= Advection of potential vorticity qhv,qhu as in Arakawa and Hsu, 1990
+    Energy and enstrophy conserving (in the limit of non-divergent mass flux) scheme with τ = 0. =#
+
+    # Linear combinations α,β,γ,δ of potential vorticity q
+    AHα!(qα,q)
+    AHβ!(qβ,q)
+    AHγ!(qγ,q)
+    AHδ!(qδ,q)
+
+    #@views qhv .= qα
+
+
 end
 
 function bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
