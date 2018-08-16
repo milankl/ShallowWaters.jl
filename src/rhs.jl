@@ -67,13 +67,24 @@ end
 
 function Uflux!(U,u,h_u)
     # U = uh
-    @views U .= u[2+ep:end-1,2:end-1].*h_u
+    m,n = size(U)
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            U[i,j] = u[1+ep+i,1+j]*h_u[i,j]
+        end
+    end
 end
 
 function Vflux!(V,v,h_v)
     # V = vh
-    @views V .= v[2:end-1,2:end-1].*h_v
+    m,n = size(V)
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            V[i,j] = v[i+1,j+1]*h_v[i,j]
+        end
+    end
 end
+
 
 function speed!(u²,v²,u,v)
     @views u² .= u.^2
@@ -113,16 +124,21 @@ function PV_adv_ArakawaHsu!(qhv,qhu,q,qα,qβ,qγ,qδ,U,V)
     AHγ!(qγ,q)
     AHδ!(qδ,q)
 
-    @views qhv .= qα[2-ep:end,:].*V[3-ep:end-1,2:end]
-    @views qhv .+= qβ[2-ep:end-1,:].*V[2-ep:end-2,2:end]
-    @views qhv .+= qγ[2-ep:end-1,:].*V[2-ep:end-2,1:end-1]
-    @views qhv .+= qδ[2-ep:end,:].*V[3-ep:end-1,1:end-1]
+    # Linear combinations of q and V=hv to yield qhv
+    m,n = size(qhv)
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            qhv[i,j] = qα[1-ep+i,j].*V[2-ep+i,j+1] .+ qβ[1-ep+i,j].*V[1-ep+i,j+1] .+ qγ[1-ep+i,j].*V[1-ep+i,j] .+ qδ[1-ep+i,j].*V[2-ep+i,j]
+        end
+    end
 
-    @views qhu .= qα[:,1:end-1].*U[1:end-1,2:end-2]
-    @views qhu .+= qβ[2:end,1:end-1].*U[2:end,2:end-2]
-    @views qhu .+= qγ[2:end,2:end].*U[2:end,3:end-1]
-    @views qhu .+= qδ[:,2:end].*U[1:end-1,3:end-1]
-
+    # Linear combinations of q and U=hu to yield qhu
+    m,n = size(qhu)
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            qhu[i,j] = qα[i,j].*U[i,j+1] .+ qβ[i+1,j].*U[i+1,j+1] .+ qγ[i+1,j+1].*U[i+1,j+2] .+ qδ[i,j+1].*U[i,j+2]
+        end
+    end
 end
 
 function bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
