@@ -40,7 +40,11 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
     PV!(q,f_q,dvdx,dudy,h_q)
 
     # Sadourny, 1975 enstrophy conserving scheme
-    PV_adv_Sadourny!(qhv,qhu,q,q_u,q_v,U,V,V_u,U_v)
+    if adv_scheme == "Sadourny"
+        PV_adv_Sadourny!(qhv,qhu,q,q_u,q_v,U,V,V_u,U_v)
+    elseif adv_scheme == "ArakawaHsu"
+        PV_adv_ArakawaHsu!(qhv,qhu,q,qα,qβ,qγ,qδ,U,V)
+    end
 
     # bottom drag
     bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
@@ -95,8 +99,8 @@ function PV_adv_Sadourny!(qhv,qhu,q,q_u,q_v,U,V,V_u,U_v)
     Ixy!(V_u,V)
     Ixy!(U_v,U)
 
-    @views qhv .= q_u.*V_u
-    @views qhu .= q_v.*U_v
+    @views qhv .= q_u[2-ep:end-1,:].*V_u[2-ep:end-1,:]
+    @views qhu .= q_v[:,2:end-1].*U_v[:,2:end-1]
 end
 
 function PV_adv_ArakawaHsu!(qhv,qhu,q,qα,qβ,qγ,qδ,U,V)
@@ -109,8 +113,15 @@ function PV_adv_ArakawaHsu!(qhv,qhu,q,qα,qβ,qγ,qδ,U,V)
     AHγ!(qγ,q)
     AHδ!(qδ,q)
 
-    #@views qhv .= qα
+    @views qhv .= qα[2-ep:end,:].*V[3-ep:end-1,2:end]
+    @views qhv .+= qβ[2-ep:end-1,:].*V[2-ep:end-2,2:end]
+    @views qhv .+= qγ[2-ep:end-1,:].*V[2-ep:end-2,1:end-1]
+    @views qhv .+= qδ[2-ep:end,:].*V[3-ep:end-1,1:end-1]
 
+    @views qhu .= qα[:,1:end-1].*U[1:end-1,2:end-2]
+    @views qhu .+= qβ[2:end,1:end-1].*U[2:end,2:end-2]
+    @views qhu .+= qγ[2:end,2:end].*U[2:end,3:end-1]
+    @views qhu .+= qδ[:,2:end].*U[1:end-1,3:end-1]
 
 end
 
@@ -161,12 +172,12 @@ end
 
 function momentum_u!(du,qhv,dpdx,Bu,LLu1,LLu2,Fx)
     # Sum up the tendency terms of the right-hand side for the u-component
-    @views du[3:end-2,3:end-2] .= qhv[2-ep:end-1,:] .- dpdx[2-ep:end-1,2:end-1] .- Bu[2-ep:end-1,2:end-1] .+ LLu1[:,2:end-1] .+ LLu2[2-ep:end-1,:] .+ Fx
+    @views du[3:end-2,3:end-2] .= qhv .- dpdx[2-ep:end-1,2:end-1] .- Bu[2-ep:end-1,2:end-1] .+ LLu1[:,2:end-1] .+ LLu2[2-ep:end-1,:] .+ Fx
 end
 
 function momentum_v!(dv,qhu,dpdy,Bv,LLv1,LLv2)
     # Sum up the tendency terms of the right-hand side for the v-component
-    @views dv[3:end-2,3:end-2] .= -qhu[:,2:end-1] .- dpdy[2:end-1,2:end-1] .- Bv[2:end-1,2:end-1] .+ LLv1[:,2:end-1] + LLv2[2:end-1,:]
+    @views dv[3:end-2,3:end-2] .= -qhu .- dpdy[2:end-1,2:end-1] .- Bv[2:end-1,2:end-1] .+ LLv1[:,2:end-1] + LLv2[2:end-1,:]
 end
 
 function continuity!(dη,dUdx,dVdy)
