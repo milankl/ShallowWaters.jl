@@ -35,7 +35,7 @@ function output_ini(u,v,η)
         Dictu["water_depth"] = water_depth
         Dictu["bc_x"] = bc_x
         Dictu["lbc"] = lbc
-        Dictu["c_D"] = c_D
+        Dictu["drag"] = drag
         Dictu["c_smag"] = c_smag
         Dictu["initial_cond"] = initial_cond
         Dictu["init_run_id"] = init_run_id
@@ -126,7 +126,7 @@ end
 
 function scripts_output()
     # archives all .jl files of juls in the output folder to make runs reproducible
-    
+
     if output == 1
         # copy all files in juls main folder
         mkdir(runpath*"scripts")

@@ -61,13 +61,15 @@ function preallocate_Sadourny()
 
     # two less in x direction, one less in y
     q_v = zeros(Numtype,nx+2*haloη-2,ny+2*haloη-1)
-    qhu = zeros(q_v)
     U_v = zeros(q_v)
 
     # two less in y direction, one less in x
     q_u = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-2)
-    qhv = zeros(q_u)
     V_u = zeros(q_u)
+
+    #
+    qhu = zeros(Numtype,nvx,nvy)
+    qhv = zeros(Numtype,nux,nuy)
 
     return h_q,q,q_v,qhu,U_v,q_u,qhv,V_u
 end
@@ -76,8 +78,8 @@ function preallocate_ArakawaHsu()
 
     qα = zeros(Numtype,nx+2*haloη-2,ny+2*haloη-2)
     qβ = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-2)
-    qγ = zeros(Numtype,nx+2*haloη-2,ny+2*haloη-2)
-    qδ = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-2)
+    qγ = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-2)
+    qδ = zeros(Numtype,nx+2*haloη-2,ny+2*haloη-2)
 
     return qα,qβ,qγ,qδ
 end

@@ -30,6 +30,6 @@ function flat_bottom()
 end
 
 # set the desired topography here
-topography = ridge
+# topography = ridge
 # topography = seamount
-# topography = flat_bottom
+topography = flat_bottom
