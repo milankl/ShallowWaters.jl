@@ -68,6 +68,9 @@ end
 function Uflux!(U,u,h_u)
     # U = uh
     m,n = size(U)
+    @boundscheck (m,n) == size(h_u) || throw(BoundsError())
+    @boundscheck (m+2+ep,n+2) == size(u) || throw(BoundsError())
+
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             U[i,j] = u[1+ep+i,1+j]*h_u[i,j]
@@ -78,6 +81,9 @@ end
 function Vflux!(V,v,h_v)
     # V = vh
     m,n = size(V)
+    @boundscheck (m,n) == size(h_v) || throw(BoundsError())
+    @boundscheck (m+2,n+2) == size(v) || throw(BoundsError())
+
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             V[i,j] = v[i+1,j+1]*h_v[i,j]
@@ -85,20 +91,55 @@ function Vflux!(V,v,h_v)
     end
 end
 
-
 function speed!(u²,v²,u,v)
-    @views u² .= u.^2
-    @views v² .= v.^2
+    # u squared
+    m,n = size(u²)
+    @boundscheck (m,n) == size(u) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            u²[i,j] = u[i,j]^2
+        end
+    end
+
+    # v squared
+    m,n = size(v²)
+    @boundscheck (m,n) == size(v) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            v²[i,j] = v[i,j]^2
+        end
+    end
 end
 
 function Bernoulli!(p,KEu,KEv,η)
     # Bernoulli potential p = 1/2*(u² + v²) + gη
-    @views p .= one_half*(KEu[1+ep:end,2:end-1] .+ KEv[2:end-1,:]) .+ g*η
+    m,n = size(p)
+    @boundscheck (m+ep,n+2) == size(KEu) || throw(BoundsError())
+    @boundscheck (m+2,n) == size(KEv) || throw(BoundsError())
+    @boundscheck (m,n) == size(η) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            p[i,j] = one_half*(KEu[i+ep,j+1] + KEv[i+1,j]) + g*η[i,j]
+        end
+    end
 end
 
 function PV!(q,f_q,dvdx,dudy,h_q)
     # Potential vorticity q = (f + ∂v/∂x - ∂u/∂y)/h
-    @views q .= (f_q .+ dvdx[2:end-1,2:end-1] .- dudy[2+ep:end-1,2:end-1]) ./ h_q
+    m,n = size(q)
+    @boundscheck (m,n) == size(f_q) || throw(BoundsError())
+    @boundscheck (m+2,n+2) == size(dvdx) || throw(BoundsError())
+    @boundscheck (m+2+ep,n+2) == size(dudy) || throw(BoundsError())
+    @boundscheck (m,n) == size(h_q) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            q[i,j] = (f_q[i,j] + dvdx[i+1,j+1] - dudy[i+1+ep,j+1]) / h_q[i,j]
+        end
+    end
 end
 
 function PV_adv_Sadourny!(qhv,qhu,q,q_u,q_v,U,V,V_u,U_v)
@@ -188,17 +229,41 @@ end
 
 function momentum_u!(du,qhv,dpdx,Bu,LLu1,LLu2,Fx)
     # Sum up the tendency terms of the right-hand side for the u-component
-    @views du[3:end-2,3:end-2] .= qhv .- dpdx[2-ep:end-1,2:end-1] .- Bu[2-ep:end-1,2:end-1] .+ LLu1[:,2:end-1] .+ LLu2[2-ep:end-1,:] .+ Fx
+    m,n = size(du) .- (2*halo,2*halo) # cut off the halo
+    @boundscheck (m,n) == size(qhv) || throw(BoundsError())
+    @boundscheck (m+2-ep,n+2) == size(dpdx) || throw(BoundsError())
+    @boundscheck (m+2-ep,n+2) == size(Bu) || throw(BoundsError())
+    @boundscheck (m,n+2) == size(LLu1) || throw(BoundsError())
+    @boundscheck (m+2-ep,n) == size(LLu2) || throw(BoundsError())
+    @boundscheck (m,n) == size(Fx) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            du[i+2,j+2] = qhv[i,j] - dpdx[i+1-ep,j+1] - Bu[i+1-ep,j+1] + LLu1[i,j+1] + LLu2[i+1-ep,j] + Fx[i,j]
+        end
+    end
 end
 
 function momentum_v!(dv,qhu,dpdy,Bv,LLv1,LLv2)
     # Sum up the tendency terms of the right-hand side for the v-component
-    @views dv[3:end-2,3:end-2] .= -qhu .- dpdy[2:end-1,2:end-1] .- Bv[2:end-1,2:end-1] .+ LLv1[:,2:end-1] + LLv2[2:end-1,:]
+    m,n = size(dv) .- (2*halo,2*halo) # cut off the halo
+    @boundscheck (m,n) == size(qhu) || throw(BoundsError())
+    @boundscheck (m+2,n+2) == size(dpdy) || throw(BoundsError())
+    @boundscheck (m+2,n+2) == size(Bv) || throw(BoundsError())
+    @boundscheck (m,n+2) == size(LLv1) || throw(BoundsError())
+    @boundscheck (m+2,n) == size(LLv2) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+             dv[i+2,j+2] = -qhu[i,j] - dpdy[i+1,j+1] - Bv[i+1,j+1] + LLv1[i,j+1] + LLv2[i+1,j]
+        end
+    end
 end
 
 function continuity!(dη,dUdx,dVdy)
     # Continuity equation's right-hand side -∂x(uh) - ∂y(vh)
     m,n = size(dη)
+    #TODO boundscheck
 
     @inbounds for i ∈ 2:n-1
         for j ∈ 2:m-1

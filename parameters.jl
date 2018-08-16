@@ -12,7 +12,7 @@ const seamount_height = 50.     # height of seamount
 const ρ = 1e3                   # density
 
 const cfl = 0.9                 # CFL number
-const Ndays = 10               # number of days to integrate for
+const Ndays = 100               # number of days to integrate for
 
 # boundary condtions
 const bc_x = "periodic"      # "periodic" or anything else for nonperiodic
