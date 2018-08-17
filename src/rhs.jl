@@ -12,14 +12,17 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
 
     # compute the tendencies du,dv,dη of the right-hand side
 
+    # layer thickness
     thickness!(h,η,H)
     Ix!(h_u,h)
     Iy!(h_v,h)
     Ixy!(h_q,h)
 
+    # mass or volume flux U,V = uh,vh
     Uflux!(U,u,h_u)
     Vflux!(V,v,h_v)
 
+    # stress tensor ∇u⃗
     ∂x!(dudx,u)
     ∂y!(dvdy,v)
     ∂x!(dvdx,v)
@@ -197,11 +200,42 @@ end
 
 function bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
     # quadratic bottom drag Bu,Bv = c_D/h * | u⃗ | * u⃗
-    @views sqrtKE .= sqrt.(KEu[1+ep:end,2:end-1] .+ KEv[2:end-1,:])
+
+    # sqrt of KE, which is actually the kinetic energy
+    m,n = size(sqrtKE)
+    @boundscheck (m+ep,n+2) == size(KEu) || throw(BoundsError())
+    @boundscheck (m+2,n) == size(KEv) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            sqrtKE[i,j] = sqrt(KEu[i+ep,j+1] + KEv[i+1,j])
+        end
+    end
+
     Ix!(sqrtKE_u,sqrtKE)
     Iy!(sqrtKE_v,sqrtKE)
-    @views Bu .= c_D*sqrtKE_u .* u[2+ep:end-1,2:end-1] ./ h_u
-    @views Bv .= c_D*sqrtKE_v .* v[2:end-1,2:end-1] ./ h_v
+
+    m,n = size(Bu)
+    @boundscheck (m,n) == size(sqrtKE_u) || throw(BoundsError())
+    @boundscheck (m,n) == size(h_u) || throw(BoundsError())
+    @boundscheck (m+2+ep,n+2) == size(u) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            Bu[i,j] = c_D*sqrtKE_u[i,j] * u[i+1+ep,j+1] / h_u[i,j]
+        end
+    end
+
+    m,n = size(Bv)
+    @boundscheck (m,n) == size(sqrtKE_v) || throw(BoundsError())
+    @boundscheck (m,n) == size(h_v) || throw(BoundsError())
+    @boundscheck (m+2,n+2) == size(v) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            Bv[i,j] = c_D*sqrtKE_v[i,j] * v[i+1,j+1] / h_v[i,j]
+        end
+    end
 end
 
 
