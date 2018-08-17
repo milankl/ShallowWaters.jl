@@ -12,7 +12,7 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
 
     # compute the tendencies du,dv,dη of the right-hand side
 
-    @views h .= η .+ H
+    thickness!(h,η,H)
     Ix!(h_u,h)
     Iy!(h_v,h)
     Ixy!(h_q,h)
@@ -63,6 +63,19 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
     momentum_u!(du,qhv,dpdx,Bu,LLu1,LLu2,Fx)
     momentum_v!(dv,qhu,dpdy,Bv,LLv1,LLv2)
     continuity!(dη,dUdx,dVdy)
+end
+
+function thickness!(h,η,H)
+    # h = η + H
+    m,n = size(h)
+    @boundscheck (m,n) == size(η) || throw(BoundsError())
+    @boundscheck (m,n) == size(H) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            h[i,j] = η[i,j] + H[i,j]
+        end
+    end
 end
 
 function Uflux!(U,u,h_u)
