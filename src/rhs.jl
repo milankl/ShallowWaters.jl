@@ -268,10 +268,45 @@ end
 function viscous_tensor!(S11,S12,S21,S22,νSmag,νSmag_q,dLudx,dLudy,dLvdx,dLvdy)
     # Biharmonic stress tensor times Smagorinsky coefficient
     # νSmag * ∇∇² ⃗u = (S11, S12; S21, S22)
-    @views S11 .= νSmag[2-ep:end-1,:].*dLudx
-    @views S12 .= νSmag_q.*dLudy[1+ep:end,:]
-    @views S21 .= νSmag_q.*dLvdx
-    @views S22 .= νSmag[:,2:end-1].*dLvdy
+    m,n = size(S11)
+    @boundscheck (m+2-ep,n) == size(νSmag) || throw(BoundsError())
+    @boundscheck (m,n) == size(dLudx) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            S11[i,j] = νSmag[i+1-ep,j] * dLudx[i,j]
+        end
+    end
+
+    m,n = size(S12)
+    @boundscheck (m,n) == size(νSmag_q) || throw(BoundsError())
+    @boundscheck (m+ep,n) == size(dLudy) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            S12[i,j] = νSmag_q[i,j] * dLudy[i+ep,j]
+        end
+    end
+
+    m,n = size(S21)
+    @boundscheck (m,n) == size(νSmag_q) || throw(BoundsError())
+    @boundscheck (m,n) == size(dLvdx) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            S21[i,j] = νSmag_q[i,j] * dLvdx[i,j]
+        end
+    end
+
+    m,n = size(S22)
+    @boundscheck (m,n+2) == size(νSmag) || throw(BoundsError())
+    @boundscheck (m,n) == size(dLvdy) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            S22[i,j] = νSmag[i,j+1] * dLvdy[i,j]
+        end
+    end
 end
 
 function momentum_u!(du,qhv,dpdx,Bu,LLu1,LLu2,Fx)
@@ -309,12 +344,13 @@ end
 
 function continuity!(dη,dUdx,dVdy)
     # Continuity equation's right-hand side -∂x(uh) - ∂y(vh)
-    m,n = size(dη)
-    #TODO boundscheck
+    m,n = size(dη) .- (2*haloη,2*haloη)
+    @boundscheck (m,n+2) == size(dUdx) || throw(BoundsError())
+    @boundscheck (m+2,n) == size(dVdy) || throw(BoundsError())
 
-    @inbounds for i ∈ 2:n-1
-        for j ∈ 2:m-1
-            dη[j,i] = -(dUdx[j-1,i] + dVdy[j,i-1])
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            dη[i+1,j+1] = -(dUdx[i,j+1] + dVdy[i+1,j])
         end
     end
 end
