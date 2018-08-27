@@ -12,19 +12,19 @@ const seamount_height = 0.     # height of seamount
 const ρ = 1e3                   # density
 
 const cfl = 0.9                 # CFL number
-const Ndays = 300               # number of days to integrate for
+const Ndays = 5               # number of days to integrate for
 
 # boundary condtions
-const bc_x = "nonperiodic"      # "periodic" or anything else for nonperiodic
+const bc_x = "periodic"      # "periodic" or anything else for nonperiodic
 const lbc = 2.                  # lateral boundary condition parameter
                                 # 0 free-slip, 0<lbc<2 partial-slip, 2 no-slip
 
-const adv_scheme = "ArakawaHsu"   # "Sadourny" or "ArakawaHsu"
+const adv_scheme = "Sadourny"   # "Sadourny" or "ArakawaHsu"
 
 const drag = 1e-5               # bottom drag coefficient
 const c_smag = 0.06             # Smagorinsky coefficient
 
-const output = 1                # 1 for nc output 0 for none
+const output = 0                # 1 for nc output 0 for none
 const output_dt = 6             # output time step in hours
 const outpath = "/local/kloewer/julsdata/"
 

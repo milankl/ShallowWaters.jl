@@ -167,8 +167,25 @@ function PV_adv_Sadourny!(qhv,qhu,q,q_u,q_v,U,V,V_u,U_v)
     Ixy!(V_u,V)
     Ixy!(U_v,U)
 
-    @views qhv .= q_u[2-ep:end-1,:].*V_u[2-ep:end-1,:]
-    @views qhu .= q_v[:,2:end-1].*U_v[:,2:end-1]
+    m,n = size(qhv)
+    @boundscheck (m+2-ep,n) == size(q_u) || throw(BoundsError())
+    @boundscheck (m+2-ep,n) == size(V_u) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            qhv[i,j] = q_u[i+1-ep,j] * V_u[i+1-ep,j]
+        end
+    end
+
+    m,n = size(qhu)
+    @boundscheck (m,n+2) == size(q_v) || throw(BoundsError())
+    @boundscheck (m,n+2) == size(U_v) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            qhu[i,j] = q_v[i,j+1] * U_v[i,j+1]
+        end
+    end
 end
 
 function PV_adv_ArakawaHsu!(qhv,qhu,q,qα,qβ,qγ,qδ,U,V)
