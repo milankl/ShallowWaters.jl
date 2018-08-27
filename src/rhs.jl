@@ -255,20 +255,45 @@ function bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
     end
 end
 
-
 function Smagorinsky_coeff!(νSmag,νSmag_q,DS,DS_q,DT,dudx,dvdy,dudy,dvdx)
     # νSmag = cSmag * |D|, where deformation rate |D| = √((∂u/∂x - ∂v/∂y)^2 + (∂u/∂y + ∂v/∂x)^2)
     # the grid spacing Δ is omitted here as the operators are dimensionless
 
     # horizontal shearing strain squared
-    @views DS_q .= (dudy[1+ep:end,:] .+ dvdx).^2
+    m,n = size(DS_q)
+    @boundscheck (m+ep,n) == size(dudy) || throw(BoundsError())
+    @boundscheck (m,n) == size(dvdx) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            DS_q[i,j] = (dudy[i+ep,j] + dvdx[i,j])^2
+        end
+    end
+
     Ixy!(DS,DS_q)
 
     # horizontal tension squared
-    @views DT .= (dudx[1+ep:end,2:end-1] + dvdy[2:end-1,:]).^2
+    m,n = size(DT)
+    @boundscheck (m+ep,n+2) == size(dudx) || throw(BoundsError())
+    @boundscheck (m+2,n) == size(dvdy) || throw(BoundsError())
 
-    # Smagorinsky coefficient times deformation rate
-    @views νSmag .= cSmag*sqrt.(DS .+ DT)
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            DT[i,j] = (dudx[i+ep,j+1] + dvdy[i+1,j])^2
+        end
+    end
+
+    # viscosity = Smagorinsky coefficient times deformation rate
+    m,n = size(νSmag)
+    @boundscheck (m,n) == size(DS) || throw(BoundsError())
+    @boundscheck (m,n) == size(DT) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            νSmag[i,j] = cSmag*sqrt(DS[i,j] + DT[i,j])
+        end
+    end
+
     Ixy!(νSmag_q,νSmag)
 end
 
