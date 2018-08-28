@@ -18,11 +18,11 @@ function meshgrid(x,y)
     yy = zeros(typeof(y[1]),length(x),length(y))
 
     for i in 1:length(x)
-        xx[i,:] = x[i]
+        xx[i,:] .= x[i]
     end
 
     for i in 1:length(y)
-        yy[:,i] = y[i]
+        yy[:,i] .= y[i]
     end
 
     return xx,yy
@@ -57,17 +57,17 @@ const nv = nvx*nvy
 const nq = nqx*nqy
 
 # grid vectors
-const x_T = Array(1:nx)*Δ - Δ/2
-const y_T = Array(1:ny)*Δ - Δ/2
+const x_T = Δ*Array(1:nx) .- Δ/2
+const y_T = Δ*Array(1:ny) .- Δ/2
 
-const x_u = if (bc_x == "periodic") Array(0:nx-1)*Δ else Array(1:nx-1)*Δ end
+const x_u = if (bc_x == "periodic") Δ*Array(0:nx-1) else Δ*Array(1:nx-1) end
 const y_u = y_T
 
 const x_v = x_T
-const y_v = Array(1:ny-1)*Δ
+const y_v = Δ*Array(1:ny-1)
 
-const x_q = if bc_x == "periodic" x_u else Array(1:nx+1)*Δ - Δ end
-const y_q = Array(1:ny+1)*Δ - Δ
+const x_q = if bc_x == "periodic" x_u else Δ*Array(1:nx+1) .- Δ end
+const y_q = Δ*Array(1:ny+1) .- Δ
 
 # halo of ghost points (because of the biharmonic operator) - don't change.
 const halo = 2
@@ -78,18 +78,18 @@ const haloη = 1
 const ep = if bc_x == "periodic" 1 else 0 end
 
 # halo versions with additional ghost points
-const x_T_halo = Array(0:nx+1)*Δ - Δ/2
-const y_T_halo = Array(0:ny+1)*Δ - Δ/2
+const x_T_halo = Δ*Array(0:nx+1) .- Δ/2
+const y_T_halo = Δ*Array(0:ny+1) .- Δ/2
 
-const x_u_halo = if (bc_x == "periodic") Array(-2:nx+1)*Δ else Array(-1:nx+1)*Δ end
-const y_u_halo = Array(-1:ny+2)*Δ - Δ/2
+const x_u_halo = if (bc_x == "periodic") Δ*Array(-2:nx+1) else Δ*Array(-1:nx+1) end
+const y_u_halo = Δ*Array(-1:ny+2) .- Δ/2
 
-const x_v_halo = Array(-1:nx+2)*Δ - Δ/2
-const y_v_halo = Array(-1:ny+1)*Δ
+const x_v_halo = Δ*Array(-1:nx+2) .- Δ/2
+const y_v_halo = Δ*Array(-1:ny+1)
 
 # also two halo for q
-const x_q_halo = if bc_x == "periodic" x_u_halo else Array(-1:nx+3)*Δ - Δ end
-const y_q_halo = Array(-1:ny+3)*Δ - Δ
+const x_q_halo = if bc_x == "periodic" x_u_halo else Δ*Array(-1:nx+3) .- Δ end
+const y_q_halo = Δ*Array(-1:ny+3) .- Δ
 
 # time and output
 const dt,Δt,dtint,nt = timestep()

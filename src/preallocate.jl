@@ -2,8 +2,8 @@ function preallocate_u_vars()
 
     # with full halo
     du = zeros(Numtype,nux+2*halo,nuy+2*halo)
-    u0 = zeros(du)
-    u1 = zeros(du)
+    u0 = zero(du)
+    u1 = zero(du)
 
     # derivative: one less in x or y direction
     dudx = zeros(Numtype,nux+2*halo-1,nuy+2*halo)
@@ -16,8 +16,8 @@ function preallocate_v_vars()
 
     # with full halo
     dv = zeros(Numtype,nvx+2*halo,nvy+2*halo)
-    v0 = zeros(dv)
-    v1 = zeros(dv)
+    v0 = zero(dv)
+    v1 = zero(dv)
 
     # derivative: one less in x or y direction
     dvdx = zeros(Numtype,nvx+2*halo-1,nvy+2*halo)
@@ -29,9 +29,9 @@ end
 function preallocate_η_vars()
 
     dη = zeros(Numtype,nx+2*haloη,ny+2*haloη)
-    η0 = zeros(dη)
-    η1 = zeros(dη)
-    h = zeros(dη)
+    η0 = zero(dη)
+    η1 = zero(dη)
+    h = zero(dη)
 
     return dη,η0,η1,h
 end
@@ -40,11 +40,11 @@ function preallocate_continuity()
 
     # interpolation: one less in x-direction
     h_u = zeros(Numtype,nx+2*haloη-1,ny+2*haloη)
-    U = zeros(h_u)
+    U = zero(h_u)
 
     # interpolation: one less in y-direction
     h_v = zeros(Numtype,nx+2*haloη,ny+2*haloη-1)
-    V = zeros(h_v)
+    V = zero(h_v)
 
     # Derivatives: two less in x- or y-direction
     dUdx = zeros(Numtype,nx+2*haloη-2,ny+2*haloη)
@@ -57,15 +57,15 @@ function preallocate_Sadourny()
 
     # interpolation from h: ones less in both directions
     h_q = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-1)
-    q = zeros(h_q)
+    q = zero(h_q)
 
     # two less in x direction, one less in y
     q_v = zeros(Numtype,nx+2*haloη-2,ny+2*haloη-1)
-    U_v = zeros(q_v)
+    U_v = zero(q_v)
 
     # two less in y direction, one less in x
     q_u = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-2)
-    V_u = zeros(q_u)
+    V_u = zero(q_u)
 
     #
     qhu = zeros(Numtype,nvx,nvy)
@@ -127,16 +127,16 @@ end
 function preallocate_Smagorinsky()
     # on the η-grid including halo
     DT = zeros(Numtype,nx+2*haloη,ny+2*haloη)
-    DS = zeros(DT)
-    νSmag = zeros(DT)
+    DS = zero(DT)
+    νSmag = zero(DT)
 
     # DS_q has same size as dvdx
     DS_q = zeros(Numtype,nvx+2*halo-1,nvy+2*halo)
 
     # one less in both directions, the q-grid
     νSmag_q = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-1)
-    S12 = zeros(νSmag_q)
-    S21 = zeros(νSmag_q)
+    S12 = zero(νSmag_q)
+    S21 = zero(νSmag_q)
 
     S11 = zeros(Numtype,nux+2*halo-3,nuy+2*halo-2)
     S22 = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-3)

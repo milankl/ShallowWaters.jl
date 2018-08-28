@@ -1,7 +1,8 @@
 #= This script includes all modules and functions, sets up the grid parameters
 etc, and runs the model =#
 
-using Base.Dates
+using Dates
+using Printf
 using NetCDF
 #using SigmoidNumbers
 
