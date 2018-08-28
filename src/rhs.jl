@@ -218,7 +218,7 @@ end
 function bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
     # quadratic bottom drag Bu,Bv = c_D/h * | u⃗ | * u⃗
 
-    # sqrt of KE, which is actually the kinetic energy
+    # sqrt of KE, which is actually the kinetic energy without the 0.5 factor
     m,n = size(sqrtKE)
     @boundscheck (m+ep,n+2) == size(KEu) || throw(BoundsError())
     @boundscheck (m+2,n) == size(KEv) || throw(BoundsError())
@@ -276,7 +276,7 @@ function Smagorinsky_coeff!(νSmag,νSmag_q,DS,DS_q,DT,dudx,dvdy,dudy,dvdx)
     m,n = size(DT)
     @boundscheck (m+ep,n+2) == size(dudx) || throw(BoundsError())
     @boundscheck (m+2,n) == size(dvdy) || throw(BoundsError())
-
+    
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             DT[i,j] = (dudx[i+ep,j+1] + dvdy[i+1,j])^2

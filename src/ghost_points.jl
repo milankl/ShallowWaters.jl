@@ -1,15 +1,15 @@
 function add_halo(u,v,η)
     # extends the matrices u,v,η with a halo of ghost points
 
-    u = cat(1,zeros(Numtype,halo,nuy),u,zeros(Numtype,halo,nuy))
-    u = cat(2,zeros(Numtype,nux+2*halo,halo),u,zeros(Numtype,nux+2*halo,halo))
+    u = cat(zeros(Numtype,halo,nuy),u,zeros(Numtype,halo,nuy),dims=1)
+    u = cat(zeros(Numtype,nux+2*halo,halo),u,zeros(Numtype,nux+2*halo,halo),dims=2)
 
-    v = cat(1,zeros(Numtype,halo,nvy),v,zeros(Numtype,halo,nvy))
-    v = cat(2,zeros(Numtype,nvx+2*halo,halo),v,zeros(Numtype,nvx+2*halo,halo))
+    v = cat(zeros(Numtype,halo,nvy),v,zeros(Numtype,halo,nvy),dims=1)
+    v = cat(zeros(Numtype,nvx+2*halo,halo),v,zeros(Numtype,nvx+2*halo,halo),dims=2)
 
     # halo is always 1 for η
-    η = cat(1,zeros(Numtype,haloη,ny),η,zeros(Numtype,haloη,ny))
-    η = cat(2,zeros(Numtype,nx+2,haloη),η,zeros(Numtype,nx+2,haloη))
+    η = cat(zeros(Numtype,haloη,ny),η,zeros(Numtype,haloη,ny),dims=1)
+    η = cat(zeros(Numtype,nx+2,haloη),η,zeros(Numtype,nx+2,haloη),dims=2)
 
     ghost_points!(u,v,η)
     return u,v,η
