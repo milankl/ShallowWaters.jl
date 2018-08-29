@@ -1,4 +1,4 @@
-function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
+function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,η_ref,
             dudx,dvdy,dvdx,dudy,dpdx,dpdy,
             p,u²,v²,KEu,KEv,dUdx,dVdy,
             h,h_u,h_v,h_q,U,V,U_v,V_u,
@@ -65,7 +65,7 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,
     # adding the terms
     momentum_u!(du,qhv,dpdx,Bu,LLu1,LLu2,Fx)
     momentum_v!(dv,qhu,dpdy,Bv,LLv1,LLv2)
-    continuity!(dη,dUdx,dVdy)
+    continuity!(dη,dUdx,dVdy,η,η_ref)
 end
 
 function thickness!(h,η,H)
@@ -276,7 +276,7 @@ function Smagorinsky_coeff!(νSmag,νSmag_q,DS,DS_q,DT,dudx,dvdy,dudy,dvdx)
     m,n = size(DT)
     @boundscheck (m+ep,n+2) == size(dudx) || throw(BoundsError())
     @boundscheck (m+2,n) == size(dvdy) || throw(BoundsError())
-    
+
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             DT[i,j] = (dudx[i+ep,j+1] + dvdy[i+1,j])^2
@@ -384,15 +384,17 @@ function momentum_v!(dv,qhu,dpdy,Bv,LLv1,LLv2)
     end
 end
 
-function continuity!(dη,dUdx,dVdy)
+function continuity!(dη,dUdx,dVdy,η,η_ref)
     # Continuity equation's right-hand side -∂x(uh) - ∂y(vh)
     m,n = size(dη) .- (2*haloη,2*haloη)
     @boundscheck (m,n+2) == size(dUdx) || throw(BoundsError())
     @boundscheck (m+2,n) == size(dVdy) || throw(BoundsError())
+    @boundscheck (m+2,n+2) == size(η) || throw(BoundsError())
+    @boundscheck (m,n) == size(η_ref) || throw(BoundsError())
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            dη[i+1,j+1] = -(dUdx[i,j+1] + dVdy[i+1,j])
+            dη[i+1,j+1] = -(dUdx[i,j+1] + dVdy[i+1,j]) + γ*(η_ref[i,j]-η[i+1,j+1])
         end
     end
 end
