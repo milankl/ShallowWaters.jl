@@ -4,6 +4,7 @@ function time_integration(u,v,η)
     Fx = wind()
     f_q = beta_plane()
     H = topography()
+    η_ref = interface_relaxation()
 
     # add halo with ghost point copy
     u,v,η = add_halo(u,v,η)
@@ -49,7 +50,7 @@ function time_integration(u,v,η)
                 ghost_points!(u1,v1,η1)
             end
 
-            rhs!(du,dv,dη,u1,v1,η1,Fx,f_q,H,
+            rhs!(du,dv,dη,u1,v1,η1,Fx,f_q,H,η_ref,
                 dudx,dvdy,dvdx,dudy,dpdx,dpdy,
                 p,u²,v²,KEu,KEv,dUdx,dVdy,
                 h,h_u,h_v,h_q,U,V,U_v,V_u,

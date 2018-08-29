@@ -30,7 +30,11 @@ function flat_bottom()
     return Numtype.(H)
 end
 
-# set the desired topography here
-# topography = ridge
-# topography = seamount
-topography = flat_bottom
+# rename for convenience
+if topography_feature == "ridge"
+    topography = ridge
+elseif topography_feature == "seamount"
+    topography = seamount
+elseif topography_feature == "flat_bottom"
+    topography = flat_bottom
+end
