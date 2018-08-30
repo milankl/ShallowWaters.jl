@@ -202,7 +202,7 @@ function PV_adv_ArakawaHsu!(qhv,qhu,q,qα,qβ,qγ,qδ,U,V)
     m,n = size(qhv)
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            qhv[i,j] = qα[1-ep+i,j].*V[2-ep+i,j+1] .+ qβ[1-ep+i,j].*V[1-ep+i,j+1] .+ qγ[1-ep+i,j].*V[1-ep+i,j] .+ qδ[1-ep+i,j].*V[2-ep+i,j]
+            qhv[i,j] = qα[1-ep+i,j]*V[2-ep+i,j+1] + qβ[1-ep+i,j]*V[1-ep+i,j+1] + qγ[1-ep+i,j]*V[1-ep+i,j] + qδ[1-ep+i,j]*V[2-ep+i,j]
         end
     end
 
@@ -210,7 +210,7 @@ function PV_adv_ArakawaHsu!(qhv,qhu,q,qα,qβ,qγ,qδ,U,V)
     m,n = size(qhu)
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            qhu[i,j] = qα[i,j].*U[i,j+1] .+ qβ[i+1,j].*U[i+1,j+1] .+ qγ[i+1,j+1].*U[i+1,j+2] .+ qδ[i,j+1].*U[i,j+2]
+            qhu[i,j] = qα[i,j]*U[i,j+1] + qβ[i+1,j]*U[i+1,j+1] + qγ[i+1,j+1]*U[i+1,j+2] + qδ[i,j+1]*U[i,j+2]
         end
     end
 end
