@@ -14,4 +14,4 @@ Requires Julia v0.7, NetCDF.
 - from one layer to two (or n-) layers
 - split external mode (gravity waves) from internal modes - a potential speed up of 10x
 - parallelize via domain decomposition (all operators are written in a generic way, applicable to every subdomain too, such that only the ghost point copy needs to include communication between threads)
-- Forcing of the continuity equation ("newtonian cooling")
+- DONE. Forcing of the continuity equation ("newtonian cooling")
