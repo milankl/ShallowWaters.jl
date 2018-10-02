@@ -55,8 +55,8 @@ function Guy_nonperiodic!(dudy::Matrix{Numtype},u::Matrix{Numtype})
     dudy[2:end-1,2:end-1] = one_over_Δ*(u[:,2:end] - u[:,1:end-1])
     dudy[2:end-1,1] = α_over_Δ*u[:,1] #  α is the lateral boundary condition parameter
     dudy[2:end-1,end] = -α_over_Δ*u[:,end]
-    dudy[1,:] = zeero       #TODO probably redundant if initialised with zeros
-    dudy[end,:] = zeero
+    dudy[1,:] .= zeero       #TODO probably redundant if initialised with zeros
+    dudy[end,:] .= zeero
 end
 
 function Guy_periodic!(dudy::Matrix{Numtype},u::Matrix{Numtype})
@@ -75,8 +75,8 @@ function Gvx_nonperiodic!(dvdx::Matrix{Numtype},v::Matrix{Numtype})
     dvdx[2:end-1,2:end-1] = one_over_Δ*(v[2:end,:] - v[1:end-1,:])
     dvdx[1,2:end-1] = α_over_Δ*v[1,:] #  α is the lateral boundary condition parameter
     dvdx[end,2:end-1] = -α_over_Δ*v[end,:]
-    dvdx[:,1] = zeero      #TODO redundant if initialised with zeros
-    dvdx[:,end] = zeero
+    dvdx[:,1] .= zeero      #TODO redundant if initialised with zeros
+    dvdx[:,end] .= zeero
 end
 
 function Gvx_periodic!(dvdx::Matrix{Numtype},v::Matrix{Numtype})
@@ -85,8 +85,8 @@ function Gvx_periodic!(dvdx::Matrix{Numtype},v::Matrix{Numtype})
 
     dvdx[2:end,2:end-1] = one_over_Δ*(v[2:end,:] - v[1:end-1,:])
     dvdx[1,2:end-1] = one_over_Δ*(v[1,:]-v[end,:])
-    dvdx[:,1] = zeero      #TODO redundant if initialised with zeros
-    dvdx[:,end] = zeero
+    dvdx[:,1] .= zeero      #TODO redundant if initialised with zeros
+    dvdx[:,end] .= zeero
 end
 
 function Gqx_nonperiodic!(dqdx::Matrix{Numtype},q::Matrix{Numtype})
