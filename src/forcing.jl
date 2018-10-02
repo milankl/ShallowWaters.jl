@@ -32,5 +32,5 @@ function interface_relaxation()
 end
 
 # change wind forcing here
-# wind = channel_wind
-wind = double_gyre_wind
+wind = channel_wind
+# wind = double_gyre_wind
