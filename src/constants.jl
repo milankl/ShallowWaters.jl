@@ -21,3 +21,15 @@ const c_D = Numtype(drag)
 # frequency [1/s] of interface relaxation (for non-dimensional gradients, γ contains the grid spacing Δ)
 #const γ = Numtype(Δ/(t_relax*3600*24))
 const γ = 0
+
+
+# for analysis the old operators with boundary conditions are kept. Constants for these
+const one_over_Δ = Numtype(1/Δ)
+const zeero = Numtype(0.)
+
+const α = Numtype(lbc)
+const minus_α = Numtype(-lbc)
+const one_minus_α_half = Numtype(1-0.5*lbc)
+const α_over_Δ = Numtype(lbc/Δ)
+const one_quarter = Numtype(0.25)
+const minus_3_minus_α = Numtype(-3-lbc)
