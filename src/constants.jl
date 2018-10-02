@@ -19,4 +19,5 @@ const g = Numtype(gravity)
 const c_D = Numtype(drag)
 
 # frequency [1/s] of interface relaxation (for non-dimensional gradients, γ contains the grid spacing Δ)
-const γ = Numtype(Δ/(t_relax*3600*24))
+#const γ = Numtype(Δ/(t_relax*3600*24))
+const γ = 0
