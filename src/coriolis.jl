@@ -4,6 +4,7 @@ const R = 6.371e6           # Earth's radius [m]
 const f₀ = 2*ω*sind(ϕ)      # Coriolis parameter [s^-1]
 const β = 2*ω/R*cosd(ϕ)     # Coriolis derivative wrt latitude [(ms)^-1]
 
+"""Returns the coriolis parameter on the q-grid for beta plane approximation."""
 function beta_plane()
 
     if bc_x == "periodic"
