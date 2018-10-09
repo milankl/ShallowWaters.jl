@@ -22,7 +22,6 @@ const c_D = Numtype(drag)
 #const γ = Numtype(Δ/(t_relax*3600*24))
 const γ = 0
 
-
 # for analysis the old operators with boundary conditions are kept. Constants for these
 const one_over_Δ = Numtype(1/Δ)
 const zeero = Numtype(0.)

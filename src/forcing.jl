@@ -31,6 +31,12 @@ function interface_relaxation()
     return Numtype.(η_ref)
 end
 
-# change wind forcing here
-wind = channel_wind
-# wind = double_gyre_wind
+if wind_forcing == "channel"
+    wind = channel_wind
+elseif wind_forcing == "shear"
+    wind = shear_wind
+elseif wind_forcing == "double_gyre"
+    wind = double_gyre_wind
+else
+    throw(error("Wind forcing not correctly specified. Allowed: 'channel', 'shear', 'double_gyre'"))
+end
