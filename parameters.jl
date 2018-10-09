@@ -14,9 +14,10 @@ const wind_forcing = "double_gyre"
 const Fx0 = 0.12                  # wind stress strength [Pa], default 0.12
 
 const topography_feature = "ridge"
-const seamount_height = 50.      # height of seamount
-const seamount_width = 100e3    # horizontal scale [m] of the seamount
+const seamount_height = 150.      # height of seamount
+const seamount_width = 200e3    # horizontal scale [m] of the seamount
 
+const surface_forcing = 0
 const t_relax = 5.              # time scale of the interface_relaxation [days]
 const η_refh = 5.               # height difference [m] of the interface relaxation profile
 const η_refw = 50e3            # width [m] of the tangent used for the interface relaxation

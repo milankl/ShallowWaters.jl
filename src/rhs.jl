@@ -384,17 +384,34 @@ function momentum_v!(dv,qhu,dpdy,Bv,LLv1,LLv2)
     end
 end
 
-function continuity!(dη,dUdx,dVdy,η,η_ref)
-    # Continuity equation's right-hand side -∂x(uh) - ∂y(vh)
-    m,n = size(dη) .- (2*haloη,2*haloη)
-    @boundscheck (m,n+2) == size(dUdx) || throw(BoundsError())
-    @boundscheck (m+2,n) == size(dVdy) || throw(BoundsError())
-    @boundscheck (m+2,n+2) == size(η) || throw(BoundsError())
-    @boundscheck (m,n) == size(η_ref) || throw(BoundsError())
+if surface_forcing
+    function continuity!(dη,dUdx,dVdy,η,η_ref)
+        # Continuity equation's right-hand side -∂x(uh) - ∂y(vh)
+        m,n = size(dη) .- (2*haloη,2*haloη)
+        @boundscheck (m,n+2) == size(dUdx) || throw(BoundsError())
+        @boundscheck (m+2,n) == size(dVdy) || throw(BoundsError())
+        @boundscheck (m+2,n+2) == size(η) || throw(BoundsError())
+        @boundscheck (m,n) == size(η_ref) || throw(BoundsError())
 
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            dη[i+1,j+1] = -(dUdx[i,j+1] + dVdy[i+1,j]) + γ*(η_ref[i,j]-η[i+1,j+1])
+        @inbounds for j ∈ 1:n
+            for i ∈ 1:m
+                dη[i+1,j+1] = -(dUdx[i,j+1] + dVdy[i+1,j]) + γ*(η_ref[i,j]-η[i+1,j+1])
+            end
+        end
+    end
+else
+    function continuity!(dη,dUdx,dVdy,η,η_ref)
+        # Continuity equation's right-hand side -∂x(uh) - ∂y(vh)
+        m,n = size(dη) .- (2*haloη,2*haloη)
+        @boundscheck (m,n+2) == size(dUdx) || throw(BoundsError())
+        @boundscheck (m+2,n) == size(dVdy) || throw(BoundsError())
+        @boundscheck (m+2,n+2) == size(η) || throw(BoundsError())
+        @boundscheck (m,n) == size(η_ref) || throw(BoundsError())
+
+        @inbounds for j ∈ 1:n
+            for i ∈ 1:m
+                dη[i+1,j+1] = -(dUdx[i,j+1] + dVdy[i+1,j])
+            end
         end
     end
 end
