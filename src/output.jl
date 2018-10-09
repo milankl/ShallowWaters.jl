@@ -40,7 +40,20 @@ function output_ini(u,v,η)
         Dictu["initial_cond"] = initial_cond
         Dictu["init_run_id"] = init_run_id
         Dictu["phi"] = ϕ
-        Dictu["seamount_height"] = seamount_height
+        Dictu["density rho"] = ρ
+
+        Dictu["wind_forcing"] = wind_forcing
+        Dictu["Fx0"] = Fx0
+
+        Dictu["surface_forcing"] = string(surface_forcing)
+        Dictu["t_relax"] = t_relax
+        Dictu["eta_refh"] = η_refh
+        Dictu["η_refw"] = η_refw
+
+        Dictu["topography_feature"] = topography_feature
+        Dictu["topofeat_height"] = topofeat_height
+        Dictu["topofeat_width"] = topofeat_width
+
         Dictu["Numtype"] = string(Numtype)
         Dictu["output_dt"] = nout*dtint
 
