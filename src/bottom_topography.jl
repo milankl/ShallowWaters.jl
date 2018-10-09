@@ -1,26 +1,19 @@
 function seamount()
     # A gaussian seamount
     xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
+    bumpx = exp.(-((xx_T .- Lx/2).^2)/(2*topofeat_width^2))
+    bumpy = exp.(-((yy_T .- Ly/2).^2)/(2*topofeat_width^2))
 
-    σx = 200e3  # extent in x [m]
-    σy = 200e3  # extent in y [m]
-
-    bumpx = exp.(-((xx_T .- Lx/2).^2)/(2*σx^2))
-    bumpy = exp.(-((yy_T .- Ly/2).^2)/(2*σy^2))
-
-    H = water_depth .- seamount_height*bumpx.*bumpy
+    H = water_depth .- topofeat_height*bumpx.*bumpy
     return Numtype.(H)
 end
 
 function ridge()
     # A gaussian ridge
     xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
+    bumpx = exp.(-((xx_T .- Lx/2).^2)/(2*topofeat_width^2))
 
-    σx = 200e3  # extent in x [m]
-
-    bumpx = exp.(-((xx_T .- Lx/2).^2)/(2*σx^2))
-
-    H = water_depth .- seamount_height*bumpx
+    H = water_depth .- topofeat_height*bumpx
     return Numtype.(H)
 end
 
@@ -35,6 +28,8 @@ if topography_feature == "ridge"
     topography = ridge
 elseif topography_feature == "seamount"
     topography = seamount
-elseif topography_feature == "flat_bottom"
+elseif topography_feature == "flat"
     topography = flat_bottom
+else
+    throw(error("Topography feature not correctly declared. Allowed: 'ridge', 'seamount', 'flat'."))
 end
