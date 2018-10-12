@@ -14,7 +14,7 @@ const wind_forcing = "channel"  # "channel", "double_gyre", "shear" or "none"
 const Fx0 = 0.12                  # wind stress strength [Pa], default 0.12
 
 const topography_feature = "ridge"
-const topofeat_height = 150.      # height of seamount
+const topofeat_height = 50.      # height of seamount
 const topofeat_width = 100e3    # horizontal scale [m] of the seamount
 
 const surface_forcing = false   # or true
@@ -23,11 +23,11 @@ const η_refh = 5.               # height difference [m] of the interface relaxa
 const η_refw = 50e3             # width [m] of the tangent used for the interface relaxation
 
 const cfl = 0.9                 # CFL number
-const Ndays = 200               # number of days to integrate for
+const Ndays = 400               # number of days to integrate for
 
 # boundary condtions
 const bc_x = "periodic"         # "periodic" or anything else for nonperiodic
-const lbc = 0.                  # lateral boundary condition parameter
+const lbc = 2.                  # lateral boundary condition parameter
                                 # 0 free-slip, 0<lbc<2 partial-slip, 2 no-slip
 
 const adv_scheme = "ArakawaHsu" # "Sadourny" or "ArakawaHsu"
