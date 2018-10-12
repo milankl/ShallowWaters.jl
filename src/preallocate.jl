@@ -1,5 +1,5 @@
+"""Returns preallocated variables of different size that derive from u."""
 function preallocate_u_vars()
-
     # with full halo
     du = zeros(Numtype,nux+2*halo,nuy+2*halo)
     u0 = zero(du)
@@ -12,8 +12,8 @@ function preallocate_u_vars()
     return du,u0,u1,dudx,dudy
 end
 
+"""Returns preallocated variables of different size that derive from v."""
 function preallocate_v_vars()
-
     # with full halo
     dv = zeros(Numtype,nvx+2*halo,nvy+2*halo)
     v0 = zero(dv)
@@ -26,8 +26,9 @@ function preallocate_v_vars()
     return dv,v0,v1,dvdx,dvdy
 end
 
+"""Returns preallocated variables of different size that derive from η."""
 function preallocate_η_vars()
-
+    # with full halo
     dη = zeros(Numtype,nx+2*haloη,ny+2*haloη)
     η0 = zero(dη)
     η1 = zero(dη)
@@ -36,8 +37,8 @@ function preallocate_η_vars()
     return dη,η0,η1,h
 end
 
+"""Returns preallocated variables of different size that will be used in the contuinity equation."""
 function preallocate_continuity()
-
     # interpolation: one less in x-direction
     h_u = zeros(Numtype,nx+2*haloη-1,ny+2*haloη)
     U = zero(h_u)
@@ -53,6 +54,7 @@ function preallocate_continuity()
     return h_u,U,h_v,V,dUdx,dVdy
 end
 
+"""Returns preallocated variables of different size that will be used for PV and the Sadourny adv scheme."""
 function preallocate_Sadourny()
 
     # interpolation from h: ones less in both directions
@@ -74,18 +76,18 @@ function preallocate_Sadourny()
     return h_q,q,q_v,qhu,U_v,q_u,qhv,V_u
 end
 
+"""Returns preallocated variables of different size for the PV linear combinations in the Arakawa&Hsu advection scheme."""
 function preallocate_ArakawaHsu()
-
     qα = zeros(Numtype,nx+2*haloη-2,ny+2*haloη-2)
     qβ = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-2)
     qγ = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-2)
     qδ = zeros(Numtype,nx+2*haloη-2,ny+2*haloη-2)
-
     return qα,qβ,qγ,qδ
 end
 
+"""Returns preallocated variables of different size that will be used for the Bernoulli potential."""
 function preallocate_Bernoulli()
-
+    # with full halo
     u² = zeros(Numtype,nux+2*halo,nuy+2*halo)
     v² = zeros(Numtype,nvx+2*halo,nvy+2*halo)
 
@@ -99,6 +101,7 @@ function preallocate_Bernoulli()
     return u²,v²,KEu,KEv,p,dpdx,dpdy
 end
 
+"""Returns preallocated variables of different size that will be used for the bottom drag term."""
 function preallocate_bottomdrag()
     sqrtKE = zeros(Numtype,nx+2*haloη,ny+2*haloη)
     sqrtKE_u = zeros(Numtype,nx+2*haloη-1,ny+2*haloη)
@@ -110,6 +113,7 @@ function preallocate_bottomdrag()
     return sqrtKE,sqrtKE_u,sqrtKE_v,Bu,Bv
 end
 
+"""Returns preallocated variables of different size that will be used for the momentum diffusion term."""
 function preallocate_Laplace()
     # two less in both directions
     Lu = zeros(Numtype,nux+2*halo-2,nuy+2*halo-2)
@@ -124,6 +128,7 @@ function preallocate_Laplace()
     return Lu,Lv,dLudx,dLudy,dLvdx,dLvdy
 end
 
+"""Returns preallocated variables of different size that will be used in the contuinity equation."""
 function preallocate_Smagorinsky()
     # on the η-grid including halo
     DT = zeros(Numtype,nx+2*haloη,ny+2*haloη)

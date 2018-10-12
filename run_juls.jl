@@ -14,7 +14,6 @@ include("src/constants.jl")
 # OPERATORS and everything that is needed for the RHS
 include("src/gradients.jl")
 include("src/interpolations.jl")
-include("src/laplace.jl")
 include("src/arakawahsu.jl")
 include("src/coriolis.jl")
 include("src/forcing.jl")
@@ -32,4 +31,6 @@ include("src/output.jl")
 include("src/initial_conditions.jl")
 include("src/preallocate.jl")
 u,v,η = initial_conditions()
+
+# RUN
 u,v,η = time_integration(u,v,η)
