@@ -1,13 +1,13 @@
+""" Extends the matrices u,v,η with a halo of ghost points for boundary conditions. """
 function add_halo(u,v,η)
-    # extends the matrices u,v,η with a halo of ghost points
-
+    # use halo = number of halo rows/columns to either side for u,v
     u = cat(zeros(Numtype,halo,nuy),u,zeros(Numtype,halo,nuy),dims=1)
     u = cat(zeros(Numtype,nux+2*halo,halo),u,zeros(Numtype,nux+2*halo,halo),dims=2)
 
     v = cat(zeros(Numtype,halo,nvy),v,zeros(Numtype,halo,nvy),dims=1)
     v = cat(zeros(Numtype,nvx+2*halo,halo),v,zeros(Numtype,nvx+2*halo,halo),dims=2)
 
-    # halo is always 1 for η
+    # and haloη for η
     η = cat(zeros(Numtype,haloη,ny),η,zeros(Numtype,haloη,ny),dims=1)
     η = cat(zeros(Numtype,nx+2,haloη),η,zeros(Numtype,nx+2,haloη),dims=2)
 
@@ -15,6 +15,7 @@ function add_halo(u,v,η)
     return u,v,η
 end
 
+""" Copy ghost points for u from inside to the halo in the nonperiodic case. """
 function ghost_points_u_nonperiodic!(u)
 
     # kinematic boundary condition
@@ -31,6 +32,7 @@ function ghost_points_u_nonperiodic!(u)
     @views @inbounds u[:,end] .= one_minus_α*u[:,end-3]
 end
 
+""" Copy ghost points for u from inside to the halo in the periodic case. """
 function ghost_points_u_periodic!(u)
 
     # periodic bc
@@ -46,6 +48,7 @@ function ghost_points_u_periodic!(u)
     @views @inbounds u[:,end] .= one_minus_α*u[:,end-3]
 end
 
+""" Copy ghost points for v from inside to the halo in the nonperiodic case. """
 function ghost_points_v_nonperiodic!(v)
 
     # kinematic boundary condition
@@ -62,6 +65,7 @@ function ghost_points_v_nonperiodic!(v)
     @views @inbounds v[end,:] .= one_minus_α*v[end-3,:]
 end
 
+""" Copy ghost points for v from inside to the halo in the periodic case. """
 function ghost_points_v_periodic!(v)
 
     # kinematic boundary condition
@@ -78,6 +82,7 @@ function ghost_points_v_periodic!(v)
     @views @inbounds v[end,:] .= v[4,:]
 end
 
+""" Copy ghost points for η from inside to the halo in the nonperiodic case. """
 function ghost_points_η_nonperiodic!(η)
 
     # assume no gradients of η across solid boundaries
@@ -89,6 +94,7 @@ function ghost_points_η_nonperiodic!(η)
     @views @inbounds η[:,end] .= η[:,end-1]
 end
 
+""" Copy ghost points for η from inside to the halo in the periodic case. """
 function ghost_points_η_periodic!(η)
 
     # corner points are copied twice, but it's faster!
@@ -100,7 +106,6 @@ function ghost_points_η_periodic!(η)
 end
 
 # gather and rename functions for convenience
-
 function ghost_points_periodic!(u,v,η)
 
     ghost_points_u_periodic!(u)
