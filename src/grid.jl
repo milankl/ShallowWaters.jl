@@ -1,18 +1,16 @@
+"""Based on the desired aspect ratio L_ratio of the domain returns the number of
+grid cells in y-direction and the length of that side of the domain."""
 function domain_ratio(nx::Int,Lx::Real,L_ratio::Real)
-    #= Based on the desired aspect ratio L_ratio of the domain returns the number of
-    grid cells in y-direction and the length of that side of the domain. =#
-
     Δ = Lx / nx                        # grid spacing
     ny = Int(round(Lx / L_ratio / Δ))  # number of grid cells in y-direction
     Ly = ny * Δ                        # length of domain in y-direction
     return Δ,ny,Ly
 end
 
+"""Similar to the numpy meshgrid function:
+repeats x length(y)-times and vice versa. Returns two matrices xx,yy of same shape so that
+each row of xx is x and each column of yy is y."""
 function meshgrid(x,y)
-    #= Similar to the numpy meshgrid function:
-    repeats x length(y)-times and vice versa. Returns two matrices xx,yy of same shape so that
-    each row of xx is x and each column of yy is y. =#
-
     # preallocate preserving the data type of x,y
     xx = zeros(typeof(x[1]),length(x),length(y))
     yy = zeros(typeof(y[1]),length(x),length(y))
@@ -28,6 +26,8 @@ function meshgrid(x,y)
     return xx,yy
 end
 
+""" Returns the time step dt,Δt,dtint and the total number of steps to integrate nt
+based on the CFL criterion to resolve shallow water gravity waves. """
 function timestep()
     # shallow water gravity wave phase speed
     c_phase = sqrt(gravity*water_depth)
