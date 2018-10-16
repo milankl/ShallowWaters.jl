@@ -78,19 +78,7 @@ function feedback_ini()
     return time(),progrtxt
 end
 
-function feedback_end(progrtxt,t::Real)
-    # finalise the progress txt file.
-    s = " Integration done in "*readable_secs(time()-t)*"."
-    println(s)
-    if output == 1
-        write(progrtxt,"\n"*s[2:end]*"\n")  # close txt file with last output
-        flush(progrtxt)
-    end
-end
-
 function feedback(u,v,η,i,t,nt,nans_detected,progrtxt)
-
-
     if i == 10
         t = time()    # measure time after 10 loops to avoid overhead
     elseif i == 100
@@ -115,6 +103,16 @@ function feedback(u,v,η,i,t,nt,nans_detected,progrtxt)
     end
 
     return t,nans_detected
+end
+
+function feedback_end(progrtxt,t::Real)
+    # finalise the progress txt file.
+    s = " Integration done in "*readable_secs(time()-t)*"."
+    println(s)
+    if output == 1
+        write(progrtxt,"\n"*s[2:end]*"\n")  # close txt file with last output
+        flush(progrtxt)
+    end
 end
 
 function progress(i,nt,progrtxt)

@@ -83,6 +83,10 @@ function time_integration(u,v,η)
         # feedback and output
         t0,nans_detected = feedback(u,v,η,i,t0,nt,nans_detected,progrtxt)
         ncs,iout = output_nc(ncs,u,v,η,i,iout)
+
+        if nans_detected
+            break
+        end
     end
 
     # finalise feeback and output

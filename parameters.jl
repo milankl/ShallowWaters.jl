@@ -22,8 +22,8 @@ const t_relax = 5.              # time scale of the interface_relaxation [days]
 const η_refh = 5.               # height difference [m] of the interface relaxation profile
 const η_refw = 50e3             # width [m] of the tangent used for the interface relaxation
 
-const cfl = 0.9                 # CFL number
-const Ndays = 400               # number of days to integrate for
+const cfl = 1.0                 # CFL number
+const Ndays = 200               # number of days to integrate for
 
 # boundary condtions
 const bc_x = "periodic"         # "periodic" or anything else for nonperiodic
