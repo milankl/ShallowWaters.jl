@@ -4,12 +4,14 @@ etc, and runs the model =#
 using Dates
 using Printf
 using NetCDF
+using MPI
 #using SigmoidNumbers
 
-# PARAMETERS, GRID and CONSTANTS
+# PARAMETERS, GRID, CONSTANTS and DOMAIN DECOMPOSITION
 include("parameters.jl")
 include("src/grid.jl")
 include("src/constants.jl")
+include("src/domain_decomposition.jl")
 
 # OPERATORS and everything that is needed for the RHS
 include("src/gradients.jl")
