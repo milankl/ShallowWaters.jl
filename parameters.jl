@@ -23,7 +23,7 @@ const η_refh = 5.               # height difference [m] of the interface relaxa
 const η_refw = 50e3             # width [m] of the tangent used for the interface relaxation
 
 const cfl = 1.0                 # CFL number
-const Ndays = 200               # number of days to integrate for
+const Ndays = 50000               # number of days to integrate for
 
 # boundary condtions
 const bc_x = "periodic"         # "periodic" or anything else for nonperiodic
@@ -36,10 +36,10 @@ const drag = 1e-5               # bottom drag coefficient [dimensionless]
 const c_smag = 0.15             # Smagorinsky coefficient [dimensionless]
 
 const output = 1                # 1 for nc output 0 for none
-const output_dt = 6             # output time step in hours
+const output_dt = 3             # output time step in hours
 const outpath = "/network/aopp/cirrus/pred/kloewer/julsdata/"
 
-const initial_cond = "rest"   # "rest" or "ncfile"
+const initial_cond = "ncfile"   # "rest" or "ncfile"
 const init_run_id = 0           # only for starting from ncfile
 
 const ϕ = 30.                   # central latitue of the domain
