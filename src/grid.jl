@@ -76,6 +76,7 @@ const haloη = 1
 # is there a point on the left edge? ep - egde points
 # used in some functions of rhs.jl to avoid an if
 const ep = if bc_x == "periodic" 1 else 0 end
+#TODO possibly different edge point variables needed on subdomains
 
 # halo versions with additional ghost points
 const x_T_halo = Δ*Array(0:nx+1) .- Δ/2
