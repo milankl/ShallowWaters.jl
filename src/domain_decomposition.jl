@@ -85,9 +85,9 @@ function subdomain_grid(M::AbstractMatrix,nbours::AbstractVector,prank::Int,npro
     sub_dom["nvx"] = sub_dom["nx"]
 
     if nbours[3] != -1 # if south neighbour exists
-        sub_dom["nvy"] = sub_dom["ny"]
-    else
         sub_dom["nvy"] = sub_dom["ny"]-1
+    else
+        sub_dom["nvy"] = sub_dom["ny"]
     end
 
     # number of grid points on the q-grid for given direction x,y
@@ -119,4 +119,9 @@ const proc_rank = MPI.Comm_rank(comm)
 const nprocs = MPI.Comm_size(comm)
 
 const nbours,M = neighbours(proc_rank,nprocs)
-const sub_dom = subdomain_grid(M,proc_rank,nprocs)
+const sub_dom = subdomain_grid(M,nbours,proc_rank,nprocs)
+
+# for testing
+# nbours,M = neighbours(2,4)
+# sub_dom = subdomain_grid(M,nbours,2,4)
+# sub_dom
