@@ -39,7 +39,7 @@ function neighbours(prank::Int,nprocs::Int)
     M = neighbours_mat(nprocs)
     m,n = size(M)
 
-    prank >= 0 && prank < nprocs || throw(error("Processor rank must be within (0,$(nprocs-1)), $prank was given.")) 
+    prank >= 0 && prank < nprocs || throw(error("Processor rank must be within (0,$(nprocs-1)), $prank was given."))
 
     # get indices of process rank
     i,j = mod(prank,m)+1,(prank ÷ m)+1
@@ -49,8 +49,8 @@ function neighbours(prank::Int,nprocs::Int)
     nnb = if (j+1 > n); -1 else M[i,j+1] end
     snb = if (j-1 < 1); -1 else M[i,j-1] end
     if bc_x == "periodic"
-        enb = M[mod(i+1,m),j]
-        wnb = M[mod(i-1,m),j]
+        enb = M[mod(i,m)+1,j]
+        wnb = M[mod(i-2,m)+1,j]
     else
         enb = if (i+1 > m); -1 else M[i+1,j] end
         wnb = if (i-1 < 1); -1 else M[i-1,j] end
