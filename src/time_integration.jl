@@ -86,6 +86,7 @@ function time_integration(u,v,η)
 
         if nans_detected
             break
+            #TODO break all MPI processes
         end
     end
 

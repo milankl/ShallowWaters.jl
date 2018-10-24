@@ -2,11 +2,13 @@ function initial_conditions()
     # initialise the state matrices u,v,η and set their initial conditions
 
     if initial_cond == "rest"
-        u = zeros(Numtype,nux,nuy)
-        v = zeros(Numtype,nvx,nvy)
-        η = zeros(Numtype,nx,ny)
+        # sub domain sub_dom is the entire domain for a single process (no domain decomposition)
+        u = zeros(Numtype,sub_dom["nux"],sub_dom["nuy"])
+        v = zeros(Numtype,sub_dom["nvx"],sub_dom["nvy"])
+        η = zeros(Numtype,sub_dom["nx"],sub_dom["ny"])
 
     elseif initial_cond == "ncfile"
+        #TODO for domain decomposition: slice ncfile for different processors
         inipath = outpath*"run"*@sprintf("%04d",init_run_id)*"/"
 
         # take last time step from existing netcdf files
