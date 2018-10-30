@@ -4,8 +4,13 @@ etc, and runs the model =#
 using Dates
 using Printf
 using NetCDF
-using MPI
+#using FileIO
+
+#using MPI
 #using SigmoidNumbers
+
+# Finite16nonu
+#include("/home/kloewer/julia/FiniteFloats.jl/src/FiniteFloats.jl")
 
 # PARAMETERS, GRID, CONSTANTS and DOMAIN DECOMPOSITION
 include("parameters.jl")
@@ -29,9 +34,11 @@ include("src/ghost_points.jl")
 include("src/feedback.jl")
 include("src/output.jl")
 
-# INITIALISE
+
 include("src/initial_conditions.jl")
 include("src/preallocate.jl")
+
+# INITIALISE
 u,v,η = initial_conditions()
 
 # RUN

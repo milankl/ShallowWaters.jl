@@ -1,7 +1,7 @@
 """initialises netCDF files for data output."""
 function output_ini(u,v,η)
     # only process with rank 0 defines the netCDF file
-    if output == 1 && prank == 0
+    if output == 1 #&& prank == 0
 
         # Dimensions
         xudim = NcDim("x",nux,values=x_u)
@@ -85,14 +85,14 @@ end
 """ Writes data to a netCDF file."""
 function output_nc(ncs,u,v,η,i,iout)
 
-    if nprocs > 1
-        #TODO MPI Gather data
-        #TODO rename u,v,η necessary? To distinguish between the loval u,v,η and the gathered u,v,η?
-    end
+    # if nprocs > 1
+    #     #TODO MPI Gather data
+    #     #TODO rename u,v,η necessary? To distinguish between the loval u,v,η and the gathered u,v,η?
+    # end
 
     # output only every nout time steps
     # only process 0 will do the output
-    if i % nout == 0 && output == 1 && prank == 0
+    if i % nout == 0 && output == 1 #&& prank == 0
 
         # cut off the halo
         NetCDF.putvar(ncs[1],"u",Float32.(u[halo+1:end-halo,halo+1:end-halo]),start=[1,1,iout],count=[-1,-1,1])
@@ -114,7 +114,7 @@ end
 
 """Closes netCDF and progress.txt files."""
 function output_close(ncs,progrtxt)
-    if output == 1 && prank == 0
+    if output == 1 #&& prank == 0
         for nc in ncs
             NetCDF.close(nc)
         end
@@ -127,7 +127,7 @@ end
 """Checks output folders to determine a 4-digit run id number."""
 function get_run_id_path()
     # only process rank 0 checks existing folders
-    if output == 1 && prank == 0
+    if output == 1 #&& prank == 0
         runlist = filter(x->startswith(x,"run"),readdir(outpath))
         existing_runs = [parse(Int,id[4:end]) for id in runlist]
         if length(existing_runs) == 0           # if no runfolder exists yet
@@ -147,7 +147,7 @@ end
 
 """Archives all .jl files of juls in the output folder to make runs reproducible."""
 function scripts_output()
-    if output == 1 && prank == 0
+    if output == 1 #&& prank == 0
         # copy all files in juls main folder
         mkdir(runpath*"scripts")
         for juliafile in filter(x->endswith(x,".jl"),readdir())
@@ -162,5 +162,4 @@ function scripts_output()
     end
 end
 
-# get the run id number and create folders
-const run_id,runpath = get_run_id_path()
+global run_id,runpath = get_run_id_path()

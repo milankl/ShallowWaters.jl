@@ -50,7 +50,11 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,η_ref,
     end
 
     # bottom drag
-    bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
+    if bottom_friction == "linear"
+        bottom_drag_lin!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
+    elseif bottom_friction == "quadratic"
+        bottom_drag_quad!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
+    end
 
     # Smagorinsky-like biharmonic diffusion
     Smagorinsky_coeff!(νSmag,νSmag_q,DS,DS_q,DT,dudx,dvdy,dudy,dvdx)
@@ -215,7 +219,7 @@ function PV_adv_ArakawaHsu!(qhv,qhu,q,qα,qβ,qγ,qδ,U,V)
     end
 end
 
-function bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
+function bottom_drag_quad!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
     # quadratic bottom drag Bu,Bv = c_D/h * | u⃗ | * u⃗
 
     # sqrt of KE, which is actually the kinetic energy without the 0.5 factor
@@ -251,6 +255,26 @@ function bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             Bv[i,j] = c_D*sqrtKE_v[i,j] * v[i+1,j+1] / h_v[i,j]
+        end
+    end
+end
+
+function bottom_drag_lin!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
+    m,n = size(Bu)
+    @boundscheck (m+2+ep,n+2) == size(u) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            Bu[i,j] = r_B * u[i+1+ep,j+1]
+        end
+    end
+
+    m,n = size(Bv)
+    @boundscheck (m+2,n+2) == size(v) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            Bv[i,j] = r_B * v[i+1,j+1]
         end
     end
 end
@@ -386,7 +410,7 @@ end
 
 if surface_forcing
     function continuity!(dη,dUdx,dVdy,η,η_ref)
-        # Continuity equation's right-hand side -∂x(uh) - ∂y(vh)
+        # Continuity equation's right-hand side -∂x(uh) - ∂y(vh) + γ*(η_ref - η)
         m,n = size(dη) .- (2*haloη,2*haloη)
         @boundscheck (m,n+2) == size(dUdx) || throw(BoundsError())
         @boundscheck (m+2,n) == size(dVdy) || throw(BoundsError())
