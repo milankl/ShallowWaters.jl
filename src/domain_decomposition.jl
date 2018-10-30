@@ -112,14 +112,14 @@ function subdomain_grid(M::AbstractMatrix,nbours::AbstractVector,prank::Int,npro
     return sub_dom
 end
 
-MPI.Init()
-const comm = MPI.COMM_WORLD
-
-const proc_rank = MPI.Comm_rank(comm)
-const nprocs = MPI.Comm_size(comm)
-
-const nbours,M = neighbours(proc_rank,nprocs)
-const sub_dom = subdomain_grid(M,nbours,proc_rank,nprocs)
+# MPI.Init()
+# const comm = MPI.COMM_WORLD
+#
+# const proc_rank = MPI.Comm_rank(comm)
+# const nprocs = MPI.Comm_size(comm)
+#
+# const nbours,M = neighbours(proc_rank,nprocs)
+# const sub_dom = subdomain_grid(M,nbours,proc_rank,nprocs)
 
 # for testing
 #nbours,M = neighbours(0,1)
