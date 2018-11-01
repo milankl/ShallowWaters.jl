@@ -16,7 +16,7 @@ using NetCDF
 include("parameters.jl")
 include("src/grid.jl")
 include("src/constants.jl")
-include("src/domain_decomposition.jl")
+#include("src/domain_decomposition.jl")
 
 # OPERATORS and everything that is needed for the RHS
 include("src/gradients.jl")
@@ -25,7 +25,6 @@ include("src/arakawahsu.jl")
 include("src/coriolis.jl")
 include("src/forcing.jl")
 include("src/bottom_topography.jl")
-include("src/viscosity.jl")
 include("src/rhs.jl")
 include("src/time_integration.jl")
 include("src/ghost_points.jl")

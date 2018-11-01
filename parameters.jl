@@ -37,10 +37,12 @@ const bottom_friction = "linear" # "linear" or "quadratic"
 const drag = 1e-5               # bottom drag coefficient [dimensionless] for quadratic
 const τdrag = 10.                # bottom drag coefficient [days] for linear
 
+const diffusion = "Constant"    # "Smagorinsky" or "Constant", biharmonic in both cases
+const ν_const = 540             # [m^2/s] scaling constant for Constant biharmonic diffusion
 const c_smag = 0.15             # Smagorinsky coefficient [dimensionless]
 
 const output = 1                # 1 for nc output 0 for none
-# TODO const output_vars = ["u","v","eta"]
+const output_vars = ["eta"]
 const output_dt = 6             # output time step in hours
 const outpath = "/network/aopp/cirrus/pred/kloewer/julsdata/"
 
