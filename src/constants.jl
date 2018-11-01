@@ -22,6 +22,10 @@ const r_B = Numtype(1/(τdrag*24*3600))  # [1/s]
 # frequency [1/s] of interface relaxation (for non-dimensional gradients, γ contains the grid spacing Δ)
 const γ = Numtype(Δ/(t_relax*3600*24))
 
+# for biharmonic diffusion
+const cSmag = Numtype(-c_smag)
+const νB = Numtype(ν_const/(30000*Δ))   # linear scaling based on 540m^s/s at Δ=30km
+
 # for analysis the old operators with boundary conditions are kept. Constants for these
 const one_over_Δ = Numtype(1/Δ)
 const zeero = Numtype(0.)

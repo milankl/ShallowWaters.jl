@@ -56,10 +56,19 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,η_ref,
         bottom_drag_quad!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,h_u,h_v)
     end
 
-    # Smagorinsky-like biharmonic diffusion
-    Smagorinsky_coeff!(νSmag,νSmag_q,DS,DS_q,DT,dudx,dvdy,dudy,dvdx)
+    # biharmonic diffusion
     stress_tensor!(dLudx,dLudy,dLvdx,dLvdy,Lu,Lv,u,v)
-    viscous_tensor!(S11,S12,S21,S22,νSmag,νSmag_q,dLudx,dLudy,dLvdx,dLvdy)
+    if diffusion == "Smagorinsky"
+        #= Smagorinsky-like biharmonic viscosity
+            Viscosity = ∇ ⋅ (cSmag Δ⁴ |D| ∇∇² ⃗u)
+        The Δ⁴-scaling is omitted as gradient operators are dimensionless. =#
+        Smagorinsky_coeff!(νSmag,νSmag_q,DS,DS_q,DT,dudx,dvdy,dudy,dvdx)
+        viscous_tensor!(S11,S12,S21,S22,νSmag,νSmag_q,dLudx,dLudy,dLvdx,dLvdy)
+    elseif diffusion == "Constant"
+        #= Biharmonic diffusion operator with constant viscosity coefficient
+            Viscosity = ν∇⁴ ⃗u =#
+        viscous_tensor_νB!(S11,S12,S21,S22,νSmag,νSmag_q,dLudx,dLudy,dLvdx,dLvdy)
+    end
 
     ∂x!(LLu1,S11)
     ∂y!(LLu2,S12)
@@ -371,6 +380,50 @@ function viscous_tensor!(S11,S12,S21,S22,νSmag,νSmag_q,dLudx,dLudy,dLvdx,dLvdy
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             S22[i,j] = νSmag[i,j+1] * dLvdy[i,j]
+        end
+    end
+end
+
+function viscous_tensor_νB!(S11,S12,S21,S22,νSmag,νSmag_q,dLudx,dLudy,dLvdx,dLvdy)
+    # Biharmonic stress tensor times Smagorinsky coefficient
+    # νSmag * ∇∇² ⃗u = (S11, S12; S21, S22)
+    m,n = size(S11)
+    @boundscheck (m+2-ep,n) == size(νSmag) || throw(BoundsError())
+    @boundscheck (m,n) == size(dLudx) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            S11[i,j] = νB * dLudx[i,j]
+        end
+    end
+
+    m,n = size(S12)
+    @boundscheck (m,n) == size(νSmag_q) || throw(BoundsError())
+    @boundscheck (m+ep,n) == size(dLudy) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            S12[i,j] = νB * dLudy[i+ep,j]
+        end
+    end
+
+    m,n = size(S21)
+    @boundscheck (m,n) == size(νSmag_q) || throw(BoundsError())
+    @boundscheck (m,n) == size(dLvdx) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            S21[i,j] = νB * dLvdx[i,j]
+        end
+    end
+
+    m,n = size(S22)
+    @boundscheck (m,n+2) == size(νSmag) || throw(BoundsError())
+    @boundscheck (m,n) == size(dLvdy) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            S22[i,j] = νB * dLvdy[i,j]
         end
     end
 end

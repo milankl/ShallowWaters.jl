@@ -3,29 +3,6 @@ function output_ini(u,v,η)
     # only process with rank 0 defines the netCDF file
     if output == 1 #&& prank == 0
 
-        # Dimensions
-        xudim = NcDim("x",nux,values=x_u)
-        yudim = NcDim("y",nuy,values=y_u)
-        xvdim = NcDim("x",nvx,values=x_v)
-        yvdim = NcDim("y",nvy,values=y_v)
-        xTdim = NcDim("x",nx,values=x_T)
-        yTdim = NcDim("y",ny,values=y_T)
-        tdim = NcDim("t",0,unlimited=true)
-
-        # Variables
-        uvar = NcVar("u",[xudim,yudim,tdim],t=Float32)
-        vvar = NcVar("v",[xvdim,yvdim,tdim],t=Float32)
-        ηvar = NcVar("eta",[xTdim,yTdim,tdim],t=Float32)
-
-        # current bug in NetCDF package - tvar has to be defined for every variable separately
-        tvaru = NcVar("t",tdim,t=Int64)
-        tvarv = NcVar("t",tdim,t=Int64)
-        tvarη = NcVar("t",tdim,t=Int64)
-
-        ncu = NetCDF.create(runpath*"u.nc",[uvar,tvaru],mode=NC_NETCDF4)
-        ncv = NetCDF.create(runpath*"v.nc",[vvar,tvarv],mode=NC_NETCDF4)
-        ncη = NetCDF.create(runpath*"eta.nc",[ηvar,tvarη],mode=NC_NETCDF4)
-
         # Attributes
         Dictu = Dict{String,Any}("description"=>"Data from shallow-water model juls.")
         Dictu["details"] = "Cartesian coordinates, f or beta-plane, Arakawa C-grid"
@@ -57,21 +34,62 @@ function output_ini(u,v,η)
         Dictu["Numtype"] = string(Numtype)
         Dictu["output_dt"] = nout*dtint
 
-        # Write attributes and units
-        for nc in (ncu,ncv,ncη)
-            NetCDF.putatt(nc,"global",Dictu)
-            NetCDF.putatt(nc,"t",Dict("units"=>"s","long_name"=>"time"))
-            NetCDF.putatt(nc,"x",Dict("units"=>"m","long_name"=>"zonal coordinate"))
-            NetCDF.putatt(nc,"y",Dict("units"=>"m","long_name"=>"meridional coordinate"))
+        if "u" in output_vars
+            xudim = NcDim("x",nux,values=x_u)
+            yudim = NcDim("y",nuy,values=y_u)
+            tdim = NcDim("t",0,unlimited=true)
+
+            uvar = NcVar("u",[xudim,yudim,tdim],t=Float32)
+            tvaru = NcVar("t",tdim,t=Int64)
+
+            ncu = NetCDF.create(runpath*"u.nc",[uvar,tvaru],mode=NC_NETCDF4)
+            NetCDF.putatt(ncu,"u",Dict("units"=>"m/s","long_name"=>"zonal velocity"))
+        else
+            ncu = 0
         end
 
-        NetCDF.putatt(ncu,"u",Dict("units"=>"m/s","long_name"=>"zonal velocity"))
-        NetCDF.putatt(ncv,"v",Dict("units"=>"m/s","long_name"=>"meridional velocity"))
-        NetCDF.putatt(ncη,"eta",Dict("units"=>"m","long_name"=>"sea surface height"))
+        if "v" in output_vars
+            xvdim = NcDim("x",nvx,values=x_v)
+            yvdim = NcDim("y",nvy,values=y_v)
+            tdim = NcDim("t",0,unlimited=true)
+
+            vvar = NcVar("v",[xvdim,yvdim,tdim],t=Float32)
+            tvarv = NcVar("t",tdim,t=Int64)
+
+            ncv = NetCDF.create(runpath*"v.nc",[vvar,tvarv],mode=NC_NETCDF4)
+            NetCDF.putatt(ncv,"v",Dict("units"=>"m/s","long_name"=>"meridional velocity"))
+        else
+            ncv = 0
+        end
+
+        if "eta" in output_vars
+            xTdim = NcDim("x",nx,values=x_T)
+            yTdim = NcDim("y",ny,values=y_T)
+            tdim = NcDim("t",0,unlimited=true)
+
+            ηvar = NcVar("eta",[xTdim,yTdim,tdim],t=Float32)
+            tvarη = NcVar("t",tdim,t=Int64)
+
+            ncη = NetCDF.create(runpath*"eta.nc",[ηvar,tvarη],mode=NC_NETCDF4)
+            NetCDF.putatt(ncη,"eta",Dict("units"=>"m","long_name"=>"sea surface height"))
+        else
+            ncη = 0
+        end
+
+        ncs = (ncu,ncv,ncη)
+
+        # Write attributes and units
+        for nc in ncs
+            if nc != 0
+                NetCDF.putatt(nc,"global",Dictu)
+                NetCDF.putatt(nc,"t",Dict("units"=>"s","long_name"=>"time"))
+                NetCDF.putatt(nc,"x",Dict("units"=>"m","long_name"=>"zonal coordinate"))
+                NetCDF.putatt(nc,"y",Dict("units"=>"m","long_name"=>"meridional coordinate"))
+            end
+        end
 
         # write initial conditions
         iout = 1   # counter for output time steps
-        ncs = (ncu,ncv,ncη)
         ncs,iout = output_nc(ncs,u,v,η,0,iout)
 
         # also output scripts
@@ -95,13 +113,21 @@ function output_nc(ncs,u,v,η,i,iout)
     if i % nout == 0 && output == 1 #&& prank == 0
 
         # cut off the halo
-        NetCDF.putvar(ncs[1],"u",Float32.(u[halo+1:end-halo,halo+1:end-halo]),start=[1,1,iout],count=[-1,-1,1])
-        NetCDF.putvar(ncs[2],"v",Float32.(v[halo+1:end-halo,halo+1:end-halo]),start=[1,1,iout],count=[-1,-1,1])
-        NetCDF.putvar(ncs[3],"eta",Float32.(η[haloη+1:end-haloη,haloη+1:end-haloη]),start=[1,1,iout],count=[-1,-1,1])
+        if ncs[1] != 0
+            NetCDF.putvar(ncs[1],"u",Float32.(u[halo+1:end-halo,halo+1:end-halo]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[2] != 0
+            NetCDF.putvar(ncs[2],"v",Float32.(v[halo+1:end-halo,halo+1:end-halo]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[3] != 0
+            NetCDF.putvar(ncs[3],"eta",Float32.(η[haloη+1:end-haloη,haloη+1:end-haloη]),start=[1,1,iout],count=[-1,-1,1])
+        end
 
         for nc in ncs
+            if nc !=0
                 NetCDF.putvar(nc,"t",Int64[i*dtint],start=[iout])
                 NetCDF.sync(nc)     # sync to view netcdf while model is still running
+            end
         end
 
         iout += 1
@@ -116,7 +142,9 @@ end
 function output_close(ncs,progrtxt)
     if output == 1 #&& prank == 0
         for nc in ncs
-            NetCDF.close(nc)
+            if nc !=0
+                NetCDF.close(nc)
+            end
         end
         println("All data stored.")
         write(progrtxt,"All data stored.")
