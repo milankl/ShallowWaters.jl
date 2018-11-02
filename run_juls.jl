@@ -28,14 +28,13 @@ include("src/bottom_topography.jl")
 include("src/rhs.jl")
 include("src/time_integration.jl")
 include("src/ghost_points.jl")
+include("src/initial_conditions.jl")
+include("src/preallocate.jl")
 
 # OUTPUT AND FEEDBACK
 include("src/feedback.jl")
 include("src/output.jl")
-
-
-include("src/initial_conditions.jl")
-include("src/preallocate.jl")
+global run_id,runpath = get_run_id_path()
 
 # INITIALISE
 u,v,η = initial_conditions()

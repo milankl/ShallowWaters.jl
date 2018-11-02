@@ -189,5 +189,3 @@ function scripts_output()
         end
     end
 end
-
-global run_id,runpath = get_run_id_path()

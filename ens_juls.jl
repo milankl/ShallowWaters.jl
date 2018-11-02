@@ -4,7 +4,7 @@ etc, and runs the model =#
 using Dates
 using Printf
 using NetCDF
-#using FileIO
+using FileIO
 
 #using MPI
 using SigmoidNumbers
@@ -28,19 +28,17 @@ include("src/bottom_topography.jl")
 include("src/rhs.jl")
 include("src/time_integration.jl")
 include("src/ghost_points.jl")
+include("src/initial_conditions.jl")
+include("src/preallocate.jl")
 
 # OUTPUT AND FEEDBACK
 include("src/feedback.jl")
 include("src/output.jl")
 
-
-include("src/initial_conditions.jl")
-include("src/preallocate.jl")
-
 # INITIALISE
 for ens_mem in 1:5
 	println("Ensemble member $ens_mem")
-	runpath,run_id = get_run_id()
+	global runpath,run_id = get_run_id_path()
 	u,v,η = initial_conditions(run_id)
 
 	# RUN
