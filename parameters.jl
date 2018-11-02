@@ -1,6 +1,6 @@
 # define constants
-const Numtype = Float32
-#const Numtype = Posit{16,1}
+#const Numtype = Float32
+const Numtype = Posit{16,1}
 #const Numtype = Main.FiniteFloats.Finite16
 
 const nx = 100                  # number of grid cells in x-direction
@@ -24,7 +24,7 @@ const η_refh = 5.               # height difference [m] of the interface relaxa
 const η_refw = 50e3             # width [m] of the tangent used for the interface relaxation
 
 const cfl = 1.0                 # CFL number
-const Ndays = 100               # number of days to integrate for
+const Ndays = 5               # number of days to integrate for
 
 # boundary condtions
 const bc_x = "periodic"         # "periodic" or anything else for nonperiodic
@@ -42,7 +42,7 @@ const ν_const = 540             # [m^2/s] scaling constant for Constant biharmo
 const c_smag = 0.15             # Smagorinsky coefficient [dimensionless]
 
 const output = 1                # 1 for nc output 0 for none
-const output_vars = ["eta"]
+const output_vars = ["u"]
 const output_dt = 6             # output time step in hours
 const outpath = "/network/aopp/cirrus/pred/kloewer/julsdata/"
 

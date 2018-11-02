@@ -38,7 +38,13 @@ include("src/initial_conditions.jl")
 include("src/preallocate.jl")
 
 # INITIALISE
-u,v,η = initial_conditions()
+for ens_mem in 1:5
+	println("Ensemble member $ens_mem")
+	runpath,run_id = get_run_id()
+	u,v,η = initial_conditions(run_id)
 
-# RUN
-u,v,η = time_integration(u,v,η)
+	# RUN
+	u,v,η = time_integration(u,v,η)
+
+	println()
+end
