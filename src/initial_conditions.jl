@@ -1,4 +1,4 @@
-function initial_condition(starti=-1)
+function initial_conditions(starti=-1)
     # initialise the state matrices u,v,η and set their initial conditions
 
     if initial_cond == "rest"

@@ -1,6 +1,6 @@
 # define constants
-#const Numtype = Float32
-const Numtype = Posit{16,1}
+const Numtype = Float32
+#const Numtype = Posit{16,1}
 #const Numtype = Main.FiniteFloats.Finite16
 
 const nx = 100                  # number of grid cells in x-direction
@@ -35,7 +35,7 @@ const adv_scheme = "ArakawaHsu"   # "Sadourny" or "ArakawaHsu"
 
 const bottom_friction = "linear" # "linear" or "quadratic"
 const drag = 1e-5               # bottom drag coefficient [dimensionless] for quadratic
-const τdrag = 10.                # bottom drag coefficient [days] for linear
+const τdrag = 10.               # bottom drag coefficient [days] for linear
 
 const diffusion = "Constant"    # "Smagorinsky" or "Constant", biharmonic in both cases
 const ν_const = 540             # [m^2/s] scaling constant for Constant biharmonic diffusion
@@ -46,7 +46,7 @@ const output_vars = ["u"]
 const output_dt = 6             # output time step in hours
 const outpath = "/network/aopp/cirrus/pred/kloewer/julsdata/"
 
-const initial_cond = "ncfile"   # "rest" or "ncfile"
+const initial_cond = "rest"   # "rest" or "ncfile"
 const initpath = "/network/aopp/cirrus/pred/kloewer/julsdata/forecast/"
 const init_run_id = 1           # only for starting from ncfile
 

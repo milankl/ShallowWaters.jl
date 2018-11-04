@@ -153,7 +153,16 @@ function output_close(ncs,progrtxt)
 end
 
 """Checks output folders to determine a 4-digit run id number."""
-function get_run_id_path()
+function get_run_id_path(order="continue",run_id=nothing)
+
+    function gap(a::Array{Int,1})
+        try
+            return minimum([i for i in minimum(a):maximum(a) if ~(i in a)])
+        catch
+            return maximum(a)+1
+        end
+    end
+
     # only process rank 0 checks existing folders
     if output == 1 #&& prank == 0
         runlist = filter(x->startswith(x,"run"),readdir(outpath))
@@ -163,9 +172,27 @@ function get_run_id_path()
             mkdir(runpath)
             return 0,runpath
         else                                    # create next folder
-            run_id = maximum(existing_runs)+1
-            runpath = outpath*"run"*@sprintf("%04d",run_id)*"/"
-            mkdir(runpath)
+            if order == "fill"  # find the smallest gap in runfolders
+                run_id = gap(existing_runs)
+                runpath = outpath*"run"*@sprintf("%04d",run_id)*"/"
+                mkdir(runpath)
+
+            elseif order == "specific" # specify the run_id as input argument
+                runpath = outpath*"run"*@sprintf("%04d",run_id)*"/"
+                try # create folder if not existent
+                    mkdir(runpath)
+                catch # else rm folder and create new one
+                    rm(runpath,recursive=true)
+                    mkdir(runpath)
+                end
+
+            elseif order == "continue" # find largest folder and count one up
+                run_id = maximum(existing_runs)+1
+                runpath = outpath*"run"*@sprintf("%04d",run_id)*"/"
+                mkdir(runpath)
+            else
+                throw(error("Order $order is not valid for get_run_id_path(), chose continue, specific or fill."))
+            end
             return run_id,runpath
         end
     else
