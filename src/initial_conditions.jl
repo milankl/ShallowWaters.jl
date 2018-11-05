@@ -1,4 +1,4 @@
-function initial_conditions()
+function initial_conditions(starti=-1)
     # initialise the state matrices u,v,η and set their initial conditions
 
     if initial_cond == "rest"
@@ -15,17 +15,23 @@ function initial_conditions()
         #TODO for domain decomposition: slice ncfile for different processors
         inirunpath = initpath*"run"*@sprintf("%04d",init_run_id)*"/"
 
-        # take last time step from existing netcdf files
+        # take starti time step from existing netcdf files
         ncu = NetCDF.open(inirunpath*"u.nc")
-        u = ncu.vars["u"][:,:,end]
+
+        if starti == -1
+            # replace -1 with length of time dimension
+            starti = size(ncu.vars["t"])[end]
+        end
+
+        u = ncu.vars["u"][:,:,starti]
         NetCDF.close(ncu)
 
         ncv = NetCDF.open(inirunpath*"v.nc")
-        v = ncv.vars["v"][:,:,end]
+        v = ncv.vars["v"][:,:,starti]
         NetCDF.close(ncv)
 
         ncη = NetCDF.open(inirunpath*"eta.nc")
-        η = ncη.vars["eta"][:,:,end]
+        η = ncη.vars["eta"][:,:,starti]
         NetCDF.close(ncη)
 
         # remove singleton time dimension
