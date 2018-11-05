@@ -7,7 +7,7 @@ using NetCDF
 using FileIO
 
 #using MPI
-using SigmoidNumbers
+#using SigmoidNumbers
 
 # Finite16nonu
 #include("/home/kloewer/julia/FiniteFloats.jl/src/FiniteFloats.jl")
@@ -36,12 +36,12 @@ include("src/feedback.jl")
 include("src/output.jl")
 
 # INITIALISE
-for ens_mem in 1:5
-	println("Ensemble member $ens_mem")
-	global runpath,run_id = get_run_id_path()
-	u,v,η = initial_conditions(run_id)
+for ens_mem in 1:80
+	global run_id,runpath = get_run_id_path("fill")
+	starti = load(initpath*"starti.jld2")["starti"][run_id+1]
+	println("Ensemble member $ens_mem, start from $starti")
 
-	# RUN
+	u,v,η = initial_conditions(starti)
 	u,v,η = time_integration(u,v,η)
 
 	println()

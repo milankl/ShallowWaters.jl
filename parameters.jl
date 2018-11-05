@@ -1,5 +1,5 @@
 # define constants
-const Numtype = Float32
+const Numtype = Float64
 #const Numtype = Posit{16,1}
 #const Numtype = Main.FiniteFloats.Finite16
 
@@ -24,14 +24,14 @@ const η_refh = 5.               # height difference [m] of the interface relaxa
 const η_refw = 50e3             # width [m] of the tangent used for the interface relaxation
 
 const cfl = 1.0                 # CFL number
-const Ndays = 5               # number of days to integrate for
+const Ndays = 100               # number of days to integrate for
 
 # boundary condtions
 const bc_x = "periodic"         # "periodic" or anything else for nonperiodic
 const lbc = 1.                  # lateral boundary condition parameter
                                 # 0 free-slip, 0<lbc<2 partial-slip, 2 no-slip
 
-const adv_scheme = "ArakawaHsu"   # "Sadourny" or "ArakawaHsu"
+const adv_scheme = "Sadourny"   # "Sadourny" or "ArakawaHsu"
 
 const bottom_friction = "linear" # "linear" or "quadratic"
 const drag = 1e-5               # bottom drag coefficient [dimensionless] for quadratic
@@ -42,9 +42,9 @@ const ν_const = 540             # [m^2/s] scaling constant for Constant biharmo
 const c_smag = 0.15             # Smagorinsky coefficient [dimensionless]
 
 const output = 1                # 1 for nc output 0 for none
-const output_vars = ["u"]
+const output_vars = ["eta"]
 const output_dt = 6             # output time step in hours
-const outpath = "/network/aopp/cirrus/pred/kloewer/julsdata/"
+const outpath = "/network/aopp/cirrus/pred/kloewer/julsdata/forecast/Float64Sad/"
 
 const initial_cond = "rest"   # "rest" or "ncfile"
 const initpath = "/network/aopp/cirrus/pred/kloewer/julsdata/forecast/"
