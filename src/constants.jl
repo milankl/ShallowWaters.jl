@@ -15,16 +15,16 @@ const one_quarter = Numtype(0.25)
 # will be used for the Bernoulli potential
 const g = Numtype(gravity)
 
-# for the bottom friction
-const c_D = Numtype(drag)
-const r_B = Numtype(1/(τdrag*24*3600))  # [1/s]
+# for the bottom friction (include grid spacing as gradient operators are dimensionless)
+const c_D = Numtype(Δ*drag)
+const r_B = Numtype(Δ/(τdrag*24*3600))  # [1/s]
 
 # frequency [1/s] of interface relaxation (for non-dimensional gradients, γ contains the grid spacing Δ)
 const γ = Numtype(Δ/(t_relax*3600*24))
 
 # for biharmonic diffusion
 const cSmag = Numtype(-c_smag)
-const νB = Numtype(ν_const/(30000*Δ))   # linear scaling based on 540m^s/s at Δ=30km
+const νB = Numtype(-ν_const/30000)   # linear scaling based on 540m^s/s at Δ=30km
 
 # for analysis the old operators with boundary conditions are kept. Constants for these
 const one_over_Δ = Numtype(1/Δ)
