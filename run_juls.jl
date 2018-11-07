@@ -4,7 +4,7 @@ etc, and runs the model =#
 using Dates
 using Printf
 using NetCDF
-#using FileIO
+using FileIO
 
 #using MPI
 #using SigmoidNumbers
@@ -34,10 +34,8 @@ include("src/preallocate.jl")
 # OUTPUT AND FEEDBACK
 include("src/feedback.jl")
 include("src/output.jl")
-global run_id,runpath = get_run_id_path("fill")
+global run_id,runpath = get_run_id_path()
 
-# INITIALISE
+# INITIALISE & RUN
 u,v,η = initial_conditions()
-
-# RUN
 u,v,η = time_integration(u,v,η)
