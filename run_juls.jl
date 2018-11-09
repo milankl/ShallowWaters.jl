@@ -7,7 +7,7 @@ using NetCDF
 using FileIO
 
 #using MPI
-#using SigmoidNumbers
+using SigmoidNumbers
 
 # Finite16nonu
 #include("/home/kloewer/julia/FiniteFloats.jl/src/FiniteFloats.jl")
@@ -34,7 +34,7 @@ include("src/preallocate.jl")
 # OUTPUT AND FEEDBACK
 include("src/feedback.jl")
 include("src/output.jl")
-global run_id,runpath = get_run_id_path()
+global run_id,runpath = get_run_id_path("fill")
 
 # INITIALISE & RUN
 u,v,η = initial_conditions()
