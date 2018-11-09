@@ -32,7 +32,7 @@ function Ixy!(uxy::AbstractMatrix,u::AbstractMatrix)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            uxy[i,j] = one_quarter*(u[i,j] + u[i+1,j] + u[i,j+1] + u[i+1,j+1])
+            uxy[i,j] = one_quart*(u[i,j] + u[i+1,j] + u[i,j+1] + u[i+1,j+1])
         end
     end
 end
