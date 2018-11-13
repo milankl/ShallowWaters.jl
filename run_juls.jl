@@ -2,12 +2,15 @@
 etc, and runs the model =#
 
 using Dates
-using Printf
 using NetCDF
 using FileIO
 
+if VERSION == v"0.7.0"
+    using Printf
+end
+
 #using MPI
-using SigmoidNumbers
+#using SigmoidNumbers
 
 # Finite16nonu
 #include("/home/kloewer/julia/FiniteFloats.jl/src/FiniteFloats.jl")
@@ -34,7 +37,8 @@ include("src/preallocate.jl")
 # OUTPUT AND FEEDBACK
 include("src/feedback.jl")
 include("src/output.jl")
-global run_id,runpath = get_run_id_path("fill")
+global run_id,runpath
+run_id,runpath = get_run_id_path()
 
 # INITIALISE & RUN
 u,v,η = initial_conditions()

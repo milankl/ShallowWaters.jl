@@ -2,9 +2,13 @@
 etc, and runs the model =#
 
 using Dates
-using Printf
 using NetCDF
 using FileIO
+
+if VERSION == v"0.7.0"
+    using Printf
+end
+
 
 #using MPI
 #using SigmoidNumbers
@@ -36,8 +40,9 @@ include("src/feedback.jl")
 include("src/output.jl")
 
 # INITIALISE
-for ens_mem in 1:20
-	global run_id,runpath = get_run_id_path()
+for ens_mem in 1:3
+	global run_id,runpath
+	run_id,runpath = get_run_id_path()
 	starti = load(initpath*"starti.jld2")["starti"][run_id+1]
 	println("Ensemble member $ens_mem, start from $starti")
 

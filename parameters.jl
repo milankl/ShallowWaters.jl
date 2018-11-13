@@ -1,9 +1,9 @@
 # define constants
-const Numtype = Float16
+const Numtype = Float32
 #const Numtype = Posit{16,1}
 #const Numtype = Main.FiniteFloats.Finite16
 #const Numtype = BigFloat
-#setprecision(5)
+#setprecision(7)
 
 const nx = 100                  # number of grid cells in x-direction
 const Lx = 2000e3               # length of the domain in x-direction
@@ -46,10 +46,13 @@ const c_smag = 0.15             # Smagorinsky coefficient [dimensionless]
 const output = 1                # 1 for nc output 0 for none
 const output_vars = ["eta"]
 const output_dt = 6             # output time step in hours
-const outpath = "/network/aopp/cirrus/pred/kloewer/julsdata/forecast2/Float16/"
+#const outpath = "/network/aopp/cirrus/pred/kloewer/julsdata/forecast2/Float64/"
+const outpath = "/network/aopp/chaos/pred/kloewer/forecast2/Float32/"
 
 const initial_cond = "ncfile"   # "rest" or "ncfile"
-const initpath = "/network/aopp/cirrus/pred/kloewer/julsdata/forecast2/"
+#const initpath = "/network/aopp/cirrus/pred/kloewer/julsdata/forecast2/"
+const initpath = "/network/aopp/chaos/pred/kloewer/forecast2/"
+
 const init_run_id = 1           # only for starting from ncfile
 
 const ϕ = 30.                   # central latitue of the domain
