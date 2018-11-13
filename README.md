@@ -7,7 +7,7 @@ Boundary conditions are either periodic (only in x direction) or super-slip/free
 
 Output is done via NetCDF.
 
-Requires Julia v0.7, NetCDF.
+Requires Julia v0.6 or v0.7 and NetCDF.
 
 # TODO
 
