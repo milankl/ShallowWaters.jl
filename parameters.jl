@@ -1,6 +1,6 @@
 # define constants
-const Numtype = Float32
-#const Numtype = Posit{16,1}
+const Numtype = Float64
+#const Numtype = Posit{16,0}
 #const Numtype = Main.FiniteFloats.Finite16
 #const Numtype = BigFloat
 #setprecision(7)
@@ -43,11 +43,13 @@ const diffusion = "Constant"    # "Smagorinsky" or "Constant", biharmonic in bot
 const ν_const = 500             # [m^2/s] scaling constant for Constant biharmonic diffusion
 const c_smag = 0.15             # Smagorinsky coefficient [dimensionless]
 
+const Uadv = 5                  # Velocity scale [m/s] for tracer advection
+
 const output = 1                # 1 for nc output 0 for none
 const output_vars = ["eta"]
 const output_dt = 6             # output time step in hours
 #const outpath = "/network/aopp/cirrus/pred/kloewer/julsdata/forecast2/Float64/"
-const outpath = "/network/aopp/chaos/pred/kloewer/forecast2/Float32/"
+const outpath = "/network/aopp/chaos/pred/kloewer/forecast2/Float64Sad/"
 
 const initial_cond = "ncfile"   # "rest" or "ncfile"
 #const initpath = "/network/aopp/cirrus/pred/kloewer/julsdata/forecast2/"
