@@ -20,6 +20,7 @@ function time_integration(u,v,η)
     sqrtKE,sqrtKE_u,sqrtKE_v,Bu,Bv = preallocate_bottomdrag()
     Lu,Lv,dLudx,dLudy,dLvdx,dLvdy = preallocate_Laplace()
     DT,DS,DS_q,νSmag,νSmag_q,S11,S12,S21,S22,LLu1,LLu2,LLv1,LLv2 = preallocate_Smagorinsky()
+    xd,yd,uinterp,vinterp,sst,ssti = preallocate_semiLagrange()
 
     # propagate initial conditions
     u0 .= u
@@ -79,6 +80,24 @@ function time_integration(u,v,η)
         v .= v0
         η .= η0
         t += dtint
+
+        # average velocities
+        # um .+= u
+        # vm .+= v
+
+        # if i % nadvstep == 0
+        #
+        #     um ./= nadvstep
+        #     vm ./= nadvstep
+        #
+        #     departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
+        #     adv_sst!(ssti,sst,xd,yd)
+        #     ghost_points_sst!(ssti)
+        #     sst .= ssti
+        #
+        #     um .= zeero
+        #     vm .= zeero
+        # end
 
         # feedback and output
         t0,nans_detected = feedback(u,v,η,i,t0,nt,nans_detected,progrtxt)

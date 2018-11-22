@@ -185,6 +185,8 @@ end
 
 if bc_x == "periodic"
     ghost_points! = ghost_points_periodic!
+    ghost_points_sst! = ghost_points_η_periodic!
 else
     ghost_points! = ghost_points_nonperiodic!
+    ghost_points_sst! = ghost_points_η_nonperiodic!
 end

@@ -154,3 +154,18 @@ function preallocate_Smagorinsky()
 
     return DT,DS,DS_q,νSmag,νSmag_q,S11,S12,S21,S22,LLu1,LLu2,LLv1,LLv2
 end
+
+"""Returns preallocated variables of different size that will be used for the semi-Lagrangian tracer advection."""
+function preallocate_semiLagrange()
+    # on the η-grid including halo
+    xd = zeros(Numtype,nx+2*haloη,ny+2*haloη)
+    yd = zero(xd)
+
+    uinterp = zeros(Numtype,nx+2*haloη,ny+2*haloη)
+    vinterp = zero(uinterp)
+
+    sst = zeros(Numtype,nx+2*haloη,ny+2*haloη)
+    ssti = zero(sst)
+
+    return xd,yd,uinterp,vinterp,sst,ssti
+end
