@@ -1,5 +1,5 @@
 """ Extends the matrices u,v,η with a halo of ghost points for boundary conditions. """
-function add_halo(u,v,η)
+function add_halo(u,v,η,sst)
     if VERSION == v"0.6.1"  # cat function was different back then
         u = cat(1,zeros(Numtype,halo,nuy),u,zeros(Numtype,halo,nuy))
         u = cat(2,zeros(Numtype,nux+2*halo,halo),u,zeros(Numtype,nux+2*halo,halo))
@@ -10,6 +10,9 @@ function add_halo(u,v,η)
         # and haloη for η
         η = cat(1,zeros(Numtype,haloη,ny),η,zeros(Numtype,haloη,ny))
         η = cat(2,zeros(Numtype,nx+2,haloη),η,zeros(Numtype,nx+2,haloη))
+
+        sst = cat(1,zeros(Numtype,haloη,ny),sst,zeros(Numtype,haloη,ny))
+        sst = cat(2,zeros(Numtype,nx+2,haloη),sst,zeros(Numtype,nx+2,haloη))
 
     else
         # use halo = number of halo rows/columns to either side for u,v
@@ -22,10 +25,14 @@ function add_halo(u,v,η)
         # and haloη for η
         η = cat(zeros(Numtype,haloη,ny),η,zeros(Numtype,haloη,ny),dims=1)
         η = cat(zeros(Numtype,nx+2,haloη),η,zeros(Numtype,nx+2,haloη),dims=2)
+
+        sst = cat(zeros(Numtype,haloη,ny),sst,zeros(Numtype,haloη,ny),dims=1)
+        sst = cat(zeros(Numtype,nx+2,haloη),sst,zeros(Numtype,nx+2,haloη),dims=2)
     end
 
     ghost_points!(u,v,η)
-    return u,v,η
+    ghost_points_sst!(sst)
+    return u,v,η,sst
 end
 
 """ Copy ghost points for u from inside to the halo in the nonperiodic case. """

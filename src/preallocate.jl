@@ -157,15 +157,24 @@ end
 
 """Returns preallocated variables of different size that will be used for the semi-Lagrangian tracer advection."""
 function preallocate_semiLagrange()
-    # on the η-grid including halo
-    xd = zeros(Numtype,nx+2*haloη,ny+2*haloη)
+    xd = zeros(Numtype,nx,ny)
     yd = zero(xd)
 
-    uinterp = zeros(Numtype,nx+2*haloη,ny+2*haloη)
+    um = zeros(Numtype,nux+2*halo,nuy+2*halo)
+    vm = zeros(Numtype,nvx+2*halo,nvy+2*halo)
+
+    # u on T-grid one less in x-direction
+    u_T = zeros(Numtype,nux+2*halo-1,nuy+2*halo)
+    um_T = zero(u_T)
+
+    # v on T-grid one less in y-direction
+    v_T = zeros(Numtype,nvx+2*halo,nvy+2*halo-1)
+    vm_T = zero(v_T)
+
+    uinterp = zeros(Numtype,nx,ny)
     vinterp = zero(uinterp)
 
-    sst = zeros(Numtype,nx+2*haloη,ny+2*haloη)
-    ssti = zero(sst)
+    ssti = zeros(Numtype,nx+2*haloη,ny+2*haloη)
 
-    return xd,yd,uinterp,vinterp,sst,ssti
+    return xd,yd,um,vm,u_T,um_T,v_T,vm_T,uinterp,vinterp,ssti
 end

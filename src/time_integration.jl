@@ -1,13 +1,14 @@
-function time_integration(u,v,η)
+function time_integration(u,v,η,sst)
 
     # FORCING
     Fx = wind()
     f_q = beta_plane()
     H = topography()
     η_ref = interface_relaxation()
+    sst_ref = sst_initial()
 
     # add halo with ghost point copy
-    u,v,η = add_halo(u,v,η)
+    u,v,η,sst = add_halo(u,v,η,sst)
 
     # PREALLOCATE
     du,u0,u1,dudx,dudy = preallocate_u_vars()
@@ -20,7 +21,7 @@ function time_integration(u,v,η)
     sqrtKE,sqrtKE_u,sqrtKE_v,Bu,Bv = preallocate_bottomdrag()
     Lu,Lv,dLudx,dLudy,dLvdx,dLvdy = preallocate_Laplace()
     DT,DS,DS_q,νSmag,νSmag_q,S11,S12,S21,S22,LLu1,LLu2,LLv1,LLv2 = preallocate_Smagorinsky()
-    xd,yd,uinterp,vinterp,sst,ssti = preallocate_semiLagrange()
+    xd,yd,um,vm,u_T,um_T,v_T,vm_T,uinterp,vinterp,ssti = preallocate_semiLagrange()
 
     # propagate initial conditions
     u0 .= u
@@ -33,7 +34,7 @@ function time_integration(u,v,η)
 
     # feedback and output
     t0,progrtxt = feedback_ini()
-    ncs, iout = output_ini(u,v,η)
+    ncs, iout = output_ini(u,v,η,sst)
     nans_detected = false
 
     t = 0           # model time
@@ -81,27 +82,33 @@ function time_integration(u,v,η)
         η .= η0
         t += dtint
 
-        # average velocities
-        # um .+= u
-        # vm .+= v
+        # average velocities throughout advection time step
+        if tracer_advection
+            um .+= u
+            vm .+= v
+        end
 
-        # if i % nadvstep == 0
-        #
-        #     um ./= nadvstep
-        #     vm ./= nadvstep
-        #
-        #     departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
-        #     adv_sst!(ssti,sst,xd,yd)
-        #     ghost_points_sst!(ssti)
-        #     sst .= ssti
-        #
-        #     um .= zeero
-        #     vm .= zeero
-        # end
+        if tracer_advection && (i % nadvstep) == 0
+
+            um ./= nadvstep   # this does not break the type of um,vm as nadvstep is integer
+            vm ./= nadvstep
+
+            departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
+
+            adv_sst!(ssti,sst,xd,yd)
+            if tracer_relaxation
+                tracer_relax!(ssti,sst_ref)
+            end
+            ghost_points_sst!(ssti)
+            sst .= ssti
+
+            um .= zeero
+            vm .= zeero
+        end
 
         # feedback and output
-        t0,nans_detected = feedback(u,v,η,i,t0,nt,nans_detected,progrtxt)
-        ncs,iout = output_nc(ncs,u,v,η,i,iout)
+        t0,nans_detected = feedback(u,v,η,sst,i,t0,nt,nans_detected,progrtxt)
+        ncs,iout = output_nc(ncs,u,v,η,sst,i,iout)
 
         if nans_detected
             break
@@ -113,5 +120,5 @@ function time_integration(u,v,η)
     feedback_end(progrtxt,t0)
     output_close(ncs,progrtxt)
 
-    return u,v,η
+    return u,v,η,sst
 end

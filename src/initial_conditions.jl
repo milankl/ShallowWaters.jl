@@ -1,3 +1,4 @@
+"""Start from rest or load initial conditions from netCDF file."""
 function initial_conditions(starti=-1)
     # initialise the state matrices u,v,η and set their initial conditions
 
@@ -9,6 +10,7 @@ function initial_conditions(starti=-1)
         u = zeros(Numtype,nux,nuy)
         v = zeros(Numtype,nvx,nvy)
         η = zeros(Numtype,nx,ny)
+        sst = Numtype.(sst_initial())
 
     elseif initial_cond == "ncfile"
 
@@ -39,7 +41,16 @@ function initial_conditions(starti=-1)
         u = Numtype.(reshape(u,size(u)[1:2]))
         v = Numtype.(reshape(v,size(v)[1:2]))
         η = Numtype.(reshape(η,size(η)[1:2]))
+
+        #TODO allow restart from sst, for now
+        sst = Numtype.(sst_initial())
     end
 
-    return u,v,η
+    return u,v,η,sst
+end
+"""Initial conditions for the tracer determined by SSTmax, SSTmin, SSTw, SSTϕ"""
+function sst_initial()
+    xx_T,yy_T = meshgrid(x_T,y_T)
+    sst = (SSTmin+SSTmax)/2 .+ tanh.(2π*(Ly/(4*SSTw))*(yy_T/Ly .- SSTϕ))*(SSTmin-SSTmax)/2
+    return sst
 end

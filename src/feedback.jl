@@ -19,7 +19,7 @@ end
 
 function duration_estimate(i,t,nt,progrtxt)
     #= Estimates the total time the model integration will take.=#
-    time_per_step = (time()-t) / (i-10)
+    time_per_step = (time()-t) / (i-50)
     time_total = Int(round(time_per_step*nt))
     time_to_go = Int(round(time_per_step*(nt-i)))
 
@@ -45,6 +45,9 @@ function nan_detection(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix)
     else
         return false
     end
+
+    #TODO include of check for tracer!
+
 end
 
 function progress_txt_ini()
@@ -78,9 +81,9 @@ function feedback_ini()
     return time(),progrtxt
 end
 
-function feedback(u,v,η,i,t,nt,nans_detected,progrtxt)
-    if i == 10
-        t = time()    # measure time after 10 loops to avoid overhead
+function feedback(u,v,η,sst,i,t,nt,nans_detected,progrtxt)
+    if i == 50
+        t = time()    # measure time after 50 loops to avoid overhead and make sure tracer advection executed once
     elseif i == 100
         duration_estimate(i,t,nt,progrtxt)
     end

@@ -1,5 +1,5 @@
 """initialises netCDF files for data output."""
-function output_ini(u,v,η)
+function output_ini(u,v,η,sst)
     # only process with rank 0 defines the netCDF file
     if output == 1 #&& prank == 0
 
@@ -76,7 +76,21 @@ function output_ini(u,v,η)
             ncη = 0
         end
 
-        ncs = (ncu,ncv,ncη)
+        if "sst" in output_vars
+            xTdim = NcDim("x",nx,values=x_T)
+            yTdim = NcDim("y",ny,values=y_T)
+            tdim = NcDim("t",0,unlimited=true)
+
+            ηvar = NcVar("sst",[xTdim,yTdim,tdim],t=Float32)
+            tvarη = NcVar("t",tdim,t=Int64)
+
+            ncsst = NetCDF.create(runpath*"sst.nc",[ηvar,tvarη],mode=NC_NETCDF4)
+            NetCDF.putatt(ncsst,"sst",Dict("units"=>"1","long_name"=>"sea surface temperature"))
+        else
+            ncsst = 0
+        end
+
+        ncs = (ncu,ncv,ncη,ncsst)
 
         # Write attributes and units
         for nc in ncs
@@ -90,7 +104,7 @@ function output_ini(u,v,η)
 
         # write initial conditions
         iout = 1   # counter for output time steps
-        ncs,iout = output_nc(ncs,u,v,η,0,iout)
+        ncs,iout = output_nc(ncs,u,v,η,sst,0,iout)
 
         # also output scripts
         scripts_output()
@@ -100,8 +114,9 @@ function output_ini(u,v,η)
         return nothing, nothing
     end
 end
+
 """ Writes data to a netCDF file."""
-function output_nc(ncs,u,v,η,i,iout)
+function output_nc(ncs,u,v,η,sst,i,iout)
 
     # if nprocs > 1
     #     #TODO MPI Gather data
@@ -121,6 +136,9 @@ function output_nc(ncs,u,v,η,i,iout)
         end
         if ncs[3] != 0
             NetCDF.putvar(ncs[3],"eta",Float32.(η[haloη+1:end-haloη,haloη+1:end-haloη]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[4] != 0
+            NetCDF.putvar(ncs[4],"sst",Float32.(sst[haloη+1:end-haloη,haloη+1:end-haloη]),start=[1,1,iout],count=[-1,-1,1])
         end
 
         for nc in ncs
@@ -200,6 +218,8 @@ function get_run_id_path(order="continue",run_id=nothing)
     end
 end
 
+#TODO in ensemble mode, the .jl files might have changed since the start and do not correspond to what
+#TODO is actually executed!
 """Archives all .jl files of juls in the output folder to make runs reproducible."""
 function scripts_output()
     if output == 1 #&& prank == 0
