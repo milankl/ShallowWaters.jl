@@ -48,7 +48,9 @@ function adv_timestep()
     nadvstep = Int(floor(Δ/Uadv/dtint))
     # recompute the tracer advection time step to fit the rounding
     dtadvint = nadvstep*dtint
-    return Numtype(dtadv),dtadvint,nadvstep
+    dtadvu = Numtype(dtadvint*nx/Lx)    # [s/m] for dimensionless advection grid
+    dtadvv = Numtype(dtadvint*ny/Ly)
+    return dtadvu,dtadvv,dtadvint,nadvstep
 end
 
 const Δ,ny,Ly = domain_ratio(nx,Lx,L_ratio)
@@ -102,8 +104,8 @@ const y_v_halo = Δ*Array(-1:ny+1)
 const x_q_halo = if bc_x == "periodic" x_u_halo else Δ*Array(-1:nx+3) .- Δ end
 const y_q_halo = Δ*Array(-1:ny+3) .- Δ
 
-# matrices of x and y positions with halo
-const xxT,yyT = meshgrid(Numtype.(x_T_halo),Numtype.(y_T_halo))
+# matrices of x and y positions with halo (dimensionless - actually indices!)
+const xxT,yyT = meshgrid(Numtype.(Array(1:nx+2)),Numtype.(Array(1:ny+2)))
 
 # time and output
 const dt,Δt,dtint,nt = timestep()
@@ -112,4 +114,4 @@ const nout_total = (nt ÷ nout)+1                # total number of time steps fo
 const t_vec = Array(0:nout_total-1)*dtint       # time vector for output
 
 # advection time step
-const dtadv,dtadvint,nadvstep = adv_timestep()
+const dtadvu,dtadvv,dtadvint,nadvstep = adv_timestep()

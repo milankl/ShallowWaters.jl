@@ -25,6 +25,7 @@ include("src/constants.jl")
 include("src/gradients.jl")
 include("src/interpolations.jl")
 include("src/arakawahsu.jl")
+include("src/tracer_adv.jl")
 include("src/coriolis.jl")
 include("src/forcing.jl")
 include("src/bottom_topography.jl")
@@ -41,5 +42,5 @@ global run_id,runpath
 run_id,runpath = get_run_id_path()
 
 # INITIALISE & RUN
-u,v,η = initial_conditions()
-u,v,η = time_integration(u,v,η)
+u,v,η,sst = initial_conditions()
+u,v,η,sst = time_integration(u,v,η,sst)

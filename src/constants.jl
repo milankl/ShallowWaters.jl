@@ -26,10 +26,13 @@ const γ = Numtype(Δ/(t_relax*3600*24))
 const cSmag = Numtype(-c_smag)
 const νB = Numtype(-ν_const/30000)   # linear scaling based on 540m^s/s at Δ=30km
 
+# for semi-Lagrangian advection / interpolation
+const zeero = Numtype(0.)
+const oone = Numtype(1.)
+const r_SST = Numtype(dtadvint/τSST)    # [1]
+
 # for analysis the old operators with boundary conditions are kept. Constants for these
 const one_over_Δ = Numtype(1/Δ)
-const zeero = Numtype(0.)
-
 const α = Numtype(lbc)
 const minus_α = Numtype(-lbc)
 const one_minus_α_half = Numtype(1-0.5*lbc)

@@ -25,6 +25,7 @@ include("src/constants.jl")
 include("src/gradients.jl")
 include("src/interpolations.jl")
 include("src/arakawahsu.jl")
+include("src/tracer_adv.jl")
 include("src/coriolis.jl")
 include("src/forcing.jl")
 include("src/bottom_topography.jl")
@@ -45,8 +46,8 @@ for ens_mem in 1:10
 	starti = load(initpath*"starti.jld2")["starti"][run_id+1]
 	println("Ensemble member $ens_mem, start from $starti")
 
-	u,v,η = initial_conditions(starti)
-	u,v,η = time_integration(u,v,η)
+	u,v,η,sst = initial_conditions(starti)
+	u,v,η,sst = time_integration(u,v,η,sst)
 
 	println()
 end

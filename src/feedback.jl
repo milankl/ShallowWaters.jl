@@ -45,6 +45,9 @@ function nan_detection(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix)
     else
         return false
     end
+
+    #TODO include of check for tracer!
+
 end
 
 function progress_txt_ini()
@@ -78,7 +81,7 @@ function feedback_ini()
     return time(),progrtxt
 end
 
-function feedback(u,v,η,i,t,nt,nans_detected,progrtxt)
+function feedback(u,v,η,sst,i,t,nt,nans_detected,progrtxt)
     if i == 10
         t = time()    # measure time after 10 loops to avoid overhead
     elseif i == 100
