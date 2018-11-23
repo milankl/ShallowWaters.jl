@@ -44,8 +44,8 @@ end
 """ Returns the tracer advection time step dtadv and the number of timesteps nadvstep after which
 one evaluation of the tracer advection is computed. """
 function adv_timestep()
-    # round down to make sure nadvstep is integer
-    nadvstep = Int(floor(Δ/Uadv/dtint))
+    # round down to make sure nadvstep is integer, at least 1
+    nadvstep = max(1,Int(floor(Δ/Uadv/dtint)))
     # recompute the tracer advection time step to fit the rounding
     dtadvint = nadvstep*dtint
     dtadvu = Numtype(dtadvint*nx/Lx)    # [s/m] for dimensionless advection grid
@@ -105,7 +105,7 @@ const x_q_halo = if bc_x == "periodic" x_u_halo else Δ*Array(-1:nx+3) .- Δ end
 const y_q_halo = Δ*Array(-1:ny+3) .- Δ
 
 # matrices of x and y positions with halo (dimensionless - actually indices!)
-const xxT,yyT = meshgrid(Numtype.(Array(1:nx+2)),Numtype.(Array(1:ny+2)))
+const xxT,yyT = meshgrid(Numtype.(Array(1:nx)),Numtype.(Array(1:ny)))
 
 # time and output
 const dt,Δt,dtint,nt = timestep()

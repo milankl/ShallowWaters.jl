@@ -21,7 +21,7 @@ function time_integration(u,v,η,sst)
     sqrtKE,sqrtKE_u,sqrtKE_v,Bu,Bv = preallocate_bottomdrag()
     Lu,Lv,dLudx,dLudy,dLvdx,dLvdy = preallocate_Laplace()
     DT,DS,DS_q,νSmag,νSmag_q,S11,S12,S21,S22,LLu1,LLu2,LLv1,LLv2 = preallocate_Smagorinsky()
-    #xd,yd,uinterp,vinterp,ssti = preallocate_semiLagrange()
+    xd,yd,um,vm,u_T,um_T,v_T,vm_T,uinterp,vinterp,ssti = preallocate_semiLagrange()
 
     # propagate initial conditions
     u0 .= u
@@ -88,12 +88,13 @@ function time_integration(u,v,η,sst)
             vm .+= v
         end
 
-        if tracer_advection && i % nadvstep == 0
+        if tracer_advection && (i % nadvstep) == 0
 
             um ./= nadvstep   # this does not break the type of um,vm as nadvstep is integer
             vm ./= nadvstep
 
             departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
+
             adv_sst!(ssti,sst,xd,yd)
             if tracer_relaxation
                 tracer_relax!(ssti,sst_ref)

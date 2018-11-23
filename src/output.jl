@@ -114,6 +114,7 @@ function output_ini(u,v,η,sst)
         return nothing, nothing
     end
 end
+
 """ Writes data to a netCDF file."""
 function output_nc(ncs,u,v,η,sst,i,iout)
 

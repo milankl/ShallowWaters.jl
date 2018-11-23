@@ -5,8 +5,8 @@ const Numtype = Float32
 #const Numtype = BigFloat
 #setprecision(7)
 
-const nx = 100                  # number of grid cells in x-direction
-const Lx = 2000e3               # length of the domain in x-direction
+const nx = 400                  # number of grid cells in x-direction
+const Lx = 4000e3               # length of the domain in x-direction
 const L_ratio = 2               # Domain aspect ratio of Lx/Ly
 
 const gravity = 10.             # gravitational acceleration
@@ -27,7 +27,7 @@ const η_refh = 5.               # height difference [m] of the interface relaxa
 const η_refw = 50e3             # width [m] of the tangent used for the interface relaxation
 
 const cfl = 1.0                 # CFL number
-const Ndays = 100               # number of days to integrate for
+const Ndays = 1000               # number of days to integrate for
 
 # boundary condtions
 const bc_x = "periodic"         # "periodic" or anything else for nonperiodic
@@ -36,25 +36,25 @@ const lbc = 1.                  # lateral boundary condition parameter
 
 const adv_scheme = "ArakawaHsu"   # "Sadourny" or "ArakawaHsu"
 
-const bottom_friction = "linear" # "linear" or "quadratic"
+const bottom_friction = "quadratic" # "linear" or "quadratic"
 const drag = 1e-5               # bottom drag coefficient [dimensionless] for quadratic
 const τdrag = 300.               # bottom drag coefficient [days] for linear
 
-const diffusion = "Constant"    # "Smagorinsky" or "Constant", biharmonic in both cases
+const diffusion = "Smagorinsky"    # "Smagorinsky" or "Constant", biharmonic in both cases
 const ν_const = 500             # [m^2/s] scaling constant for Constant biharmonic diffusion
 const c_smag = 0.15             # Smagorinsky coefficient [dimensionless]
 
 const tracer_advection = true   # "true" or "false"
 const tracer_relaxation = true  # "true" or "false"
-const Uadv = 5                  # Velocity scale [m/s] for tracer advection
+const Uadv = 4                  # Velocity scale [m/s] for tracer advection
 const SSTmax = 1.               # tracer (sea surface temperature) max for restoring
 const SSTmin = 0.               # tracer (sea surface temperature) min for restoring
-const τSST = 10.                # tracer restoring time scale
+const τSST = 50.                # tracer restoring time scale [days]
 const SSTw = 50e3               # width [m] of the tangent used for the interface relaxation
-const SSTϕ = 0.3                # latitude ∈ [0,1] of sst edge
+const SSTϕ = 0.2                # latitude ∈ [0,1] of sst edge
 
 const output = 1                # 1 for nc output 0 for none
-const output_vars = ["u","v","eta","sst"]
+const output_vars = ["u","sst"]
 const output_dt = 6             # output time step in hours
 const outpath = "/network/aopp/chaos/pred/kloewer/julsdata/ssttest/"
 
