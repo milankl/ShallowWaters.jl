@@ -46,11 +46,12 @@ one evaluation of the tracer advection is computed. """
 function adv_timestep()
     # round down to make sure nadvstep is integer, at least 1
     nadvstep = max(1,Int(floor(Δ/Uadv/dtint)))
+    nadvstep_half = nadvstep ÷ 2    #
     # recompute the tracer advection time step to fit the rounding
     dtadvint = nadvstep*dtint
     dtadvu = Numtype(dtadvint*nx/Lx)    # [s/m] for dimensionless advection grid
     dtadvv = Numtype(dtadvint*ny/Ly)
-    return dtadvu,dtadvv,dtadvint,nadvstep
+    return dtadvu,dtadvv,dtadvint,nadvstep,nadvstep_half
 end
 
 const Δ,ny,Ly = domain_ratio(nx,Lx,L_ratio)
@@ -84,6 +85,8 @@ const y_q = Δ*Array(1:ny+1) .- Δ
 # halo of ghost points (because of the biharmonic operator) - don't change.
 const halo = 2
 const haloη = 1
+const halosstx = 2
+const halossty = 1
 
 # is there a point on the left edge? ep - egde points
 # used in some functions of rhs.jl to avoid an if
@@ -114,4 +117,5 @@ const nout_total = (nt ÷ nout)+1                # total number of time steps fo
 const t_vec = Array(0:nout_total-1)*dtint       # time vector for output
 
 # advection time step
-const dtadvu,dtadvv,dtadvint,nadvstep = adv_timestep()
+const dtadvu,dtadvv,dtadvint,nadvstep,nadvstep_half = adv_timestep()
+println((nout,nadvstep))

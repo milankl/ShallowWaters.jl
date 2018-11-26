@@ -19,7 +19,7 @@ end
 
 function duration_estimate(i,t,nt,progrtxt)
     #= Estimates the total time the model integration will take.=#
-    time_per_step = (time()-t) / (i-50)
+    time_per_step = (time()-t) / (i-nadvstep)
     time_total = Int(round(time_per_step*nt))
     time_to_go = Int(round(time_per_step*(nt-i)))
 
@@ -35,18 +35,18 @@ function duration_estimate(i,t,nt,progrtxt)
     end
 end
 
-function nan_detection(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix)
+function nan_detection(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix,sst::AbstractMatrix)
     #= Returns a boolean  input matrices u,v,η contains a NaN.
-    TODO include a check for Posits
+    TODO include a check for Posits, are posits <: AbstractFloat?
     =#
-    n_nan = sum(isnan.(u)) + sum(isnan.(v)) + sum(isnan.(η))
+    n_nan = sum(isnan.(u)) + sum(isnan.(v)) + sum(isnan.(η)) + sum(isnan.(sst))
     if n_nan > 0
         return true
     else
         return false
     end
 
-    #TODO include of check for tracer!
+    #TODO include of check for tracer by other means than nan?
 
 end
 
@@ -82,15 +82,16 @@ function feedback_ini()
 end
 
 function feedback(u,v,η,sst,i,t,nt,nans_detected,progrtxt)
-    if i == 50
-        t = time()    # measure time after 50 loops to avoid overhead and make sure tracer advection executed once
-    elseif i == 100
+    if i == nadvstep # measure time after tracer advection executed once
+        t = time()
+    elseif i == min(2*nadvstep,nadvstep+50)
+        # after the tracer advection executed twice or at least 50 steps
         duration_estimate(i,t,nt,progrtxt)
     end
 
     if !nans_detected
         if i % nout == 0    # only check for nans when output is produced
-            nans_detected = nan_detection(u,v,η)
+            nans_detected = nan_detection(u,v,η,sst)
             if nans_detected
                 println(" NaNs detected at time step $i")
                 if output == 1

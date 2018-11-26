@@ -174,7 +174,7 @@ function preallocate_semiLagrange()
     uinterp = zeros(Numtype,nx,ny)
     vinterp = zero(uinterp)
 
-    ssti = zeros(Numtype,nx+2*haloη,ny+2*haloη)
+    ssti = zeros(Numtype,nx+2*halosstx,ny+2*halossty)
 
     return xd,yd,um,vm,u_T,um_T,v_T,vm_T,uinterp,vinterp,ssti
 end

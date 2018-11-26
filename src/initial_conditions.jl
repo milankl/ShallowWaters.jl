@@ -48,9 +48,23 @@ function initial_conditions(starti=-1)
 
     return u,v,η,sst
 end
+
 """Initial conditions for the tracer determined by SSTmax, SSTmin, SSTw, SSTϕ"""
-function sst_initial()
+function sst_south()
     xx_T,yy_T = meshgrid(x_T,y_T)
     sst = (SSTmin+SSTmax)/2 .+ tanh.(2π*(Ly/(4*SSTw))*(yy_T/Ly .- SSTϕ))*(SSTmin-SSTmax)/2
     return sst
+end
+
+"""Initial conditions for the tracer determined by SSTmax, SSTmin, SSTw, SSTϕ"""
+function sst_west()
+    xx_T,yy_T = meshgrid(x_T,y_T)
+    sst = (SSTmin+SSTmax)/2 .+ tanh.(2π*(Lx/(4*SSTw))*(xx_T/Lx .- SSTϕ))*(SSTmin-SSTmax)/2
+    return sst
+end
+
+if injection_area == "south"
+    sst_initial = sst_south
+elseif injection_area == "west"
+    sst_initial = sst_west
 end

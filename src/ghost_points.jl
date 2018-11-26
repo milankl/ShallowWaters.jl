@@ -9,10 +9,10 @@ function add_halo(u,v,η,sst)
 
         # and haloη for η
         η = cat(1,zeros(Numtype,haloη,ny),η,zeros(Numtype,haloη,ny))
-        η = cat(2,zeros(Numtype,nx+2,haloη),η,zeros(Numtype,nx+2,haloη))
+        η = cat(2,zeros(Numtype,nx+2*haloη,haloη),η,zeros(Numtype,nx+2*haloη,haloη))
 
-        sst = cat(1,zeros(Numtype,haloη,ny),sst,zeros(Numtype,haloη,ny))
-        sst = cat(2,zeros(Numtype,nx+2,haloη),sst,zeros(Numtype,nx+2,haloη))
+        sst = cat(1,zeros(Numtype,halosstx,ny),sst,zeros(Numtype,halosstx,ny))
+        sst = cat(2,zeros(Numtype,nx+2*halosstx,halossty),sst,zeros(Numtype,nx+2*halosstx,halossty))
 
     else
         # use halo = number of halo rows/columns to either side for u,v
@@ -24,10 +24,10 @@ function add_halo(u,v,η,sst)
 
         # and haloη for η
         η = cat(zeros(Numtype,haloη,ny),η,zeros(Numtype,haloη,ny),dims=1)
-        η = cat(zeros(Numtype,nx+2,haloη),η,zeros(Numtype,nx+2,haloη),dims=2)
+        η = cat(zeros(Numtype,nx+2*haloη,haloη),η,zeros(Numtype,nx+2*haloη,haloη),dims=2)
 
-        sst = cat(zeros(Numtype,haloη,ny),sst,zeros(Numtype,haloη,ny),dims=1)
-        sst = cat(zeros(Numtype,nx+2,haloη),sst,zeros(Numtype,nx+2,haloη),dims=2)
+        sst = cat(zeros(Numtype,halosstx,ny),sst,zeros(Numtype,halosstx,ny),dims=1)
+        sst = cat(zeros(Numtype,nx+2*halosstx,halossty),sst,zeros(Numtype,nx+2*halosstx,halossty),dims=2)
     end
 
     ghost_points!(u,v,η)
@@ -171,6 +171,37 @@ function ghost_points_η_periodic!(η)
     @views @inbounds η[:,end] .= η[:,end-1]
 end
 
+""" Copy ghost points for η from inside to the halo in the nonperiodic case. """
+function ghost_points_sst_nonperiodic!(sst)
+
+    # assume no gradients of η across solid boundaries
+    # the 4 corner points are copied twice, but it's faster!
+    for i ∈ 1:halosstx
+        @views @inbounds sst[i,:] .= sst[halosstx+1,:]
+        @views @inbounds sst[end-i+1,:] .= sst[end-halosstx,:]
+    end
+
+    for j ∈ 1:halossty
+        @views @inbounds sst[:,j] .= sst[:,halossty+1]
+        @views @inbounds sst[:,end-j+1] .= sst[:,end-halossty]
+    end
+end
+
+""" Copy ghost points for η from inside to the halo in the periodic case. """
+function ghost_points_sst_periodic!(sst)
+
+    # corner points are copied twice, but it's faster!
+    for i ∈ 1:halosstx
+        @views @inbounds sst[i,:] .= sst[end-2*halosstx+i,:]
+        @views @inbounds sst[end-halosstx+i,:] .= sst[halosstx+i,:]
+    end
+
+    for j ∈ 1:halossty
+        @views @inbounds sst[:,j] .= sst[:,halossty+1]
+        @views @inbounds sst[:,end-j+1] .= sst[:,end-halossty]
+    end
+end
+
 # gather and rename functions for convenience
 function ghost_points_periodic!(u,v,η)
 
@@ -192,8 +223,8 @@ end
 
 if bc_x == "periodic"
     ghost_points! = ghost_points_periodic!
-    ghost_points_sst! = ghost_points_η_periodic!
+    ghost_points_sst! = ghost_points_sst_periodic!
 else
     ghost_points! = ghost_points_nonperiodic!
-    ghost_points_sst! = ghost_points_η_nonperiodic!
+    ghost_points_sst! = ghost_points_sst_nonperiodic!
 end
