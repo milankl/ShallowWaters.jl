@@ -124,18 +124,20 @@ end
 function adv_sst!(ssti,sst,xx,yy)
     m,n = size(ssti)
     @boundscheck (m,n) == size(sst) || throw(BoundsError())
-    @boundscheck (m-2,n-2) == size(xx) || throw(BoundsError())
-    @boundscheck (m-2,n-2) == size(yy) || throw(BoundsError())
+    @boundscheck (m-2*halosstx,n-2*halossty) == size(xx) || throw(BoundsError())
+    @boundscheck (m-2*halosstx,n-2*halossty) == size(yy) || throw(BoundsError())
 
-    clip!(xx,Numtype(0),Numtype(nx+1))
-    clip!(yy,Numtype(0),Numtype(ny+1))
+    clip!(xx,Numtype(1-halosstx),Numtype(nx+halosstx))
+    clip!(yy,Numtype(1-halossty),Numtype(ny+halossty))
 
-    @inbounds for j ∈ 2:n-1
-        for i ∈ 2:m-1
-            k = Int(floor(xx[i-1,j-1]))+1
-            l = Int(floor(yy[i-1,j-1]))+1
-            x0 = xx[i-1,j-1] % 1
-            y0 = yy[i-1,j-1] % 1
+    for j ∈ halossty+1:n-halossty
+        for i ∈ halosstx+1:m-halosstx
+            x = xx[i-halosstx,j-halossty]   # departure point
+            y = yy[i-halosstx,j-halossty]
+            k = Int(floor(x))+halosstx
+            l = Int(floor(y))+halossty
+            x0 = x % 1
+            y0 = y % 1
             ssti[i,j] = bilin(sst[k,l],sst[k+1,l],sst[k,l+1],sst[k+1,l+1],x0,y0)
         end
     end
@@ -151,11 +153,11 @@ end
 """Tracer relaxation."""
 function tracer_relax!(sst,sst_ref)
     m,n = size(sst)
-    @boundscheck (m-2,n-2) == size(sst_ref) || throw(BoundsError())
+    @boundscheck (m-2*halosstx,n-2*halossty) == size(sst_ref) || throw(BoundsError())
 
-    @inbounds for i ∈ 2:m-1
-        for j ∈ 2:n-1
-            sst[i,j] += r_SST*(sst_ref[i-1,j-1] - sst[i,j])
+    @inbounds for j ∈ halossty:n-halossty
+        for i ∈ halosstx:m-halosstx
+            sst[i,j] += r_SST*(sst_ref[i-halosstx,j-halossty] - sst[i,j])
         end
     end
 end

@@ -35,18 +35,18 @@ function duration_estimate(i,t,nt,progrtxt)
     end
 end
 
-function nan_detection(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix)
+function nan_detection(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix,sst::AbstractMatrix)
     #= Returns a boolean  input matrices u,v,η contains a NaN.
-    TODO include a check for Posits
+    TODO include a check for Posits, are posits <: AbstractFloat?
     =#
-    n_nan = sum(isnan.(u)) + sum(isnan.(v)) + sum(isnan.(η))
+    n_nan = sum(isnan.(u)) + sum(isnan.(v)) + sum(isnan.(η)) + sum(isnan.(sst))
     if n_nan > 0
         return true
     else
         return false
     end
 
-    #TODO include of check for tracer!
+    #TODO include of check for tracer by other means than nan?
 
 end
 
@@ -91,7 +91,7 @@ function feedback(u,v,η,sst,i,t,nt,nans_detected,progrtxt)
 
     if !nans_detected
         if i % nout == 0    # only check for nans when output is produced
-            nans_detected = nan_detection(u,v,η)
+            nans_detected = nan_detection(u,v,η,sst)
             if nans_detected
                 println(" NaNs detected at time step $i")
                 if output == 1

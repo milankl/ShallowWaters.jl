@@ -82,28 +82,20 @@ function time_integration(u,v,η,sst)
         η .= η0
         t += dtint
 
-        # average velocities throughout advection time step
-        if tracer_advection
-            um .+= u
-            vm .+= v
+        # mid point (in time) velocity for the advective time step
+        if tracer_advection && ((i+nadvstep_half) % nadvstep) == 0
+            um .= u
+            vm .= v
         end
 
         if tracer_advection && (i % nadvstep) == 0
-
-            um ./= nadvstep   # this does not break the type of um,vm as nadvstep is integer
-            vm ./= nadvstep
-
             departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
-
             adv_sst!(ssti,sst,xd,yd)
             if tracer_relaxation
                 tracer_relax!(ssti,sst_ref)
             end
             ghost_points_sst!(ssti)
             sst .= ssti
-
-            um .= zeero
-            vm .= zeero
         end
 
         # feedback and output

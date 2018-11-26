@@ -138,7 +138,7 @@ function output_nc(ncs,u,v,η,sst,i,iout)
             NetCDF.putvar(ncs[3],"eta",Float32.(η[haloη+1:end-haloη,haloη+1:end-haloη]),start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs[4] != 0
-            NetCDF.putvar(ncs[4],"sst",Float32.(sst[haloη+1:end-haloη,haloη+1:end-haloη]),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs[4],"sst",Float32.(sst[halosstx+1:end-halosstx,halossty+1:end-halossty]),start=[1,1,iout],count=[-1,-1,1])
         end
 
         for nc in ncs
