@@ -13,19 +13,19 @@ function departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
     Iy!(vm_T,vm)
 
     # initial guess - mid point
-    #backtraj_ump!(xd,xxT,one_half*dtadvu,um_T)
-    #backtraj_vmp!(yd,yyT,one_half*dtadvv,vm_T)
-    backtraj_ump!(xd,xxT,dtadvu,um_T)
-    backtraj_vmp!(yd,yyT,dtadvv,vm_T)
+    backtraj_ump!(xd,xxT,one_half*dtadvu,u_T)
+    backtraj_vmp!(yd,yyT,one_half*dtadvv,v_T)
+    #backtraj_ump!(xd,xxT,dtadvu,um_T)
+    #backtraj_vmp!(yd,yyT,dtadvv,vm_T)
 
     # # interpolate um,vm onto mid-point
     # #TODO make one function currently not possible because of different matrix sizes
-    # interp_u!(uinterp,um_T,xd,yd)
-    # interp_v!(vinterp,vm_T,xd,yd)
+    interp_u!(uinterp,um_T,xd,yd)
+    interp_v!(vinterp,vm_T,xd,yd)
     #
     # # update departure point
-    # backtraj!(xd,xxT,dtadvu,uinterp)
-    # backtraj!(yd,yyT,dtadvv,vinterp)
+    backtraj!(xd,xxT,dtadvu,uinterp)
+    backtraj!(yd,yyT,dtadvv,vinterp)
 end
 
 """ Solves the trajectory equation for a given arrival point xa, a time step dt and the velocity u.
@@ -36,8 +36,7 @@ function backtraj_ump!(xd::AbstractMatrix,xa::AbstractMatrix,dt::Real,u::Abstrac
     @boundscheck (m,n) == size(xa) || throw(BoundsError())
     @boundscheck (m+2+ep,n+4) == size(u) || throw(BoundsError())
 
-    #@inbounds for j ∈ 1:n
-    for j ∈ 1:n
+    @inbounds for j ∈ 1:n
         for i ∈ 1:m
             xd[i,j] = xa[i,j] - dt*u[i+1+ep,j+2]
         end
@@ -52,8 +51,7 @@ function backtraj_vmp!(yd::AbstractMatrix,ya::AbstractMatrix,dt::Real,v::Abstrac
     @boundscheck (m,n) == size(ya) || throw(BoundsError())
     @boundscheck (m+4,n+2) == size(v) || throw(BoundsError())
 
-    #@inbounds for j ∈ 1:n
-    for j ∈ 1:n
+    @inbounds for j ∈ 1:n
         for i ∈ 1:m
             yd[i,j] = ya[i,j] - dt*v[i+2,j+1]
         end
@@ -68,8 +66,7 @@ function backtraj!(rd::AbstractMatrix,ra::AbstractMatrix,dt::Real,uv::AbstractMa
     @boundscheck (m,n) == size(ra) || throw(BoundsError())
     @boundscheck (m,n) == size(uv) || throw(BoundsError())
 
-    #@inbounds for j ∈ 1:n
-    for j ∈ 1:n
+    @inbounds for j ∈ 1:n
         for i ∈ 1:m
             rd[i,j] = ra[i,j] - dt*uv[i,j]
         end
@@ -84,19 +81,11 @@ function interp_u!(ui,u,xx,yy)
     @boundscheck (m,n) == size(xx) || throw(BoundsError())
     @boundscheck (m,n) == size(yy) || throw(BoundsError())
 
-    # max/min to avoid indices beyond [1,m]x[1,n]
-    if minimum(xx) < -ep || maximum(xx) >= (nx+1)
-        throw(error("Interpolation error: Index exceeds matrix dimensions."))
-        # TODO think what to do then
-    end
+    # clip to avoid indices beyond [1,m]x[1,n]
+    clip!(xx,Numtype(-ep),Numtype(nx+1))
+    clip!(yy,Numtype(-1),Numtype(ny+2))
 
-    if minimum(yy) < -1 || maximum(yy) >= (ny+2)
-        throw(error("Interpolation error: Index exceeds matrix dimensions."))
-        # TODO think what to do then
-    end
-
-    #@inbounds for j ∈ 1:n
-    for j ∈ 1:n
+    @inbounds for j ∈ 1:n
         for i ∈ 1:m
             k = Int(floor(xx[i,j]))+1+ep   #+1 to account for the size difference of u,ui
             l = Int(floor(yy[i,j]))+2
@@ -115,19 +104,11 @@ function interp_v!(vi,v,xx,yy)
     @boundscheck (m,n) == size(xx) || throw(BoundsError())
     @boundscheck (m,n) == size(yy) || throw(BoundsError())
 
-    # max/min to avoid indices beyond [1,m]x[1,n]
-    if minimum(xx) < -1 || maximum(xx) >= (nx+2)
-        throw(error("Interpolation error: Index exceeds matrix dimensions."))
-        # TODO think what to do then
-    end
+    # clip to avoid indices beyond [1,m]x[1,n]
+    clip!(xx,Numtype(-1),Numtype(nx+2))
+    clip!(yy,Numtype(0),Numtype(ny+1))
 
-    if minimum(yy) < 0 || maximum(yy) >= (ny+1)
-        throw(error("Interpolation error: Index exceeds matrix dimensions."))
-        # TODO think what to do then
-    end
-
-    #@inbounds for j ∈ 1:n
-    for j ∈ 1:n
+    @inbounds for j ∈ 1:n
         for i ∈ 1:m
             k = Int(floor(xx[i,j]))+2   #+1 to account for the size difference of u,ui
             l = Int(floor(yy[i,j]))+1
@@ -146,19 +127,10 @@ function adv_sst!(ssti,sst,xx,yy)
     @boundscheck (m-2,n-2) == size(xx) || throw(BoundsError())
     @boundscheck (m-2,n-2) == size(yy) || throw(BoundsError())
 
-    # max/min to avoid indices beyond [1,m]x[1,n]
-    if minimum(xx) < 0 || maximum(xx) >= (nx+1)
-        throw(error("Interpolation error: Index exceeds matrix dimensions."))
-        # TODO think what to do then
-    end
+    clip!(xx,Numtype(0),Numtype(nx+1))
+    clip!(yy,Numtype(0),Numtype(ny+1))
 
-    if minimum(yy) < 0 || maximum(yy) >= (ny+1)
-        throw(error("Interpolation error: Index exceeds matrix dimensions."))
-        # TODO think what to do then
-    end
-
-    #@inbounds for j ∈ 2:n-1
-    for j ∈ 2:n-1
+    @inbounds for j ∈ 2:n-1
         for i ∈ 2:m-1
             k = Int(floor(xx[i-1,j-1]))+1
             l = Int(floor(yy[i-1,j-1]))+1
@@ -186,4 +158,14 @@ function tracer_relax!(sst,sst_ref)
             sst[i,j] += r_SST*(sst_ref[i-1,j-1] - sst[i,j])
         end
     end
+end
+
+"""Clips all values of Matrix X in the range [a,b)."""
+function clip!(X::AbstractMatrix,a::Real,b::Real)
+    if minimum(X) < a || maximum(X) >= b
+        println("Limits exceed matrix dimensions. Clipping...")
+        X[X .< a] .= a
+        X[X .>= b] .= b
+    end
+    return nothing
 end
