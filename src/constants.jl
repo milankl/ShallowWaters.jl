@@ -1,6 +1,15 @@
 # Set up constants to be used within the RHS rhs.jl
 # Set typeof according to the used number type Numtype
 
+# Runge-Kutta 3rd/4th order coefficients
+if RKo == 3     # version 2
+    const RKa = Numtype.([1/4,0.,3/4])
+    const RKb = Numtype.([1/3,2/3])
+elseif RKo == 4
+    const RKa = Numtype.([1/6,1/3,1/3,1/6])
+    const RKb = Numtype.([.5,.5,1.])
+end
+
 # for the ghost point copy/tangential boundary conditions
 const one_minus_α = Numtype(1-lbc)
 

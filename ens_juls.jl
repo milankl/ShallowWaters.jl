@@ -10,7 +10,7 @@ if VERSION == v"0.7.0"
 end
 
 #using MPI
-using SigmoidNumbers
+#using SigmoidNumbers
 
 # Finite16nonu
 #include("/home/kloewer/julia/FiniteFloats.jl/src/FiniteFloats.jl")
@@ -40,7 +40,7 @@ include("src/feedback.jl")
 include("src/output.jl")
 
 # INITIALISE
-for ens_mem in 1:10
+for ens_mem in 1:50
 	global run_id,runpath
 	run_id,runpath = get_run_id_path("fill")
 	starti = load(initpath*"starti.jld2")["starti"][run_id+1]
