@@ -118,4 +118,3 @@ const t_vec = Array(0:nout_total-1)*dtint       # time vector for output
 
 # advection time step
 const dtadvu,dtadvv,dtadvint,nadvstep,nadvstep_half = adv_timestep()
-println((nout,nadvstep))

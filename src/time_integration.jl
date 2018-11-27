@@ -28,10 +28,6 @@ function time_integration(u,v,η,sst)
     v0 .= v
     η0 .= η
 
-    # Runge-Kutta 4th order coefficients
-    RKa = Numtype.([1/6,1/3,1/3,1/6])
-    RKb = Numtype.([.5,.5,1.])
-
     # feedback and output
     t0,progrtxt = feedback_ini()
     ncs, iout = output_ini(u,v,η,sst)
@@ -46,8 +42,8 @@ function time_integration(u,v,η,sst)
         v1 .= v
         η1 .= η
 
-        # Runge-Kutta 4th order
-        for rki = 1:4
+        # Runge-Kutta 4th order / 3rd order
+        for rki = 1:RKo
             if rki > 1
                 ghost_points!(u1,v1,η1)
             end
@@ -65,7 +61,7 @@ function time_integration(u,v,η,sst)
                 LLu1,LLu2,LLv1,LLv2)
 
 
-            if rki < 4
+            if rki < RKo
                 u1 .= u .+ RKb[rki]*Δt*du
                 v1 .= v .+ RKb[rki]*Δt*dv
                 η1 .= η .+ RKb[rki]*Δt*dη
