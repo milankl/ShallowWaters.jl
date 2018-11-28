@@ -26,8 +26,8 @@ const t_relax = 5.              # time scale of the interface_relaxation [days]
 const η_refh = 5.               # height difference [m] of the interface relaxation profile
 const η_refw = 50e3             # width [m] of the tangent used for the interface relaxation
 
-const RKo = 3                   # Order of the RK time stepping scheme (3 or 4)
-const cfl = 0.6                 # CFL number
+const RKo = 4                   # Order of the RK time stepping scheme (3 or 4)
+const cfl = 1.0                 # CFL number
 const Ndays = 100               # number of days to integrate for
 
 # boundary condtions
@@ -35,9 +35,9 @@ const bc_x = "periodic"         # "periodic" or anything else for nonperiodic
 const lbc = 1.                  # lateral boundary condition parameter
                                 # 0 free-slip, 0<lbc<2 partial-slip, 2 no-slip
 
-const adv_scheme = "Sadourny"   # "Sadourny" or "ArakawaHsu"
+const adv_scheme = "ArakawaHsu"   # "Sadourny" or "ArakawaHsu"
 
-const bottom_friction = "linear" # "linear" or "quadratic"
+const bottom_friction = "quadratic" # "linear" or "quadratic"
 const drag = 1e-5               # bottom drag coefficient [dimensionless] for quadratic
 const τdrag = 300.               # bottom drag coefficient [days] for linear
 
@@ -56,11 +56,12 @@ const SSTw = 10e3               # width [m] of the tangent used for the interfac
 const SSTϕ = 0.5                # latitude ∈ [0,1] of sst edge
 
 const output = 1                # 1 for nc output 0 for none
-const output_vars = ["eta"]
+const output_vars = ["u"]
 const output_dt = 6             # output time step in hours
-const outpath = "/network/aopp/chaos/pred/kloewer/julsdata/forecast/Float64RK3/"
+#const outpath = "/network/aopp/chaos/pred/kloewer/julsdata/forecast/Float64RK3/"
+const outpath = "/Users/milan/phd/"
 
-const initial_cond = "ncfile"   # "rest" or "ncfile"
+const initial_cond = "rest"   # "rest" or "ncfile"
 const initpath = "/network/aopp/chaos/pred/kloewer/julsdata/forecast/"
 
 const init_run_id = 1           # only for starting from ncfile
