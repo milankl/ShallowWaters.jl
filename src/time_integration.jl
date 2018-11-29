@@ -68,7 +68,7 @@ function time_integration(u,v,η,sst)
         end
 
         # DIFFUSIVE PART - SEMI-IMPLICIT EULER
-        # use u0 = u^(n+1) to evaluate tendencies, add to u = u^n
+        # use u0 = u^(n+1) to evaluate tendencies, add to u0 = u^n + rhs
         ghost_points!(u0,v0,η0)
         bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u0,v0,η0,
                 H,h,u²,v²,h_u,h_v)

@@ -10,7 +10,7 @@ if VERSION == v"0.7.0"
 end
 
 #using MPI
-#using SigmoidNumbers
+using SigmoidNumbers
 
 # Finite16nonu
 #include("/home/kloewer/julia/FiniteFloats.jl/src/FiniteFloats.jl")
