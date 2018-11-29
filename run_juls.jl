@@ -10,7 +10,7 @@ if VERSION == v"0.7.0"
 end
 
 #using MPI
-#using SigmoidNumbers
+using SigmoidNumbers
 
 # Finite16nonu
 #include("/home/kloewer/julia/FiniteFloats.jl/src/FiniteFloats.jl")
@@ -25,6 +25,9 @@ include("src/constants.jl")
 include("src/gradients.jl")
 include("src/interpolations.jl")
 include("src/arakawahsu.jl")
+include("src/PV_adv.jl")
+include("src/bottom_friction.jl")
+include("src/diffusion.jl")
 include("src/tracer_adv.jl")
 include("src/coriolis.jl")
 include("src/forcing.jl")

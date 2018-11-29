@@ -25,8 +25,8 @@ const one_quart = Numtype(0.25)
 const g = Numtype(gravity)
 
 # for the bottom friction (include grid spacing as gradient operators are dimensionless)
-const c_D = Numtype(Δ*drag)
-const r_B = Numtype(Δ/(τdrag*24*3600))  # [1/s]
+const c_D = Numtype(-Δ*drag)
+const r_B = Numtype(-Δ/(τdrag*24*3600))  # [1/s]
 
 # frequency [1/s] of interface relaxation (for non-dimensional gradients, γ contains the grid spacing Δ)
 const γ = Numtype(Δ/(t_relax*3600*24))

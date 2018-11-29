@@ -7,32 +7,69 @@ function output_ini(u,v,η,sst)
         Dictu = Dict{String,Any}("description"=>"Data from shallow-water model juls.")
         Dictu["details"] = "Cartesian coordinates, f or beta-plane, Arakawa C-grid"
         Dictu["reference"] = "github.com/milankl/juls"
-        Dictu["cfl"] = cfl
+
+        Dictu["nx"] = nx
+        Dictu["Lx"] = Lx
+        Dictu["L_ratio"] = L_ratio
+        Dictu["delta"] = Δ
+
+        Dictu["halo"] = halo
+        Dictu["haloeta"] = haloη
+        Dictu["halosstx"] = halosstx
+        Dictu["halossty"] = halossty
+
         Dictu["g"] = gravity
         Dictu["water_depth"] = water_depth
-        Dictu["bc_x"] = bc_x
-        Dictu["lbc"] = lbc
-        Dictu["drag"] = drag
-        Dictu["c_smag"] = c_smag
-        Dictu["initial_cond"] = initial_cond
-        Dictu["init_run_id"] = init_run_id
         Dictu["phi"] = ϕ
-        Dictu["density rho"] = ρ
+        Dictu["density"] = ρ
 
         Dictu["wind_forcing"] = wind_forcing
         Dictu["Fx0"] = Fx0
+
+        Dictu["topography_feature"] = topography_feature
+        Dictu["topofeat_height"] = topofeat_height
+        Dictu["topofeat_width"] = topofeat_width
 
         Dictu["surface_forcing"] = string(surface_forcing)
         Dictu["t_relax"] = t_relax
         Dictu["eta_refh"] = η_refh
         Dictu["η_refw"] = η_refw
 
-        Dictu["topography_feature"] = topography_feature
-        Dictu["topofeat_height"] = topofeat_height
-        Dictu["topofeat_width"] = topofeat_width
-
         Dictu["Numtype"] = string(Numtype)
-        Dictu["output_dt"] = nout*dtint
+        Dictu["output_dt"] = output_dt
+        Dictu["nout"] = nout
+        Dictu["nadvstep"] = nadvstep
+
+        Dictu["RKo"] = RKo
+        Dictu["cfl"] = cfl
+        Dictu["Ndays"] = Ndays
+
+        Dictu["bc_x"] = bc_x
+        Dictu["lbc"] = lbc
+
+        Dictu["adv_scheme"] = adv_scheme
+
+        Dictu["bottom_friction"] = bottom_friction
+        Dictu["drag"] = drag
+        Dictu["taudrag"] = τdrag
+
+        Dictu["diffusion"] = diffusion
+        Dictu["nuConst"] = ν_const
+        Dictu["c_smag"] = c_smag
+
+        Dictu["tracer_advcetion"] = string(tracer_advection)
+        Dictu["tracer_relaxation"] = string(tracer_relaxation)
+        Dictu["injection_area"] = injection_area
+        Dictu["Uadv"] = Uadv
+        Dictu["SSTmax"] = SSTmax
+        Dictu["SSTmin"] = SSTmin
+        Dictu["tauSST"] = τSST
+        Dictu["SSTw"] = SSTw
+        Dictu["SSTphi"] = SSTϕ
+
+        Dictu["initial_cond"] = initial_cond
+        Dictu["init_run_id"] = init_run_id
+        Dictu["initpath"] = initpath
 
         if "u" in output_vars
             xudim = NcDim("x",nux,values=x_u)

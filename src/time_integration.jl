@@ -49,17 +49,11 @@ function time_integration(u,v,η,sst)
             end
 
             rhs!(du,dv,dη,u1,v1,η1,Fx,f_q,H,η_ref,
-                dudx,dvdy,dvdx,dudy,dpdx,dpdy,
+                dvdx,dudy,dpdx,dpdy,
                 p,u²,v²,KEu,KEv,dUdx,dVdy,
                 h,h_u,h_v,h_q,U,V,U_v,V_u,
                 qhv,qhu,q,q_u,q_v,
-                qα,qβ,qγ,qδ,
-                sqrtKE,sqrtKE_u,sqrtKE_v,Bu,Bv,
-                DS,DS_q,DT,νSmag,νSmag_q,
-                Lu,Lv,dLudx,dLudy,dLvdx,dLvdy,
-                S11,S12,S21,S22,
-                LLu1,LLu2,LLv1,LLv2)
-
+                qα,qβ,qγ,qδ)
 
             if rki < RKo
                 u1 .= u .+ RKb[rki]*Δt*du
@@ -73,11 +67,23 @@ function time_integration(u,v,η,sst)
             η0 .+= RKa[rki]*Δt*dη
         end
 
+        # DIFFUSIVE PART - SEMI-IMPLICIT EULER
+        # use u0 = u^(n+1) to evaluate tendencies, add to u0 = u^n + rhs
+        ghost_points!(u0,v0,η0)
+        bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u0,v0,η0,
+                H,h,u²,v²,h_u,h_v)
+        diffusive!(dudx,dudy,dvdx,dvdy,DS,DS_q,DT,νSmag,νSmag_q,Lu,Lv,
+                dLudx,dLudy,dLvdx,dLvdy,S11,S12,S21,S22,
+                LLu1,LLu2,LLv1,LLv2,u0,v0)
+        add_drag_diff_tendencies!(u0,v0,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
+
+        # RK3/4 copy back from substeps
         u .= u0
         v .= v0
         η .= η0
         t += dtint
 
+        # TRACER ADVECTION
         # mid point (in time) velocity for the advective time step
         if tracer_advection && ((i+nadvstep_half) % nadvstep) == 0
             um .= u
