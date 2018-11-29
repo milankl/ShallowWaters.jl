@@ -132,7 +132,6 @@ end
 νSmag * ∇∇² ⃗u = (S11, S12; S21, S22)"""
 function viscous_tensor_Constant!(S11,S12,S21,S22,dLudx,dLudy,dLvdx,dLvdy)
     m,n = size(S11)
-    @boundscheck (m+2-ep,n) == size(νSmag) || throw(BoundsError())
     @boundscheck (m,n) == size(dLudx) || throw(BoundsError())
 
     @inbounds for j ∈ 1:n
@@ -142,7 +141,6 @@ function viscous_tensor_Constant!(S11,S12,S21,S22,dLudx,dLudy,dLvdx,dLvdy)
     end
 
     m,n = size(S12)
-    @boundscheck (m,n) == size(νSmag_q) || throw(BoundsError())
     @boundscheck (m+ep,n) == size(dLudy) || throw(BoundsError())
 
     @inbounds for j ∈ 1:n
@@ -152,7 +150,6 @@ function viscous_tensor_Constant!(S11,S12,S21,S22,dLudx,dLudy,dLvdx,dLvdy)
     end
 
     m,n = size(S21)
-    @boundscheck (m,n) == size(νSmag_q) || throw(BoundsError())
     @boundscheck (m,n) == size(dLvdx) || throw(BoundsError())
 
     @inbounds for j ∈ 1:n
@@ -162,7 +159,6 @@ function viscous_tensor_Constant!(S11,S12,S21,S22,dLudx,dLudy,dLvdx,dLvdy)
     end
 
     m,n = size(S22)
-    @boundscheck (m,n+2) == size(νSmag) || throw(BoundsError())
     @boundscheck (m,n) == size(dLvdy) || throw(BoundsError())
 
     @inbounds for j ∈ 1:n
