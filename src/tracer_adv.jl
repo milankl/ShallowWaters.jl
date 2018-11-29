@@ -87,10 +87,13 @@ function interp_u!(ui,u,xx,yy)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            k = Int(floor(xx[i,j]))+1+ep   #+1 to account for the size difference of u,ui
-            l = Int(floor(yy[i,j]))+2
-            x0 = xx[i,j] % 1
-            y0 = yy[i,j] % 1
+            # floor is not defined for posits...
+            xi = Int(floor(Float64(xx[i,j])))
+            yi = Int(floor(Float64(yy[i,j])))
+            k = xi+1+ep   #+1 to account for the size difference of u,ui
+            l = yi+2
+            x0 = xx[i,j] - xi
+            y0 = yy[i,j] - yi
             ui[i,j] = bilin(u[k,l],u[k+1,l],u[k,l+1],u[k+1,l+1],x0,y0)
         end
     end
@@ -110,10 +113,13 @@ function interp_v!(vi,v,xx,yy)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            k = Int(floor(xx[i,j]))+2   #+1 to account for the size difference of u,ui
-            l = Int(floor(yy[i,j]))+1
-            x0 = xx[i,j] % 1
-            y0 = yy[i,j] % 1
+            # floor is not defined for posits...
+            xi = Int(floor(Float64(xx[i,j])))
+            yi = Int(floor(Float64(yy[i,j])))
+            k = xi+2   #+1 to account for the size difference of u,ui
+            l = yi+1
+            x0 = xx[i,j] - xi
+            y0 = yy[i,j] - yi
             vi[i,j] = bilin(v[k,l],v[k+1,l],v[k,l+1],v[k+1,l+1],x0,y0)
         end
     end
@@ -132,12 +138,12 @@ function adv_sst!(ssti,sst,xx,yy)
 
     for j ∈ halossty+1:n-halossty
         for i ∈ halosstx+1:m-halosstx
-            x = xx[i-halosstx,j-halossty]   # departure point
-            y = yy[i-halosstx,j-halossty]
-            k = Int(floor(x))+halosstx
-            l = Int(floor(y))+halossty
-            x0 = x % 1
-            y0 = y % 1
+            xi = Int(floor(Float64(xx[i-halosstx,j-halossty])))   # departure point
+            yi = Int(floor(Float64(yy[i-halosstx,j-halossty])))
+            k = xi+halosstx
+            l = yi+halossty
+            x0 = xx[i-halosstx,j-halossty] - xi
+            y0 = yy[i-halosstx,j-halossty] - yi
             ssti[i,j] = bilin(sst[k,l],sst[k+1,l],sst[k,l+1],sst[k+1,l+1],x0,y0)
         end
     end
@@ -171,3 +177,6 @@ function clip!(X::AbstractMatrix,a::Real,b::Real)
     end
     return nothing
 end
+
+#TODO for no domain decomposition the clipping function could involve a wrap-around
+#TODO for periodic boundary conditions (probably unnecessary )
