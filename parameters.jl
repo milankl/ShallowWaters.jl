@@ -6,9 +6,9 @@ const Numtype = Float32
 #setprecision(7)
 
 # DOMAIN RESOLUTION AND RATIO
-const nx = 128                  # number of grid cells in x-direction
-const Lx = 3840e3               # length of the domain in x-direction
-const L_ratio = 1               # Domain aspect ratio of Lx/Ly
+const nx = 512                  # number of grid cells in x-direction
+const Lx = 7680e3               # length of the domain in x-direction
+const L_ratio = 2               # Domain aspect ratio of Lx/Ly
 
 # PHYSICAL CONSTANTS
 const gravity = 10.             # gravitational acceleration
@@ -19,12 +19,12 @@ const ω = 2π/(24*3600)          # Earth's angular frequency [s^-1]
 const R = 6.371e6               # Earth's radius [m]
 
 # WIND FORCING OPTIONS
-const wind_forcing = "double_gyre"  # "channel", "double_gyre", "shear" or "none"
+const wind_forcing = "channel"  # "channel", "double_gyre", "shear" or "none"
 const Fx0 = 0.12                # wind stress strength [Pa], default 0.12
 
 # BOTTOM TOPOGRAPHY OPTIONS
 const topography_feature = "ridge" # "ridge", "seamount", "flat"
-const topofeat_height = 50.      # height of seamount
+const topofeat_height = 100.      # height of seamount
 const topofeat_width = 300e3    # horizontal scale [m] of the seamount
 
 # NEWTONIAN COOLING OPTIONS
@@ -36,7 +36,7 @@ const η_refw = 50e3             # width [m] of the tangent used for the interfa
 # TIME STEPPING OPTIONS
 const RKo = 4                   # Order of the RK time stepping scheme (3 or 4)
 const cfl = 1.0                 # CFL number (1.0 recommended for RK4, 0.6 for RK3)
-const Ndays = 1000            # number of days to integrate for
+const Ndays = 2000            # number of days to integrate for
 
 # BOUNDARY CONDITION OPTIONS
 const bc_x = "periodic"         # "periodic" or anything else for nonperiodic
