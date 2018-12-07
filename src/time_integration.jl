@@ -98,6 +98,9 @@ function time_integration(u,v,η,sst)
             end
             ghost_points_sst!(ssti)
             sst .= ssti
+            
+            # conserved?
+            #println(mean(sst[halosstx+1:end-halosstx,halossty+1:end-halossty].*h[haloη+1:end-haloη,haloη+1:end-haloη]))
         end
 
         # feedback and output

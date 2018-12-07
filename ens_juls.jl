@@ -4,6 +4,7 @@ etc, and runs the model =#
 using Dates
 using NetCDF
 using FileIO
+using Statistics
 
 if VERSION == v"0.7.0"
     using Printf
@@ -24,7 +25,6 @@ include("src/constants.jl")
 # OPERATORS and everything that is needed for the RHS
 include("src/gradients.jl")
 include("src/interpolations.jl")
-include("src/arakawahsu.jl")
 include("src/PV_adv.jl")
 include("src/bottom_friction.jl")
 include("src/diffusion.jl")
