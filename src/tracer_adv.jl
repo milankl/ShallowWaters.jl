@@ -82,7 +82,7 @@ function interp_u!(ui,u,xx,yy)
     @boundscheck (m,n) == size(yy) || throw(BoundsError())
 
     # clip to avoid indices beyond [1,m]x[1,n]
-    clip!(xx,Numtype(-ep),Numtype(nx+1))
+    clip_wrap!(xx,Numtype(-ep),Numtype(nx+1))
     clip!(yy,Numtype(-1),Numtype(ny+2))
 
     @inbounds for j ∈ 1:n
@@ -108,7 +108,7 @@ function interp_v!(vi,v,xx,yy)
     @boundscheck (m,n) == size(yy) || throw(BoundsError())
 
     # clip to avoid indices beyond [1,m]x[1,n]
-    clip!(xx,Numtype(-1),Numtype(nx+2))
+    clip_wrap!(xx,Numtype(-1),Numtype(nx+2))
     clip!(yy,Numtype(0),Numtype(ny+1))
 
     @inbounds for j ∈ 1:n
@@ -133,7 +133,7 @@ function adv_sst!(ssti,sst,xx,yy)
     @boundscheck (m-2*halosstx,n-2*halossty) == size(xx) || throw(BoundsError())
     @boundscheck (m-2*halosstx,n-2*halossty) == size(yy) || throw(BoundsError())
 
-    clip!(xx,Numtype(1-halosstx),Numtype(nx+halosstx))
+    clip_wrap!(xx,Numtype(1-halosstx),Numtype(nx+halosstx))
     clip!(yy,Numtype(1-halossty),Numtype(ny+halossty))
 
     for j ∈ halossty+1:n-halossty
@@ -174,6 +174,18 @@ function clip!(X::AbstractMatrix,a::Real,b::Real)
         println("Limits exceed matrix dimensions. Clipping...")
         X[X .< a] .= a
         X[X .>= b] .= b
+    end
+    return nothing
+end
+
+"""Clips all values of Matrix X in the range [a,b) with wrap-around behaviour:
+x* = x + (b-a) for x < a,   and
+x* = x + (a-b) for x >= b"""
+function clip_wrap!(X::AbstractMatrix,a::Real,b::Real)
+    if minimum(X) < a || maximum(X) >= b
+        println("Limits exceed matrix dimensions. Wrapping...")
+        X[X .< a] .+= (b-a)
+        X[X .>= b] .+= (a-b)
     end
     return nothing
 end
