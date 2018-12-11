@@ -1,13 +1,13 @@
 # NUMBER FORMAT OPTIONS
 const Numtype = Float32
-# const Numtype = Posit{16,2}
+#const Numtype = Posit{16,2}
 #const Numtype = Main.FiniteFloats.Finite16
 #const Numtype = BigFloat
 #setprecision(7)
 
 # DOMAIN RESOLUTION AND RATIO
-const nx = 512                  # number of grid cells in x-direction
-const Lx = 7680e3               # length of the domain in x-direction
+const nx = 200                  # number of grid cells in x-direction
+const Lx = 3000e3               # length of the domain in x-direction
 const L_ratio = 2               # Domain aspect ratio of Lx/Ly
 
 # PHYSICAL CONSTANTS
@@ -36,7 +36,7 @@ const η_refw = 50e3             # width [m] of the tangent used for the interfa
 # TIME STEPPING OPTIONS
 const RKo = 4                   # Order of the RK time stepping scheme (3 or 4)
 const cfl = 1.0                 # CFL number (1.0 recommended for RK4, 0.6 for RK3)
-const Ndays = 2000            # number of days to integrate for
+const Ndays = 100            # number of days to integrate for
 
 # BOUNDARY CONDITION OPTIONS
 const bc_x = "periodic"         # "periodic" or anything else for nonperiodic
@@ -58,7 +58,7 @@ const c_smag = 0.15             # Smagorinsky coefficient [dimensionless]
 
 # TRACER ADVECTION
 const tracer_advection = true   # "true" or "false"
-const tracer_relaxation = true # "true" or "false"
+const tracer_relaxation = false # "true" or "false"
 const injection_area = "south"  # "west" or "south"
 const Uadv = 0.5               # Velocity scale [m/s] for tracer advection
 const SSTmax = 30.               # tracer (sea surface temperature) max for restoring
@@ -70,12 +70,12 @@ const SSTϕ = 0.5                # latitude/longitude ∈ [0,1] of sst edge
 # OUTPUT OPTIONS
 const output = 1                # 1 for nc output 0 for none
 const output_vars = ["u","v","eta","sst"]
-const output_dt = 6             # output time step in hours
-const outpath = "/network/aopp/chaos/pred/kloewer/julsdata/ssttest/"
+const output_dt = 3             # output time step in hours
+const outpath = "/network/aopp/chaos/pred/kloewer/julsdata/tracerwrap/"
 #const outpath = "/Users/milan/phd/"
 
 # INITIAL CONDITIONS
-const initial_cond = "rest"   # "rest" or "ncfile"
-const initpath = "/network/aopp/chaos/pred/kloewer/julsdata/forecast/"
+const initial_cond = "ncfile"   # "rest" or "ncfile"
+const initpath = "/network/aopp/chaos/pred/kloewer/julsdata/tracerwrap/"
 
-const init_run_id = 2           # only for starting from ncfile
+const init_run_id = 0           # only for starting from ncfile

@@ -171,7 +171,7 @@ end
 """Clips all values of Matrix X in the range [a,b)."""
 function clip!(X::AbstractMatrix,a::Real,b::Real)
     if minimum(X) < a || maximum(X) >= b
-        println("Limits exceed matrix dimensions. Clipping...")
+        #println("Limits exceed matrix dimensions. Clipping...")
         X[X .< a] .= a
         X[X .>= b] .= b
     end
@@ -183,7 +183,7 @@ x* = x + (b-a) for x < a,   and
 x* = x + (a-b) for x >= b"""
 function clip_wrap!(X::AbstractMatrix,a::Real,b::Real)
     if minimum(X) < a || maximum(X) >= b
-        println("Limits exceed matrix dimensions. Wrapping...")
+        #println("Limits exceed matrix dimensions. Wrapping...")
         X[X .< a] .+= (b-a)
         X[X .>= b] .+= (a-b)
     end

@@ -4,10 +4,10 @@ etc, and runs the model =#
 using Dates
 using NetCDF
 using FileIO
-using Statistics
 
 if VERSION == v"0.7.0"
     using Printf
+    using Statistics
 end
 
 #using MPI
