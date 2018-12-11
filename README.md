@@ -17,7 +17,8 @@ Requires Julia either v0.6, v0.7 or v1.0 and NetCDF.
 # TODO
 
 - from one layer to two (or n-) layers
-- split external mode (gravity waves) from internal modes - a potential speed up of 100x
+- split external mode (gravity waves) from internal modes - a potential speed up of 10-100x
 - parallelize via domain decomposition (all operators are written in a generic way, applicable to every subdomain too, such that only the ghost point copy needs to include communication between threads)
 - split the tracer relaxation into a tracer source and a tracer sink with different time scales
 - include an atmospheric setting
+- bicubic interpolation for tracer advection
