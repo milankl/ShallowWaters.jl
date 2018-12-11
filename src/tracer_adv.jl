@@ -2,7 +2,7 @@
 u,v are assumed to be the time averaged velocities over the previous advection time step.
 (Presumably need to be changed to 2nd order extrapolation in case the tracer is not passive)
 
-Uses fixed-point iteration (sofar only once) to find the departure point."""
+Uses fixed-point iteration once to find the departure point."""
 function departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
     # u,v is t + dtadv, um,vm are averaged over (t,t_dtadv)
 
@@ -12,16 +12,15 @@ function departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
     Iy!(v_T,v)
     Iy!(vm_T,vm)
 
-    # initial guess - mid point
+    # initial guess for departure point - mid point
     backtraj!(xd,xxT,one_half*dtadvu,u_T)
     backtraj!(yd,yyT,one_half*dtadvv,v_T)
 
-    # # interpolate um,vm onto mid-point
-    # #TODO make one function currently not possible because of different matrix sizes
-    interp_u!(uinterp,um_T,xd,yd)
-    interp_v!(vinterp,vm_T,xd,yd)
-    #
-    # # update departure point
+    # interpolate um,vm onto mid-point
+    interp_uv!(uinterp,um_T,xd,yd)
+    interp_uv!(vinterp,vm_T,xd,yd)
+
+    # update departure point
     backtraj!(xd,xxT,dtadvu,uinterp)
     backtraj!(yd,yyT,dtadvv,vinterp)
 end
@@ -56,54 +55,44 @@ function backtraj!(rd::AbstractMatrix,ra::AbstractMatrix,dt::Real,uv::AbstractMa
     end
 end
 
-""" Interpolates the matrix u into the matrix ui, where xx, yy specify the coordinates as indices (including fraction.
-Interpolation only onto the inner entries of ui. (They will be copied back later via the ghostpoint function)"""
-function interp_u!(ui,u,xx,yy)
-    m,n = size(ui)
-    @boundscheck (m+2+ep,n+4) == size(u) || throw(BoundsError())
+""" Interpolates the matrix uv into the matrix uvi, where xx, yy specify the coordinates as indices (including fraction.
+Interpolation only onto the inner entries of uvi. (They will be copied back later via the ghostpoint function).
+Two cases
+    (i) u velocities: from u-grid with halo to T-grid
+    (ii) v velocities: from v-grid with halo to T-grid."""
+function interp_uv!(uvi::AbstractMatrix,uv::AbstractMatrix,xx::AbstractMatrix,yy::AbstractMatrix)
+    m,n = size(uvi)
     @boundscheck (m,n) == size(xx) || throw(BoundsError())
     @boundscheck (m,n) == size(yy) || throw(BoundsError())
 
-    # clip to avoid indices beyond [1,m]x[1,n]
-    clip_wrap!(xx,Numtype(-ep),Numtype(nx+1))
-    clip!(yy,Numtype(-1),Numtype(ny+2))
+    if (m+2+ep,n+4) == size(uv)      # u case
 
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            # floor is not defined for posits...
-            xi = Int(floor(Float64(xx[i,j])))
-            yi = Int(floor(Float64(yy[i,j])))
-            k = xi+1+ep   #+1 to account for the size difference of u,ui
-            l = yi+2
-            x0 = xx[i,j] - xi
-            y0 = yy[i,j] - yi
-            ui[i,j] = bilin(u[k,l],u[k+1,l],u[k,l+1],u[k+1,l+1],x0,y0)
-        end
+        ishift = 1+ep
+        jshift = 2
+        clip_wrap!(xx,Numtype(-ep),Numtype(nx+1))
+        clip!(yy,Numtype(-1),Numtype(ny+2))
+
+    elseif (m+4,n+2) == size(uv)    # v case
+
+        ishift = 2
+        jshift = 1
+        clip_wrap!(xx,Numtype(-1),Numtype(nx+2))
+        clip!(yy,Numtype(0),Numtype(ny+1))
+
+    else
+        throw(BoundsError())
     end
-end
-
-""" Interpolates the matrix u into the matrix ui, where xx, yy specify the coordinates as indices (including fraction.
-Interpolation only onto the inner entries of ui. (They will be copied back later via the ghostpoint function)"""
-function interp_v!(vi,v,xx,yy)
-    m,n = size(vi)
-    @boundscheck (m+4,n+2) == size(v) || throw(BoundsError())
-    @boundscheck (m,n) == size(xx) || throw(BoundsError())
-    @boundscheck (m,n) == size(yy) || throw(BoundsError())
-
-    # clip to avoid indices beyond [1,m]x[1,n]
-    clip_wrap!(xx,Numtype(-1),Numtype(nx+2))
-    clip!(yy,Numtype(0),Numtype(ny+1))
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             # floor is not defined for posits...
-            xi = Int(floor(Float64(xx[i,j])))
+            xi = Int(floor(Float64(xx[i,j])))   # departure point indices lower left corner within grid cell
             yi = Int(floor(Float64(yy[i,j])))
-            k = xi+2   #+1 to account for the size difference of u,ui
-            l = yi+1
-            x0 = xx[i,j] - xi
+            k = xi+ishift       # indices of uv
+            l = yi+jshift
+            x0 = xx[i,j] - xi   # coordinates within grid cell
             y0 = yy[i,j] - yi
-            vi[i,j] = bilin(v[k,l],v[k+1,l],v[k,l+1],v[k+1,l+1],x0,y0)
+            uvi[i,j] = bilin(uv[k,l],uv[k+1,l],uv[k,l+1],uv[k+1,l+1],x0,y0)
         end
     end
 end
