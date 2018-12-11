@@ -13,10 +13,8 @@ function departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
     Iy!(vm_T,vm)
 
     # initial guess - mid point
-    backtraj_ump!(xd,xxT,one_half*dtadvu,u_T)
-    backtraj_vmp!(yd,yyT,one_half*dtadvv,v_T)
-    #backtraj_ump!(xd,xxT,dtadvu,um_T)
-    #backtraj_vmp!(yd,yyT,dtadvv,vm_T)
+    backtraj!(xd,xxT,one_half*dtadvu,u_T)
+    backtraj!(yd,yyT,one_half*dtadvv,v_T)
 
     # # interpolate um,vm onto mid-point
     # #TODO make one function currently not possible because of different matrix sizes
@@ -28,47 +26,32 @@ function departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
     backtraj!(yd,yyT,dtadvv,vinterp)
 end
 
-""" Solves the trajectory equation for a given arrival point xa, a time step dt and the velocity u.
-xd, xa sit on the T-grid without halo, u is interpolated from u-grid (with halo) onto T-grd.
-Respective halo points will be ignored via indexing."""
-function backtraj_ump!(xd::AbstractMatrix,xa::AbstractMatrix,dt::Real,u::AbstractMatrix)
-    m,n = size(xd)
-    @boundscheck (m,n) == size(xa) || throw(BoundsError())
-    @boundscheck (m+2+ep,n+4) == size(u) || throw(BoundsError())
-
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            xd[i,j] = xa[i,j] - dt*u[i+1+ep,j+2]
-        end
-    end
-end
-
-""" Solves the trajectory equation for a given arrival point ya, a time step dt and the velocity v.
-yd, ya sit on the T-grid without halo, v is interpolated from v-grid (with halo) onto T-grid.
-Respective halo points will be ignored via indexing."""
-function backtraj_vmp!(yd::AbstractMatrix,ya::AbstractMatrix,dt::Real,v::AbstractMatrix)
-    m,n = size(yd)
-    @boundscheck (m,n) == size(ya) || throw(BoundsError())
-    @boundscheck (m+4,n+2) == size(v) || throw(BoundsError())
-
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            yd[i,j] = ya[i,j] - dt*v[i+2,j+1]
-        end
-    end
-end
-
 """ Solves the trajectory equation for a given arrival point ra (this can be either x or y),
-a time step dt and the velocity uv (this can be u or v). All matrices have to be of the same size.
-Update version, where all matrices have same size."""
+a time step dt and the velocity uv (this can be u or v). One function for three cases
+
+(i) u is interpolated from u-grid with halo onto T-grid
+(ii) v is interpolated from v-grid with halo onto T-grid
+(iii) u or v already on the T-grid: All matrices have same size."""
 function backtraj!(rd::AbstractMatrix,ra::AbstractMatrix,dt::Real,uv::AbstractMatrix)
     m,n = size(rd)
     @boundscheck (m,n) == size(ra) || throw(BoundsError())
-    @boundscheck (m,n) == size(uv) || throw(BoundsError())
+
+    if (m,n) == size(uv)            # update departue point case, matrices have same size
+        ishift = 0
+        jshift = 0
+    elseif (m+4,n+2) == size(uv)    # v-vel mid-point case, v has halo
+        ishift = 2
+        jshift = 1
+    elseif (m+2+ep,n+4) == size(uv) # u-vel mid-point case, u has halo
+        ishift = 1+ep
+        jshift = 2
+    else
+        throw(BoundsError())
+    end
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            rd[i,j] = ra[i,j] - dt*uv[i,j]
+            rd[i,j] = ra[i,j] - dt*uv[i+ishift,j+jshift]
         end
     end
 end
@@ -189,6 +172,3 @@ function clip_wrap!(X::AbstractMatrix,a::Real,b::Real)
     end
     return nothing
 end
-
-#TODO for no domain decomposition the clipping function could involve a wrap-around
-#TODO for periodic boundary conditions (probably unnecessary )
