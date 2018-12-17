@@ -21,6 +21,18 @@ function ridge()
     return Numtype.(H)
 end
 
+"""Same as ridge() but for 3 ridges at 1/4,1/2,3/4 of the domain."""
+function ridges()
+    xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
+
+    bump1x = exp.(-((xx_T .- Lx/4).^2)/(2*topofeat_width^2))
+    bump2x = exp.(-((xx_T .- Lx/2).^2)/(2*topofeat_width^2))
+    bump3x = exp.(-((xx_T .- 3*Lx/4).^2)/(2*topofeat_width^2))
+
+    H = water_depth .- topofeat_height*bump1x .- topofeat_height*bump2x .- topofeat_height*bump3x
+    return Numtype.(H)
+end
+
 """Returns a matrix of constant water depth specified by the constant water_depth."""
 function flat_bottom()
     H = fill(water_depth,(nx+2*haloη,ny+2*haloη))
@@ -30,6 +42,8 @@ end
 # rename for convenience
 if topography_feature == "ridge"
     topography = ridge
+elseif topography_feature == "ridges"
+    topography = ridges
 elseif topography_feature == "seamount"
     topography = seamount
 elseif topography_feature == "flat"
