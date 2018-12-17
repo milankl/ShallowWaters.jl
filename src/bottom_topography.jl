@@ -25,11 +25,16 @@ end
 function ridges()
     xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
 
-    bump1x = exp.(-((xx_T .- Lx/4).^2)/(2*topofeat_width^2))
-    bump2x = exp.(-((xx_T .- Lx/2).^2)/(2*topofeat_width^2))
-    bump3x = exp.(-((xx_T .- 3*Lx/4).^2)/(2*topofeat_width^2))
+    # bumps in x direction
+    # shift slightly left/right to avoid a symmetric solution
+    b0x = exp.(-(xx_T.^2)/(2*topofeat_width^2))
+    b1x = exp.(-((xx_T .- 0.99*Lx/4).^2)/(2*topofeat_width^2))
+    b2x = exp.(-((xx_T .- 1.01*Lx/2).^2)/(2*topofeat_width^2))
+    b3x = exp.(-((xx_T .- 0.99*3*Lx/4).^2)/(2*topofeat_width^2))
+    b4x = exp.(-((xx_T .- Lx).^2)/(2*topofeat_width^2))
 
-    H = water_depth .- topofeat_height*bump1x .- topofeat_height*bump2x .- topofeat_height*bump3x
+    th = topofeat_height    # for convenience
+    H = water_depth .- th*b0x .- th*b1x .- th*b2x .- th*b3x .- th*b4x
     return Numtype.(H)
 end
 

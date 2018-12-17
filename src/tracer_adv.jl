@@ -66,22 +66,20 @@ function interp_uv!(uvi::AbstractMatrix,uv::AbstractMatrix,xx::AbstractMatrix,yy
     @boundscheck (m,n) == size(yy) || throw(BoundsError())
 
     if (m+2+ep,n+4) == size(uv)      # u case
-
         ishift = 1+ep
         jshift = 2
         clip_wrap!(xx,Numtype(-ep),Numtype(nx+1))
-        clip!(yy,Numtype(-1),Numtype(ny+2))
-
     elseif (m+4,n+2) == size(uv)    # v case
-
         ishift = 2
         jshift = 1
         clip_wrap!(xx,Numtype(-1),Numtype(nx+2))
-        clip!(yy,Numtype(0),Numtype(ny+1))
 
     else
         throw(BoundsError())
     end
+
+    clip_wrap!(xx,Numtype(1-ishift),Numtype(nx+2))
+    clip!(yy,Numtype(1-jshift),Numtype(ny+jshift))
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
@@ -108,7 +106,7 @@ function adv_sst!(ssti,sst,xx,yy)
     clip_wrap!(xx,Numtype(1-halosstx),Numtype(nx+halosstx))
     clip!(yy,Numtype(1-halossty),Numtype(ny+halossty))
 
-    for j ∈ halossty+1:n-halossty
+    @inbounds for j ∈ halossty+1:n-halossty
         for i ∈ halosstx+1:m-halosstx
             xi = Int(floor(Float64(xx[i-halosstx,j-halossty])))   # departure point
             yi = Int(floor(Float64(yy[i-halosstx,j-halossty])))
