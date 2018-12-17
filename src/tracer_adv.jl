@@ -2,7 +2,7 @@
 u,v are assumed to be the time averaged velocities over the previous advection time step.
 (Presumably need to be changed to 2nd order extrapolation in case the tracer is not passive)
 
-Uses fixed-point iteration (sofar only once) to find the departure point."""
+Uses fixed-point iteration once to find the departure point."""
 function departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
     # u,v is t + dtadv, um,vm are averaged over (t,t_dtadv)
 
@@ -12,115 +12,85 @@ function departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
     Iy!(v_T,v)
     Iy!(vm_T,vm)
 
-    # initial guess - mid point
-    backtraj_ump!(xd,xxT,one_half*dtadvu,u_T)
-    backtraj_vmp!(yd,yyT,one_half*dtadvv,v_T)
-    #backtraj_ump!(xd,xxT,dtadvu,um_T)
-    #backtraj_vmp!(yd,yyT,dtadvv,vm_T)
+    # initial guess for departure point - mid point
+    backtraj!(xd,xxT,one_half*dtadvu,u_T)
+    backtraj!(yd,yyT,one_half*dtadvv,v_T)
 
-    # # interpolate um,vm onto mid-point
-    # #TODO make one function currently not possible because of different matrix sizes
-    interp_u!(uinterp,um_T,xd,yd)
-    interp_v!(vinterp,vm_T,xd,yd)
-    #
-    # # update departure point
+    # interpolate um,vm onto mid-point
+    interp_uv!(uinterp,um_T,xd,yd)
+    interp_uv!(vinterp,vm_T,xd,yd)
+
+    # update departure point
     backtraj!(xd,xxT,dtadvu,uinterp)
     backtraj!(yd,yyT,dtadvv,vinterp)
 end
 
-""" Solves the trajectory equation for a given arrival point xa, a time step dt and the velocity u.
-xd, xa sit on the T-grid without halo, u is interpolated from u-grid (with halo) onto T-grd.
-Respective halo points will be ignored via indexing."""
-function backtraj_ump!(xd::AbstractMatrix,xa::AbstractMatrix,dt::Real,u::AbstractMatrix)
-    m,n = size(xd)
-    @boundscheck (m,n) == size(xa) || throw(BoundsError())
-    @boundscheck (m+2+ep,n+4) == size(u) || throw(BoundsError())
-
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            xd[i,j] = xa[i,j] - dt*u[i+1+ep,j+2]
-        end
-    end
-end
-
-""" Solves the trajectory equation for a given arrival point ya, a time step dt and the velocity v.
-yd, ya sit on the T-grid without halo, v is interpolated from v-grid (with halo) onto T-grid.
-Respective halo points will be ignored via indexing."""
-function backtraj_vmp!(yd::AbstractMatrix,ya::AbstractMatrix,dt::Real,v::AbstractMatrix)
-    m,n = size(yd)
-    @boundscheck (m,n) == size(ya) || throw(BoundsError())
-    @boundscheck (m+4,n+2) == size(v) || throw(BoundsError())
-
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            yd[i,j] = ya[i,j] - dt*v[i+2,j+1]
-        end
-    end
-end
-
 """ Solves the trajectory equation for a given arrival point ra (this can be either x or y),
-a time step dt and the velocity uv (this can be u or v). All matrices have to be of the same size.
-Update version, where all matrices have same size."""
+a time step dt and the velocity uv (this can be u or v). One function for three cases
+
+(i) u is interpolated from u-grid with halo onto T-grid
+(ii) v is interpolated from v-grid with halo onto T-grid
+(iii) u or v already on the T-grid: All matrices have same size."""
 function backtraj!(rd::AbstractMatrix,ra::AbstractMatrix,dt::Real,uv::AbstractMatrix)
     m,n = size(rd)
     @boundscheck (m,n) == size(ra) || throw(BoundsError())
-    @boundscheck (m,n) == size(uv) || throw(BoundsError())
+
+    if (m,n) == size(uv)            # update departue point case, matrices have same size
+        ishift = 0
+        jshift = 0
+    elseif (m+4,n+2) == size(uv)    # v-vel mid-point case, v has halo
+        ishift = 2
+        jshift = 1
+    elseif (m+2+ep,n+4) == size(uv) # u-vel mid-point case, u has halo
+        ishift = 1+ep
+        jshift = 2
+    else
+        throw(BoundsError())
+    end
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            rd[i,j] = ra[i,j] - dt*uv[i,j]
+            rd[i,j] = ra[i,j] - dt*uv[i+ishift,j+jshift]
         end
     end
 end
 
-""" Interpolates the matrix u into the matrix ui, where xx, yy specify the coordinates as indices (including fraction.
-Interpolation only onto the inner entries of ui. (They will be copied back later via the ghostpoint function)"""
-function interp_u!(ui,u,xx,yy)
-    m,n = size(ui)
-    @boundscheck (m+2+ep,n+4) == size(u) || throw(BoundsError())
+""" Interpolates the matrix uv into the matrix uvi, where xx, yy specify the coordinates as indices (including fraction.
+Interpolation only onto the inner entries of uvi. (They will be copied back later via the ghostpoint function).
+Two cases
+    (i) u velocities: from u-grid with halo to T-grid
+    (ii) v velocities: from v-grid with halo to T-grid."""
+function interp_uv!(uvi::AbstractMatrix,uv::AbstractMatrix,xx::AbstractMatrix,yy::AbstractMatrix)
+    m,n = size(uvi)
     @boundscheck (m,n) == size(xx) || throw(BoundsError())
     @boundscheck (m,n) == size(yy) || throw(BoundsError())
 
-    # clip to avoid indices beyond [1,m]x[1,n]
-    clip_wrap!(xx,Numtype(-ep),Numtype(nx+1))
-    clip!(yy,Numtype(-1),Numtype(ny+2))
+    if (m+2+ep,n+4) == size(uv)      # u case
+        ishift = 1+ep
+        jshift = 2
+        clip_wrap!(xx,Numtype(-ep),Numtype(nx+1))
+    elseif (m+4,n+2) == size(uv)    # v case
+        ishift = 2
+        jshift = 1
+        clip_wrap!(xx,Numtype(-1),Numtype(nx+2))
 
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            # floor is not defined for posits...
-            xi = Int(floor(Float64(xx[i,j])))
-            yi = Int(floor(Float64(yy[i,j])))
-            k = xi+1+ep   #+1 to account for the size difference of u,ui
-            l = yi+2
-            x0 = xx[i,j] - xi
-            y0 = yy[i,j] - yi
-            ui[i,j] = bilin(u[k,l],u[k+1,l],u[k,l+1],u[k+1,l+1],x0,y0)
-        end
+    else
+        throw(BoundsError())
     end
-end
 
-""" Interpolates the matrix u into the matrix ui, where xx, yy specify the coordinates as indices (including fraction.
-Interpolation only onto the inner entries of ui. (They will be copied back later via the ghostpoint function)"""
-function interp_v!(vi,v,xx,yy)
-    m,n = size(vi)
-    @boundscheck (m+4,n+2) == size(v) || throw(BoundsError())
-    @boundscheck (m,n) == size(xx) || throw(BoundsError())
-    @boundscheck (m,n) == size(yy) || throw(BoundsError())
-
-    # clip to avoid indices beyond [1,m]x[1,n]
-    clip_wrap!(xx,Numtype(-1),Numtype(nx+2))
-    clip!(yy,Numtype(0),Numtype(ny+1))
+    clip_wrap!(xx,Numtype(1-ishift),Numtype(nx+2))
+    clip!(yy,Numtype(1-jshift),Numtype(ny+jshift))
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             # floor is not defined for posits...
-            xi = Int(floor(Float64(xx[i,j])))
+            xi = Int(floor(Float64(xx[i,j])))   # departure point indices lower left corner within grid cell
             yi = Int(floor(Float64(yy[i,j])))
-            k = xi+2   #+1 to account for the size difference of u,ui
-            l = yi+1
-            x0 = xx[i,j] - xi
+            k = xi+ishift       # indices of uv
+            l = yi+jshift
+            x0 = xx[i,j] - xi   # coordinates within grid cell
             y0 = yy[i,j] - yi
-            vi[i,j] = bilin(v[k,l],v[k+1,l],v[k,l+1],v[k+1,l+1],x0,y0)
+            uvi[i,j] = bilin(uv[k,l],uv[k+1,l],uv[k,l+1],uv[k+1,l+1],x0,y0)
         end
     end
 end
@@ -136,7 +106,7 @@ function adv_sst!(ssti,sst,xx,yy)
     clip_wrap!(xx,Numtype(1-halosstx),Numtype(nx+halosstx))
     clip!(yy,Numtype(1-halossty),Numtype(ny+halossty))
 
-    for j ∈ halossty+1:n-halossty
+    @inbounds for j ∈ halossty+1:n-halossty
         for i ∈ halosstx+1:m-halosstx
             xi = Int(floor(Float64(xx[i-halosstx,j-halossty])))   # departure point
             yi = Int(floor(Float64(yy[i-halosstx,j-halossty])))
@@ -189,6 +159,3 @@ function clip_wrap!(X::AbstractMatrix,a::Real,b::Real)
     end
     return nothing
 end
-
-#TODO for no domain decomposition the clipping function could involve a wrap-around
-#TODO for periodic boundary conditions (probably unnecessary )
