@@ -1,5 +1,5 @@
 # NUMBER FORMAT OPTIONS
-const Numtype = Float32
+const Numtype = Float16
 #const Numtype = Posit{16,2}
 #const Numtype = Main.FiniteFloats.Finite16
 #const Numtype = BigFloat
@@ -24,19 +24,19 @@ const Fx0 = 0.12                # wind stress strength [Pa], default 0.12
 
 # BOTTOM TOPOGRAPHY OPTIONS
 const topography_feature = "ridges" # "ridge", "seamount", "flat"
-const topofeat_height = 50.      # height of seamount
-const topofeat_width = 300e3    # horizontal scale [m] of the seamount
+const topofeat_height = 80.      # height of seamount
+const topofeat_width = 200e3    # horizontal scale [m] of the seamount
 
 # NEWTONIAN COOLING OPTIONS
 const surface_forcing = false   # or true
-const t_relax = 5.              # time scale of the interface_relaxation [days]
+const t_relax = 100.              # time scale of the interface_relaxation [days]
 const η_refh = 5.               # height difference [m] of the interface relaxation profile
-const η_refw = 50e3             # width [m] of the tangent used for the interface relaxation
+const η_refw = 100e3             # width [m] of the tangent used for the interface relaxation
 
 # TIME STEPPING OPTIONS
 const RKo = 4                   # Order of the RK time stepping scheme (3 or 4)
 const cfl = 1.0                 # CFL number (1.0 recommended for RK4, 0.6 for RK3)
-const Ndays = 1500            # number of days to integrate for
+const Ndays = 100            # number of days to integrate for
 
 # BOUNDARY CONDITION OPTIONS
 const bc_x = "periodic"         # "periodic" or anything else for nonperiodic
@@ -57,7 +57,7 @@ const ν_const = 500             # [m^2/s] scaling constant for Constant biharmo
 const c_smag = 0.15             # Smagorinsky coefficient [dimensionless]
 
 # TRACER ADVECTION
-const tracer_advection = false   # "true" or "false"
+const tracer_advection = true   # "true" or "false"
 const tracer_relaxation = false # "true" or "false"
 const injection_area = "south"  # "west" or "south"
 const Uadv = 0.5               # Velocity scale [m/s] for tracer advection
@@ -69,13 +69,13 @@ const SSTϕ = 0.5                # latitude/longitude ∈ [0,1] of sst edge
 
 # OUTPUT OPTIONS
 const output = 1                # 1 for nc output 0 for none
-const output_vars = ["u","v","eta"]
+const output_vars = ["u","v","eta","sst"]
 const output_dt = 6             # output time step in hours
 const outpath = "/network/aopp/chaos/pred/kloewer/julsdata/ssthr/"
 #const outpath = "/Users/milan/phd/"
 
 # INITIAL CONDITIONS
-const initial_cond = "rest"   # "rest" or "ncfile"
+const initial_cond = "ncfile"   # "rest" or "ncfile"
 const initpath = "/network/aopp/chaos/pred/kloewer/julsdata/ssthr/"
 
-const init_run_id = 0           # only for starting from ncfile
+const init_run_id = 2           # only for starting from ncfile
