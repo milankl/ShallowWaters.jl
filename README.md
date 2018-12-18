@@ -1,6 +1,6 @@
 # juls
 
-![sst](figs/sst_float16.png?raw=true "SST")
+![sst](figs/sst_hr_float16.png?raw=true "SST")
 
 A shallow water model (but going to be 2-Layer primitive equation model) written in Julia, with a focus on flexible number types: 16/32/64bit floats; Arbitrary precision floats (Julia's BigFloat environment); Arbitrary precision posits via the SigmoidNumber package; Maybe in the future also Integers.
 
