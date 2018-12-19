@@ -1,6 +1,5 @@
+"""Returns a human readable string representing seconds in terms of days, hours, minutes or seconds."""
 function readable_secs(secs::Real)
-    #= Returns a human readable string representing seconds in terms of days, hours, minutes, seconds. =#
-
     days = Int(floor(secs/3600/24))
     hours = Int(floor((secs/3600) % 24))
     minutes = Int(floor((secs/60) % 60))
@@ -17,8 +16,8 @@ function readable_secs(secs::Real)
     end
 end
 
+"""Estimates the total time the model integration will take."""
 function duration_estimate(i,t,nt,progrtxt)
-    #= Estimates the total time the model integration will take.=#
     time_per_step = (time()-t) / (i-nadvstep)
     time_total = Int(round(time_per_step*nt))
     time_to_go = Int(round(time_per_step*(nt-i)))
@@ -35,31 +34,23 @@ function duration_estimate(i,t,nt,progrtxt)
     end
 end
 
+"""Returns a boolean whether the prognostic variables contains a NaN."""
 function nan_detection(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix,sst::AbstractMatrix)
-    #= Returns a boolean  input matrices u,v,η contains a NaN.
-    TODO include a check for Posits, are posits <: AbstractFloat?
-    =#
+    #TODO include a check for Posits, are posits <: AbstractFloat?
+    #TODO include check for tracer by other means than nan? (semi-Lagrange is unconditionally stable...)
+
     n_nan = sum(isnan.(u)) + sum(isnan.(v)) + sum(isnan.(η)) + sum(isnan.(sst))
     if n_nan > 0
         return true
     else
         return false
     end
-
-    #TODO include of check for tracer by other means than nan?
-
 end
 
-function progress_txt_ini()
-    # initialises a txt file for progress feedback
-    progrtxt = open(runpath*"progress.txt","w")
-    return progrtxt
-end
-
+"""Initialises the progress txt file."""
 function feedback_ini()
-    # initialising the progress txt file in case of output
     if output == 1
-        progrtxt = progress_txt_ini()
+        progrtxt = open(runpath*"progress.txt","w")
         s = "Starting juls run $run_id on "*Dates.format(now(),Dates.RFC1123Format)
         println(s)
         write(progrtxt,s*"\n")
@@ -74,13 +65,14 @@ function feedback_ini()
         write(progrtxt,"Numtype is "*string(Numtype)*".\n")
         write(progrtxt,"\nAll data will be stored in $runpath\n")
     else
-        println("Starting juls on "*Dates.format(now(),Dates.RFC1123Format))
+        println("Starting juls on "*Dates.format(now(),Dates.RFC1123Format)*" without output.")
         progrtxt = nothing
     end
 
     return time(),progrtxt
 end
 
+"""Feedback function that calls duration estimate, nan_detection and progress."""
 function feedback(u,v,η,sst,i,t,nt,nans_detected,progrtxt)
     if i == nadvstep # measure time after tracer advection executed once
         t = time()
@@ -109,8 +101,8 @@ function feedback(u,v,η,sst,i,t,nt,nans_detected,progrtxt)
     return t,nans_detected
 end
 
+"""Finalises the progress txt file."""
 function feedback_end(progrtxt,t::Real)
-    # finalise the progress txt file.
     s = " Integration done in "*readable_secs(time()-t)*"."
     println(s)
     if output == 1
@@ -119,13 +111,13 @@ function feedback_end(progrtxt,t::Real)
     end
 end
 
+"""Converts time step into percent for feedback."""
 function progress(i,nt,progrtxt)
-    # progress feedback in percent
     if ((i+1)/nt*100 % 1) < (i/nt*100 % 1)  # update every 1 percent steps.
         percent = Int(round((i+1)/nt*100))
         print("\r\u1b[K")
         print("$percent%")
-        if (output == 1) && (percent % 5 == 0)
+        if (output == 1) && (percent % 5 == 0) # write out only every 5 percent step.
             write(progrtxt,"\n$percent%")
             flush(progrtxt)
         end

@@ -1,6 +1,3 @@
-# Set up constants to be used within the RHS rhs.jl
-# Set typeof according to the used number type Numtype
-
 # Runge-Kutta 3rd/4th order coefficients
 if RKo == 3     # version 2
     const RKa = Numtype.([1/4,0.,3/4])

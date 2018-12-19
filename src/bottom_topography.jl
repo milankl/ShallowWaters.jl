@@ -54,5 +54,5 @@ elseif topography_feature == "seamount"
 elseif topography_feature == "flat"
     topography = flat_bottom
 else
-    throw(error("Topography feature not correctly declared. Allowed: 'ridge', 'seamount', 'flat'."))
+    throw(error("Topography feature not correctly declared."))
 end
