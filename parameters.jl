@@ -58,7 +58,7 @@ const c_smag = 0.15             # Smagorinsky coefficient [dimensionless]
 
 # TRACER ADVECTION
 const tracer_advection = true   # "true" or "false"
-const tracer_relaxation = false  # "true" or "false"
+const tracer_relaxation = true  # "true" or "false"
 const injection_region = "rect"  # "west", "south" or "rect"
 const sstrestart = false        # start from previous sst file
 const Uadv = 0.5               # Velocity scale [m/s] for tracer advection
@@ -69,7 +69,7 @@ const SSTw = 1000e3               # width [m] of the tangent used for the IC and
 const SSTϕ = 0.5                # latitude/longitude ∈ [0,1] of sst edge
 
 # OUTPUT OPTIONS
-const output = 1                # 1 for nc output 0 for none
+const output = true                # 1 for nc output 0 for none
 const output_vars = ["u","v","eta","sst"]
 const output_dt = 6             # output time step in hours
 #const outpath = "/network/aopp/chaos/pred/kloewer/julsdata/ssthr/"

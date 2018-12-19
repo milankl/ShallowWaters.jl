@@ -49,7 +49,7 @@ end
 
 """Initialises the progress txt file."""
 function feedback_ini()
-    if output == 1
+    if output
         progrtxt = open(runpath*"progress.txt","w")
         s = "Starting juls run $run_id on "*Dates.format(now(),Dates.RFC1123Format)
         println(s)
@@ -105,7 +105,7 @@ end
 function feedback_end(progrtxt,t::Real)
     s = " Integration done in "*readable_secs(time()-t)*"."
     println(s)
-    if output == 1
+    if output
         write(progrtxt,"\n"*s[2:end]*"\n")  # close txt file with last output
         flush(progrtxt)
     end
@@ -117,7 +117,7 @@ function progress(i,nt,progrtxt)
         percent = Int(round((i+1)/nt*100))
         print("\r\u1b[K")
         print("$percent%")
-        if (output == 1) && (percent % 5 == 0) # write out only every 5 percent step.
+        if output && (percent % 5 == 0) # write out only every 5 percent step.
             write(progrtxt,"\n$percent%")
             flush(progrtxt)
         end

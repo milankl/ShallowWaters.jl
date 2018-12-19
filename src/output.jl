@@ -1,7 +1,7 @@
 """initialises netCDF files for data output."""
 function output_ini(u,v,η,sst)
     # only process with rank 0 defines the netCDF file
-    if output == 1 #&& prank == 0
+    if output #&& prank == 0
 
         # Attributes
         Dictu = Dict{String,Any}("description"=>"Data from shallow-water model juls.")
@@ -163,7 +163,7 @@ function output_nc(ncs,u,v,η,sst,i,iout)
 
     # output only every nout time steps
     # only process 0 will do the output
-    if i % nout == 0 && output == 1 #&& prank == 0
+    if i % nout == 0 && output #&& prank == 0
 
         # cut off the halo
         if ncs[1] != 0
@@ -196,7 +196,7 @@ end
 
 """Closes netCDF and progress.txt files."""
 function output_close(ncs,progrtxt)
-    if output == 1 #&& prank == 0
+    if output #&& prank == 0
         for nc in ncs
             if nc !=0
                 NetCDF.close(nc)
@@ -211,6 +211,7 @@ end
 """Checks output folders to determine a 4-digit run id number."""
 function get_run_id_path(order="continue",run_id=nothing)
 
+    """Finds the first gap in a list of integers."""
     function gap(a::Array{Int,1})
         try
             return minimum([i for i in minimum(a):maximum(a) if ~(i in a)])
@@ -220,7 +221,7 @@ function get_run_id_path(order="continue",run_id=nothing)
     end
 
     # only process rank 0 checks existing folders
-    if output == 1 #&& prank == 0
+    if output #&& prank == 0
         runlist = filter(x->startswith(x,"run"),readdir(outpath))
         existing_runs = [parse(Int,id[4:end]) for id in runlist]
         if length(existing_runs) == 0           # if no runfolder exists yet
@@ -260,7 +261,7 @@ end
 #TODO is actually executed!
 """Archives all .jl files of juls in the output folder to make runs reproducible."""
 function scripts_output()
-    if output == 1 #&& prank == 0
+    if output #&& prank == 0
         # copy all files in juls main folder
         mkdir(runpath*"scripts")
         for juliafile in filter(x->endswith(x,".jl"),readdir())
