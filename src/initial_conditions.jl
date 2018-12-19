@@ -10,7 +10,7 @@ function initial_conditions(starti=-1)
         u = zeros(Numtype,nux,nuy)
         v = zeros(Numtype,nvx,nvy)
         η = zeros(Numtype,nx,ny)
-        sst = Numtype.(sst_initial())
+        sst = sst_initial()
 
     elseif initial_cond == "ncfile"
 
@@ -43,7 +43,7 @@ function initial_conditions(starti=-1)
 
             sst = Numtpe.(reshape(sst,size(sst)[1:2]))
         else
-            sst = Numtype.(sst_initial())
+            sst = sst_initial()
         end
 
         # remove singleton time dimension
@@ -60,14 +60,14 @@ end
 function sst_south()
     xx_T,yy_T = meshgrid(x_T,y_T)
     sst = (SSTmin+SSTmax)/2 .+ tanh.(2π*(Ly/(4*SSTw))*(yy_T/Ly .- SSTϕ))*(SSTmin-SSTmax)/2
-    return sst
+    return Numtype.(sst)
 end
 
 """Meriodionally constant hyperbolic tangent initial conditions for the tracer determined by SSTmax, SSTmin, SSTw, SSTϕ"""
 function sst_west()
     xx_T,yy_T = meshgrid(x_T,y_T)
     sst = (SSTmin+SSTmax)/2 .+ tanh.(2π*(Lx/(4*SSTw))*(xx_T/Lx .- SSTϕ))*(SSTmin-SSTmax)/2
-    return sst
+    return Numtype.(sst)
 end
 
 """Initial conditions as a rectangle with SSTmax inside, SSTmin outside."""
@@ -81,7 +81,7 @@ function sst_rect()
     sst = fill(SSTmin,size(xx_T))
     inside = (xx_T/Lx .> x0) .* (xx_T/Lx .< x1) .* (yy_T/Ly .> y0) .* (yy_T/Ly .< y1)
     sst[inside] .= SSTmax
-    return sst
+    return Numtype.(sst)
 end
 
 if injection_region == "south"
