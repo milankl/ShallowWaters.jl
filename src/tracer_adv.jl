@@ -68,18 +68,19 @@ function interp_uv!(uvi::AbstractMatrix,uv::AbstractMatrix,xx::AbstractMatrix,yy
     if (m+2+ep,n+4) == size(uv)      # u case
         ishift = 1+ep
         jshift = 2
-        clip_wrap!(xx,Numtype(-ep),Numtype(nx+1))
+        clip_x!(xx,Numtype(-ep),Numtype(nx+1))
     elseif (m+4,n+2) == size(uv)    # v case
         ishift = 2
         jshift = 1
-        clip_wrap!(xx,Numtype(-1),Numtype(nx+2))
+        clip_x!(xx,Numtype(-1),Numtype(nx+2))
 
     else
         throw(BoundsError())
     end
 
-    clip_wrap!(xx,Numtype(1-ishift),Numtype(nx+2))
-    clip!(yy,Numtype(1-jshift),Numtype(ny+jshift))
+    #TODO take clip_x somehow out of the if-clause?
+    #clip_x!(xx,Numtype(1-ishift),Numtype(nx+2))
+    clip_y!(yy,Numtype(1-jshift),Numtype(ny+jshift))
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
@@ -103,8 +104,8 @@ function adv_sst!(ssti,sst,xx,yy)
     @boundscheck (m-2*halosstx,n-2*halossty) == size(xx) || throw(BoundsError())
     @boundscheck (m-2*halosstx,n-2*halossty) == size(yy) || throw(BoundsError())
 
-    clip_wrap!(xx,Numtype(1-halosstx),Numtype(nx+halosstx))
-    clip!(yy,Numtype(1-halossty),Numtype(ny+halossty))
+    clip_x!(xx,Numtype(1-halosstx),Numtype(nx+halosstx))
+    clip_y!(yy,Numtype(1-halossty),Numtype(ny+halossty))
 
     @inbounds for j ∈ halossty+1:n-halossty
         for i ∈ halosstx+1:m-halosstx
@@ -127,7 +128,7 @@ end
 
 
 """Tracer relaxation."""
-function tracer_relax!(sst,sst_ref)
+function tracer_relax!(sst::AbstractMatrix,sst_ref::AbstractMatrix)
     m,n = size(sst)
     @boundscheck (m-2*halosstx,n-2*halossty) == size(sst_ref) || throw(BoundsError())
 
@@ -158,4 +159,12 @@ function clip_wrap!(X::AbstractMatrix,a::Real,b::Real)
         X[X .>= b] .+= (a-b)
     end
     return nothing
+end
+
+if bc_x == "periodic"
+    clip_x! = clip_wrap!
+    clip_y! = clip!
+else
+    clip_x! = clip!
+    clip_y! = clip!
 end
