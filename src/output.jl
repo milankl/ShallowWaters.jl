@@ -59,7 +59,8 @@ function output_ini(u,v,η,sst)
 
         Dictu["tracer_advcetion"] = string(tracer_advection)
         Dictu["tracer_relaxation"] = string(tracer_relaxation)
-        Dictu["injection_area"] = injection_area
+        Dictu["injection_region"] = injection_region
+        Dictu["sstrestart"] = string(sstrestart)
         Dictu["Uadv"] = Uadv
         Dictu["SSTmax"] = SSTmax
         Dictu["SSTmin"] = SSTmin

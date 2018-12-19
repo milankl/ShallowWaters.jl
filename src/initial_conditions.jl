@@ -36,35 +36,58 @@ function initial_conditions(starti=-1)
         η = ncη.vars["eta"][:,:,starti]
         NetCDF.close(ncη)
 
+        if sstrestart
+            ncsst = NetCDF.open(inirunpath*"sst.nc")
+            sst = ncsst.vars["sst"][:,:,starti]
+            NetCDF.close(ncsst)
+
+            sst = Numtpe.(reshape(sst,size(sst)[1:2]))
+        else
+            sst = Numtype.(sst_initial())
+        end
+
         # remove singleton time dimension
         # and convert from Float32 to Numtype
         u = Numtype.(reshape(u,size(u)[1:2]))
         v = Numtype.(reshape(v,size(v)[1:2]))
         η = Numtype.(reshape(η,size(η)[1:2]))
-
-        #TODO allow restart from sst, for now
-        sst = Numtype.(sst_initial())
     end
 
     return u,v,η,sst
 end
 
-"""Initial conditions for the tracer determined by SSTmax, SSTmin, SSTw, SSTϕ"""
+"""Zonally constant hyperbolic tangent initial conditions for the tracer determined by SSTmax, SSTmin, SSTw, SSTϕ."""
 function sst_south()
     xx_T,yy_T = meshgrid(x_T,y_T)
     sst = (SSTmin+SSTmax)/2 .+ tanh.(2π*(Ly/(4*SSTw))*(yy_T/Ly .- SSTϕ))*(SSTmin-SSTmax)/2
     return sst
 end
 
-"""Initial conditions for the tracer determined by SSTmax, SSTmin, SSTw, SSTϕ"""
+"""Meriodionally constant hyperbolic tangent initial conditions for the tracer determined by SSTmax, SSTmin, SSTw, SSTϕ"""
 function sst_west()
     xx_T,yy_T = meshgrid(x_T,y_T)
     sst = (SSTmin+SSTmax)/2 .+ tanh.(2π*(Lx/(4*SSTw))*(xx_T/Lx .- SSTϕ))*(SSTmin-SSTmax)/2
     return sst
 end
 
-if injection_area == "south"
+"""Initial conditions as a rectangle with SSTmax inside, SSTmin outside."""
+function sst_rect()
+
+    x0,x1 = 0.1,0.3     # left right border in [0,1]
+    y0,y1 = 0.4,0.6     # north south border in [0,1]
+
+    xx_T,yy_T = meshgrid(x_T,y_T)
+
+    sst = fill(SSTmin,size(xx_T))
+    inside = (xx_T/Lx .> x0) .* (xx_T/Lx .< x1) .* (yy_T/Ly .> y0) .* (yy_T/Ly .< y1)
+    sst[inside] .= SSTmax
+    return sst
+end
+
+if injection_region == "south"
     sst_initial = sst_south
-elseif injection_area == "west"
+elseif injection_region == "west"
     sst_initial = sst_west
+elseif injection_region == "rect"
+    sst_initial = sst_rect
 end

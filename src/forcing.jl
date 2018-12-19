@@ -51,5 +51,5 @@ elseif wind_forcing == "double_gyre"
 elseif wind_forcing == "none"
     wind = no_wind
 else
-    throw(error("Wind forcing not correctly specified. Allowed: 'channel', 'shear', 'double_gyre'"))
+    throw(error("Wind forcing not correctly specified."))
 end

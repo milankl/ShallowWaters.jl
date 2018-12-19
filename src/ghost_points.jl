@@ -220,7 +220,6 @@ function ghost_points_nonperiodic!(u,v,η)
 end
 
 # pick the right set of functions depending on boundary conditions
-
 if bc_x == "periodic"
     ghost_points! = ghost_points_periodic!
     ghost_points_sst! = ghost_points_sst_periodic!
