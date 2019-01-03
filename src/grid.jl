@@ -109,6 +109,7 @@ const y_q_halo = Δ*Array(-1:ny+3) .- Δ
 
 # matrices of x and y positions with halo (dimensionless - actually indices!)
 #TODO think about a grid that works well with nx/ny large and 16bit
+#TODO delete for relative grid - redundant
 const xxT,yyT = meshgrid(Numtype.(Array(1:nx)),Numtype.(Array(1:ny)))
 
 # time and output

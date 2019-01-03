@@ -36,10 +36,10 @@ const η_refw = 100e3             # width [m] of the tangent used for the interf
 # TIME STEPPING OPTIONS
 const RKo = 4                   # Order of the RK time stepping scheme (3 or 4)
 const cfl = 1.0                 # CFL number (1.0 recommended for RK4, 0.6 for RK3)
-const Ndays = 100            # number of days to integrate for
+const Ndays = 200            # number of days to integrate for
 
 # BOUNDARY CONDITION OPTIONS
-const bc_x = "periodic"         # "periodic" or anything else for nonperiodic
+const bc_x = "nonperiodic"         # "periodic" or anything else for nonperiodic
 const lbc = 1.                  # lateral boundary condition parameter
                                 # 0 free-slip, 0<lbc<2 partial-slip, 2 no-slip
 
@@ -70,7 +70,7 @@ const SSTϕ = 0.5                # latitude/longitude ∈ [0,1] of sst edge
 
 # OUTPUT OPTIONS
 const output = true                # for nc output
-const output_vars = ["u","v","eta","sst"]
+const output_vars = ["u","sst"]
 const output_dt = 12             # output time step in hours
 #const outpath = "/network/aopp/chaos/pred/kloewer/julsdata/ssthr/"
 const outpath = "/Users/milan/phd/"
