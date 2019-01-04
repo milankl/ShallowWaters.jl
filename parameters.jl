@@ -36,7 +36,7 @@ const η_refw = 100e3             # width [m] of the tangent used for the interf
 # TIME STEPPING OPTIONS
 const RKo = 4                   # Order of the RK time stepping scheme (3 or 4)
 const cfl = 1.0                 # CFL number (1.0 recommended for RK4, 0.6 for RK3)
-const Ndays = 200            # number of days to integrate for
+const Ndays = 50            # number of days to integrate for
 
 # BOUNDARY CONDITION OPTIONS
 const bc_x = "nonperiodic"         # "periodic" or anything else for nonperiodic

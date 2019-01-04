@@ -109,17 +109,16 @@ function adv_sst!(ssti::AbstractMatrix,sst::AbstractMatrix,xx::AbstractMatrix,yy
     @boundscheck (m-2*halosstx,n-2*halossty) == size(xx) || throw(BoundsError())
     @boundscheck (m-2*halosstx,n-2*halossty) == size(yy) || throw(BoundsError())
 
-    clip_x!(xx,Numtype(1-halosstx),Numtype(nx+halosstx-1))
-    clip_y!(yy,Numtype(1-halossty+1),Numtype(ny+halossty-1))
-
     for j ∈ 1:n-2*halossty
         for i ∈ 1:m-2*halosstx
-            xi = Int(floor(Float64(xx[i,j])))   # departure point
-            yi = Int(floor(Float64(yy[i,j])))
-            k = xi+i+halosstx
-            l = yi+j+halossty
-            x0 = xx[i,j] - xi                   # subtraction Numtype - Int
-            y0 = yy[i,j] - yi
+
+            xi = Int(floor(Float64(xx[i,j])))   # departure point lower left corner
+            yi = Int(floor(Float64(yy[i,j])))   # coordinates
+
+            k,x0 = clip_halo(xi,i,xx[i,j],m,halosstx)
+            l,y0 = clip_halo(yi,j,yy[i,j],n,halossty)
+
+            #TESTING
             if x0 < 0 || x0 > 1 || y0 < 0 || y0 > 1
                 println("x0,y0 out of bounds")
             end
@@ -128,6 +127,7 @@ function adv_sst!(ssti::AbstractMatrix,sst::AbstractMatrix,xx::AbstractMatrix,yy
             catch
                 println((k,l,x0,y0))
             end
+
             ssti[i,j] = bilin(sst[k,l],sst[k+1,l],sst[k,l+1],sst[k+1,l+1],x0,y0)
         end
     end
@@ -207,10 +207,27 @@ function clip_wrap!(X::AbstractMatrix,a::Real,b::Real)
     return nothing
 end
 
+function wrap(i::Int,n::Int)
+    return mod(i-1,n)+1
+end
+
+function clip_halo(xyi::Int,ij::Int,xy::Real,mn::Int,h::Int)
+    xyis = xyi+ij+h
+
+    if xyis < 1+h
+        return 1+h,zeero
+    elseif xyis > mn-h-1
+        return mn-h-1,oone
+    else
+        return xyis,xy-xyi
+    end
+end
+
+
 if bc_x == "periodic"
     #TODO
-    clip_x! = clip_wrap!
-    clip_y! = clip!
+    clip_x! = clip_rel_wrapx!
+    clip_y! = clip_rel_y!
 else
     clip_x! = clip_rel_x!
     clip_y! = clip_rel_y!
