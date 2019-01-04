@@ -58,13 +58,13 @@ const c_smag = 0.15             # Smagorinsky coefficient [dimensionless]
 
 # TRACER ADVECTION
 const tracer_advection = true   # "true" or "false"
-const tracer_relaxation = false  # "true" or "false"
+const tracer_relaxation = true  # "true" or "false"
 const injection_region = "rect"  # "west", "south" or "rect"
 const sstrestart = false        # start from previous sst file
 const Uadv = 0.5               # Velocity scale [m/s] for tracer advection
 const SSTmax = 30.               # tracer (sea surface temperature) max for restoring
 const SSTmin = 0.               # tracer (sea surface temperature) min for restoring
-const τSST = 5.                # tracer restoring time scale [days]
+const τSST = 500.                # tracer restoring time scale [days]
 const SSTw = 1000e3               # width [m] of the tangent used for the IC and interface relaxation
 const SSTϕ = 0.5                # latitude/longitude ∈ [0,1] of sst edge
 

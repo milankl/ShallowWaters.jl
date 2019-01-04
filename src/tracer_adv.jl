@@ -101,8 +101,10 @@ function interp_uv!(uvi::AbstractMatrix,uv::AbstractMatrix,xx::AbstractMatrix,yy
     end
 end
 
-""" At the moment this is except for matrix sizes the same as interp!, will be changed in the future?
-    #TODO think about using a higher order interpolation?"""
+"""Advection of sst/tracer based on the departure points xx,yy via bilinear interpolation.
+Departure points are clipped/wrapped to remain within the domain. Boundary conditions either
+periodic (wrap around behaviour) or no-flux (no gradient via clipping). Once the respective
+4 surrounding grid points are found do bilinear interpolation on the unit square."""
 function adv_sst!(ssti::AbstractMatrix,sst::AbstractMatrix,xx::AbstractMatrix,yy::AbstractMatrix)
     m,n = size(ssti)
     @boundscheck (m,n) == size(sst) || throw(BoundsError())
@@ -115,7 +117,7 @@ function adv_sst!(ssti::AbstractMatrix,sst::AbstractMatrix,xx::AbstractMatrix,yy
             xi = Int(floor(Float64(xx[i,j])))   # departure point lower left corner
             yi = Int(floor(Float64(yy[i,j])))   # coordinates
 
-            k,x0 = clip_halo(xi,i,xx[i,j],m,halosstx)
+            k,x0 = clipwrap(xi,i,xx[i,j],m,halosstx)
             l,y0 = clip_halo(yi,j,yy[i,j],n,halossty)
 
             #TESTING
@@ -146,22 +148,22 @@ function tracer_relax!(sst::AbstractMatrix,sst_ref::AbstractMatrix)
     m,n = size(sst)
     @boundscheck (m-2*halosstx,n-2*halossty) == size(sst_ref) || throw(BoundsError())
 
-    @inbounds for j ∈ halossty:n-halossty
-        for i ∈ halosstx:m-halosstx
+    for j ∈ 1+halossty:n-halossty
+        for i ∈ 1+halosstx:m-halosstx
             sst[i,j] += r_SST*(sst_ref[i-halosstx,j-halossty] - sst[i,j])
         end
     end
 end
 
-"""Clips all values of Matrix X in the range [a,b)."""
-function clip!(X::AbstractMatrix,a::Real,b::Real)
-    if minimum(X) < a || maximum(X) >= b
-        #println("Limits exceed matrix dimensions. Clipping...")
-        X[X .< a] .= a
-        X[X .>= b] .= b
-    end
-    return nothing
-end
+# """Clips all values of Matrix X in the range [a,b)."""
+# function clip!(X::AbstractMatrix,a::Real,b::Real)
+#     if minimum(X) < a || maximum(X) >= b
+#         #println("Limits exceed matrix dimensions. Clipping...")
+#         X[X .< a] .= a
+#         X[X .>= b] .= b
+#     end
+#     return nothing
+# end
 
 """Clips relative departure points x-coordinates."""
 function clip_rel_x!(xx::AbstractMatrix,a::Real,b::Real)
@@ -207,28 +209,48 @@ function clip_wrap!(X::AbstractMatrix,a::Real,b::Real)
     return nothing
 end
 
-function wrap(i::Int,n::Int)
-    return mod(i-1,n)+1
-end
+# function wrap(i::Int,n::Int)
+#     return mod(i-1,n)+1
+# end
 
+"""Clips the relative lower-left corner index xyi (for both x or y indices) to remain within the domain.
+ij is the index of the underlying matrix. xy is the actual coordinate, mn (m or n) the size of the domain,
+and h is the halo size."""
 function clip_halo(xyi::Int,ij::Int,xy::Real,mn::Int,h::Int)
-    xyis = xyi+ij+h
 
-    if xyis < 1+h
-        return 1+h,zeero
-    elseif xyis > mn-h-1
-        return mn-h-1,oone
-    else
-        return xyis,xy-xyi
+    xyis = xyi+ij+h                 # shifted index (i.e. revert the relative index to an absolute)
+
+    if xyis < 1+h                   # beyond left/southern boundary
+        return 1+h,zeero            # coordinate is then 0
+    elseif xyis > mn-h-1            # beyond right/northern boundary
+        return mn-h-1,oone          # coordinate is then 1
+    else                            # normal case.
+        return xyis,xy-xyi          # relative coordinate ∈ [0,1]
     end
 end
 
+"""Clips the relative lower-left corner index xyi (for both x or y indices) to remain within the domain.
+ij is the index of the underlying matrix. xy is the actual coordinate, mn (m or n) the size of the domain,
+and h is the halo size."""
+function wrap_halo(xyi::Int,ij::Int,xy::Real,mn::Int,h::Int)
+
+    xyis = xyi+ij+h                 # shifted index (i.e. revert the relative index to an absolute)
+
+    if xyis < 1+h                   # beyond left/southern boundary
+        return 1+h,zeero            # coordinate is then 0
+    elseif xyis > mn-h-1            # beyond right/northern boundary
+        return mn-h-1,oone          # coordinate is then 1
+    else                            # normal case.
+        return xyis,xy-xyi          # relative coordinate ∈ [0,1]
+    end
+end
 
 if bc_x == "periodic"
-    #TODO
-    clip_x! = clip_rel_wrapx!
+    clip_x! = clip_wrap!
     clip_y! = clip_rel_y!
+    clipwrap = wrap_halo
 else
     clip_x! = clip_rel_x!
     clip_y! = clip_rel_y!
+    clipwrap = clip_halo
 end
