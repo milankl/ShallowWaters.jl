@@ -36,10 +36,10 @@ const η_refw = 100e3             # width [m] of the tangent used for the interf
 # TIME STEPPING OPTIONS
 const RKo = 4                   # Order of the RK time stepping scheme (3 or 4)
 const cfl = 1.0                 # CFL number (1.0 recommended for RK4, 0.6 for RK3)
-const Ndays = 50            # number of days to integrate for
+const Ndays = 100            # number of days to integrate for
 
 # BOUNDARY CONDITION OPTIONS
-const bc_x = "nonperiodic"         # "periodic" or anything else for nonperiodic
+const bc_x = "periodic"         # "periodic" or anything else for nonperiodic
 const lbc = 1.                  # lateral boundary condition parameter
                                 # 0 free-slip, 0<lbc<2 partial-slip, 2 no-slip
 
@@ -58,7 +58,7 @@ const c_smag = 0.15             # Smagorinsky coefficient [dimensionless]
 
 # TRACER ADVECTION
 const tracer_advection = true   # "true" or "false"
-const tracer_relaxation = true  # "true" or "false"
+const tracer_relaxation = false  # "true" or "false"
 const injection_region = "rect"  # "west", "south" or "rect"
 const sstrestart = false        # start from previous sst file
 const Uadv = 0.5               # Velocity scale [m/s] for tracer advection

@@ -85,7 +85,7 @@ const y_q = Δ*Array(1:ny+1) .- Δ
 # halo of ghost points (because of the biharmonic operator) - don't change.
 const halo = 2
 const haloη = 1
-const halosstx = 0      #TODO change for domain decomposition
+const halosstx = 1      #TODO change for domain decomposition
 const halossty = 0
 
 # is there a point on the left edge? ep - egde points
