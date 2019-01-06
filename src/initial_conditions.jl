@@ -74,7 +74,7 @@ end
 function sst_rect()
 
     x0,x1 = 0.05,0.5     # left right border in [0,1]
-    y0,y1 = 0.05,0.95     # north south border in [0,1]
+    y0,y1 = 0.0,1.0     # north south border in [0,1]
 
     xx_T,yy_T = meshgrid(x_T,y_T)
 

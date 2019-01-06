@@ -7,7 +7,7 @@ using FileIO
 
 if VERSION == v"0.7.0"
     using Printf
-    using Statistics
+    #using Statistics
 end
 
 #using MPI

@@ -86,11 +86,14 @@ function time_integration(u,v,η,sst)
         # TRACER ADVECTION
         # mid point (in time) velocity for the advective time step
         if tracer_advection && ((i+nadvstep_half) % nadvstep) == 0
+            #um .= zero(u).-Numtype(0.5)
+            #vm .= zero(v)
             um .= u
             vm .= v
         end
 
         if tracer_advection && (i % nadvstep) == 0
+            #departure!(um,vm,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
             departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
             adv_sst!(ssti,sst,xd,yd)
             if tracer_relaxation
@@ -98,7 +101,7 @@ function time_integration(u,v,η,sst)
             end
             ghost_points_sst!(ssti)
             sst .= ssti
-            
+
             # conserved?
             #println(mean(sst[halosstx+1:end-halosstx,halossty+1:end-halossty].*h[haloη+1:end-haloη,haloη+1:end-haloη]))
         end

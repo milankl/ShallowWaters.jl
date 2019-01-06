@@ -85,7 +85,7 @@ const y_q = Δ*Array(1:ny+1) .- Δ
 # halo of ghost points (because of the biharmonic operator) - don't change.
 const halo = 2
 const haloη = 1
-const halosstx = 0      #TODO change for domain decomposition
+const halosstx = 1      #TODO change for domain decomposition
 const halossty = 0
 
 # is there a point on the left edge? ep - egde points
@@ -109,6 +109,7 @@ const y_q_halo = Δ*Array(-1:ny+3) .- Δ
 
 # matrices of x and y positions with halo (dimensionless - actually indices!)
 #TODO think about a grid that works well with nx/ny large and 16bit
+#TODO delete for relative grid - redundant
 const xxT,yyT = meshgrid(Numtype.(Array(1:nx)),Numtype.(Array(1:ny)))
 
 # time and output
