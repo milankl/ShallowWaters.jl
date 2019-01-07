@@ -39,7 +39,7 @@ const cfl = 1.0                 # CFL number (1.0 recommended for RK4, 0.6 for R
 const Ndays = 100            # number of days to integrate for
 
 # BOUNDARY CONDITION OPTIONS
-const bc_x = "periodic"         # "periodic" or anything else for nonperiodic
+const bc_x = "nonperiodic"         # "periodic" or anything else for nonperiodic
 const lbc = 1.                  # lateral boundary condition parameter
                                 # 0 free-slip, 0<lbc<2 partial-slip, 2 no-slip
 

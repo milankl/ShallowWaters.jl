@@ -12,6 +12,11 @@ function departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
     Iy!(v_T,v)
     Iy!(vm_T,vm)
 
+    # simple mid-point in time advection
+    #backtraj!(xd,xxT,dtadvu,um_T)
+    #backtraj!(yd,yyT,dtadvv,vm_T)
+
+    # fixed-point iteration for departure point
     # initial guess for departure point - mid point
     backtraj!(xd,xxT,one_half*dtadvu,u_T)
     backtraj!(yd,yyT,one_half*dtadvv,v_T)
@@ -68,62 +73,34 @@ Two cases
     (ii) v velocities: from v-grid with halo to T-grid."""
 function interp_uv!(uvi::AbstractMatrix,uv::AbstractMatrix,xx::AbstractMatrix,yy::AbstractMatrix)
     m,n = size(uvi)
+    muv,nuv = size(uv)
     @boundscheck (m,n) == size(xx) || throw(BoundsError())
     @boundscheck (m,n) == size(yy) || throw(BoundsError())
 
-    if (m+2+ep,n+4) == size(uv)      # u case
-        ishift = 1+ep
-        jshift = 2
-
+    if (m+2+ep,n+4) == (muv,nuv)      # u case
         # halo sizes
-        xh1 = ishift
+        xh1 = 1+ep
         xh2 = 1
-        yh1 = jshift
-        yh2 = jshift
-
-        # previously
-        #clip_x!(xx,Numtype(-ep),Numtype(nx+1))
-    elseif (m+4,n+2) == size(uv)    # v case
-        ishift = 2
-        jshift = 1
-
-        xh1 = ishift
-        xh2 = ishift
-        yh1 = jshift
-        yh2 = jshift
-
-        #previously
-        #clip_x!(xx,Numtype(-1),Numtype(nx+2))
+        yh1 = 2
+        yh2 = 2
+    elseif (m+4,n+2) == (muv,nuv)    # v case
+        # halo sizes 1: left/bottom, 2: right/top
+        xh1 = 2
+        xh2 = 1         # don't fully understand why this is 1 ...
+        yh1 = 1
+        yh2 = 1
     else
         throw(BoundsError())
     end
-
-    #TODO take clip_x somehow out of the if-clause?
-    #clip_x!(xx,Numtype(1-ishift),Numtype(nx+2))
-    #clip_y!(yy,Numtype(1-jshift),Numtype(ny+jshift))
 
     for j ∈ 1:n
         for i ∈ 1:m
             # floor is not defined for posits...
             xi = Int(floor(Float64(xx[i,j])))   # departure point indices lower left corner within grid cell
             yi = Int(floor(Float64(yy[i,j])))
-            #k = xi+ishift+i       # indices of uv
-            #l = yi+jshift+j
-            #x0 = xx[i,j] - xi   # coordinates within grid cell
-            #y0 = yy[i,j] - yi
 
-            k,x0 = clipwrap(xi,i,xx[i,j],m,xh1,xh2)
-            l,y0 = clip_halo(yi,j,yy[i,j],n,yh1,yh2)
-
-            #TESTING
-            if x0 < 0 || x0 > 1 || y0 < 0 || y0 > 1
-                println("x0,y0 out of bounds")
-            end
-            try
-                uv[k,l]
-            catch
-                println((k,l,x0,y0,xx[i,j],yy[i,j]))
-            end
+            k,x0 = clip_or_wrap(xi,i,xx[i,j],muv,xh1,xh2)
+            l,y0 = clip(yi,j,yy[i,j],nuv,yh1,yh2)
 
             uvi[i,j] = bilin(uv[k,l],uv[k+1,l],uv[k,l+1],uv[k+1,l+1],x0,y0)
         end
@@ -148,18 +125,8 @@ function adv_sst!(ssti::AbstractMatrix,sst::AbstractMatrix,xx::AbstractMatrix,yy
             xi = Int(floor(Float64(xx[i,j])))   # departure point lower left corner
             yi = Int(floor(Float64(yy[i,j])))   # coordinates
 
-            k,x0 = clipwrap(xi,i,xx[i,j],m,halosstx,halosstx)
-            l,y0 = clip_halo(yi,j,yy[i,j],n,halossty,halossty)
-
-            #TESTING
-            if x0 < 0 || x0 > 1 || y0 < 0 || y0 > 1
-                println("x0,y0 out of bounds")
-            end
-            try
-                sst[k,l]
-            catch
-                println((k,l,x0,y0))
-            end
+            k,x0 = clip_or_wrap(xi,i,xx[i,j],m,halosstx,halosstx)
+            l,y0 = clip(yi,j,yy[i,j],n,halossty,halossty)
 
             ssti[i+halosstx,j+halossty] = bilin(sst[k,l],sst[k+1,l],sst[k,l+1],sst[k+1,l+1],x0,y0)
         end
@@ -169,14 +136,14 @@ end
 """Clips the relative lower-left corner index xyi (for both x or y indices) to remain within the domain.
 ij is the index of the underlying matrix. xy is the actual coordinate, mn (m or n) the size of the domain,
 and h1,h2 are the halo sizes (left/south and right/north)."""
-function clip_halo(xyi::Int,ij::Int,xy::Real,mn::Int,h1::Int,h2::Int)
+function clip(xyi::Int,ij::Int,xy::Real,mn::Int,h1::Int,h2::Int)
 
-    xyis = xyi+ij+h1                 # shifted index (i.e. revert the relative index to an absolute)
+    xyis = xyi+ij+h1                # shifted index (i.e. revert the relative index to an absolute)
 
     if xyis < 1+h1                  # beyond left/southern boundary
         return 1+h1,zeero           # coordinate is then 0
-    elseif xyis > mn-h2-1           # beyond right/northern boundary
-        return mn-h2-1,oone         # coordinate is then 1
+    elseif xyis > mn-1           # beyond right/northern boundary
+        return mn-1,oone         # coordinate is then 1
     else                            # normal case.
         return xyis,xy-xyi          # relative coordinate ∈ [0,1]
     end
@@ -185,14 +152,14 @@ end
 """Clips the relative lower-left corner index xyi (for both x or y indices) to remain within the domain.
 ij is the index of the underlying matrix. xy is the actual coordinate, mn (m or n) the size of the domain,
 and h is the halo size."""
-function wrap_halo(xyi::Int,ij::Int,xy::Real,mn::Int,h1::Int,h2::Int)
+function wrap(xyi::Int,ij::Int,xy::Real,mn::Int,h1::Int,h2::Int)
 
     xyis = xyi+ij+h1                 # shifted index (i.e. revert the relative index to an absolute)
     xy0 = xy-xyi                     # relative coordinate ∈ [0,1]
 
     if xyis < 1+h1                   # beyond left/southern boundary
         return xyis+mn-h1-h2,xy0     # coordinate is wrapped around
-    elseif xyis > mn-h2-1              # beyond right/northern boundary
+    elseif xyis > mn-1              # beyond right/northern boundary
         return xyis-mn+h1+h2,xy0     # coordinate is wrapped around
     else                             # normal case.
         return xyis,xy0              # just pass
@@ -219,70 +186,7 @@ function tracer_relax!(sst::AbstractMatrix,sst_ref::AbstractMatrix)
 end
 
 if bc_x == "periodic"
-    #clip_x! = clip_wrap!
-    #clip_y! = clip_rel_y!
-    clipwrap = wrap_halo
+    clip_or_wrap = wrap
 else
-    #clip_x! = clip_rel_x!
-    #clip_y! = clip_rel_y!
-    clipwrap = clip_halo
+    clip_or_wrap = clip
 end
-
-
-# function wrap(i::Int,n::Int)
-#     return mod(i-1,n)+1
-# end
-
-# """Clips all values of Matrix X in the range [a,b) with wrap-around behaviour:
-# x* = x + (b-a) for x < a,   and
-# x* = x + (a-b) for x >= b"""
-# function clip_wrap!(X::AbstractMatrix,a::Real,b::Real)
-#     if minimum(X) < a || maximum(X) >= b
-#         #println("Limits exceed matrix dimensions. Wrapping...")
-#         X[X .< a] .+= (b-a)
-#         X[X .>= b] .+= (a-b)
-#     end
-#     return nothing
-# end
-
-# """Clips all values of Matrix X in the range [a,b)."""
-# function clip!(X::AbstractMatrix,a::Real,b::Real)
-#     if minimum(X) < a || maximum(X) >= b
-#         #println("Limits exceed matrix dimensions. Clipping...")
-#         X[X .< a] .= a
-#         X[X .>= b] .= b
-#     end
-#     return nothing
-# end
-
-# """Clips relative departure points x-coordinates."""
-# function clip_rel_x!(xx::AbstractMatrix,a::Real,b::Real)
-#     m,n = size(xx)
-#
-#     for j ∈ 1:n
-#         for i ∈ 1:m
-#             # this is a comparison of Numtype+Int < Numtype
-#             if xx[i,j]+i < a
-#                 xx[i,j] = Numtype(a-i)
-#             elseif xx[i,j]+i >= b
-#                 xx[i,j] = Numtype(b-i)
-#             end
-#         end
-#     end
-# end
-#
-# """Clips relative departure points y-coordinates."""
-# function clip_rel_y!(yy::AbstractMatrix,a::Real,b::Real)
-#     m,n = size(yy)
-#
-#     for j ∈ 1:n
-#         for i ∈ 1:m
-#             # this is a comparison of Numtype+Int < Numtype
-#             if yy[i,j]+j < a
-#                 yy[i,j] = Numtype(a-j)
-#             elseif yy[i,j]+j >= b
-#                 yy[i,j] = Numtype(b-j)
-#             end
-#         end
-#     end
-# end
