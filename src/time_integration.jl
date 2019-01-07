@@ -86,8 +86,13 @@ function time_integration(u,v,η,sst)
         # TRACER ADVECTION
         # mid point (in time) velocity for the advective time step
         if tracer_advection && ((i+nadvstep_half) % nadvstep) == 0
-            #um .= zero(u).-Numtype(0.5)
-            #vm .= zero(v)
+            # um .= zero(u)#.+Numtype(0.5)
+            # um[:,end-2] .-= Numtype(0.5)
+            # um[:,3] .-= Numtype(0.5)
+            #
+            # vm .= zero(v)
+            # vm[3,:] .+= Numtype(0.5)
+            # vm[end-2,:] .+= Numtype(0.5)
             um .= u
             vm .= v
         end
