@@ -58,7 +58,7 @@ function backtraj!(rd::AbstractMatrix,dt::Real,uv::AbstractMatrix)
     # relative grid means rd = 0 - dt*uv. The arrival information is stored in
     # the indices i,j of rd: rd[2,3] => -0.5,-0.5 means for the arrival grid node (2,3)
     # the departure is (2-0.5,3-0.5) = (1.5,2.5)
-    for j ∈ 1:n
+    @inbounds for j ∈ 1:n
         for i ∈ 1:m
             rd[i,j] = -dt*uv[i+ishift,j+jshift]
         end
@@ -118,7 +118,7 @@ function adv_sst!(ssti::AbstractMatrix,sst::AbstractMatrix,xx::AbstractMatrix,yy
 
     #println((maximum(xx),minimum(xx)))
 
-    for j ∈ 1:n-2*halossty
+    @inbounds for j ∈ 1:n-2*halossty
         for i ∈ 1:m-2*halosstx
 
             xi = Int(floor(Float64(xx[i,j])))   # departure point lower left corner
@@ -177,7 +177,7 @@ function tracer_relax!(sst::AbstractMatrix,sst_ref::AbstractMatrix)
     m,n = size(sst)
     @boundscheck (m-2*halosstx,n-2*halossty) == size(sst_ref) || throw(BoundsError())
 
-    for j ∈ 1+halossty:n-halossty
+    @inbounds for j ∈ 1+halossty:n-halossty
         for i ∈ 1+halosstx:m-halosstx
             sst[i,j] += r_SST*(sst_ref[i-halosstx,j-halossty] - sst[i,j])
         end

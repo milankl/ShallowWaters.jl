@@ -10,28 +10,22 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,η_ref,
     thickness!(h,η,H)
     Ix!(h_u,h)
     Iy!(h_v,h)
-    #Ixy!(h_q,h)
 
     # mass or volume flux U,V = uh,vh
     Uflux!(U,u,h_u)
     Vflux!(V,v,h_v)
 
-    # off-diagonals of stress tensor ∇(u,v), ∇(U,V)
-    #∂x!(dvdx,v)
-    #∂y!(dudy,u)
+    # divergence of mass flux
     ∂x!(dUdx,U)
     ∂y!(dVdy,V)
 
-    # Bernoulli potential
-    #speed!(u²,v²,u,v)
-    #Ix!(KEu,u²)
-    #Iy!(KEv,v²)
+    # Bernoulli potential - recalculate for new η
     Bernoulli!(p,KEu,KEv,η)
     ∂x!(dpdx,p)
     ∂y!(dpdy,p)
 
     # Potential vorticity and advection thereof
-    #PV!(q,f_q,dvdx,dudy,h_q)
+    # PV is only updated outside
     PV_adv!(qhv,qhu,q,qα,qβ,qγ,qδ,q_u,q_v,U,V,V_u,U_v)
 
     # adding the terms
@@ -40,53 +34,35 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,η_ref,
     continuity!(dη,dUdx,dVdy,η,η_ref)
 end
 
-# """Tendencies du,dv,dη of the right-hand side with pressure gradient and wind forcing."""
-# function rhs_pressure!(du,dv,dη,u,v,η,Fx,H,h,h_u,h_v,U,V,dUdx,dVdy,dpdx,dpdy,η_ref)
-#
-#     # layer thickness
-#     thickness!(h,η,H)
-#     Ix!(h_u,h)
-#     Iy!(h_v,h)
-#
-#     # mass or volume flux U,V = uh,vh
-#     Uflux!(U,u,h_u)
-#     Vflux!(V,v,h_v)
-#     ∂x!(dUdx,U)
-#     ∂y!(dVdy,V)
-#
-#     # Pressure gradient
-#     ∂x!(dpdx,η)
-#     ∂y!(dpdy,η)
-#
-#     # adding the terms
-#     momentum_u_pressure!(du,dpdx,Fx)
-#     momentum_v_pressure!(dv,dpdy)
-#     continuity!(dη,dUdx,dVdy,η,η_ref)
-# end
-#
-
 """ Update advective and Coriolis tendencies."""
 function rhs_advcor!(u,v,η,H,h,h_u,h_v,h_q,U,V,dvdx,dudy,u²,v²,KEu,KEv,
                     q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v,V_u,U_v)
 
     thickness!(h,η,H)
-    #Ix!(h_u,h)
-    #Iy!(h_v,h)
     Ixy!(h_q,h)
 
-    # mass or volume flux U,V = uh,vh
-    #Uflux!(U,u,h_u)
-    #Vflux!(V,v,h_v)
-
+    # off-diagonals of stress tensor ∇(u,v), ∇(U,V)
     ∂x!(dvdx,v)
     ∂y!(dudy,u)
 
+    # non-linear part of the Bernoulli potential
     speed!(u²,v²,u,v)
     Ix!(KEu,u²)
     Iy!(KEv,v²)
 
+    # Potential vorticity update
     PV!(q,f_q,dvdx,dudy,h_q)
-    #PV_adv!(qhv,qhu,q,qα,qβ,qγ,qδ,q_u,q_v,U,V,V_u,U_v)
+
+    # Linear combinations of the PV q
+    if adv_scheme == "Sadourny"
+        Iy!(q_u,q)
+        Ix!(q_v,q)
+    elseif adv_scheme == "ArakawaHsu"
+        AHα!(qα,q)
+        AHβ!(qβ,q)
+        AHγ!(qγ,q)
+        AHδ!(qδ,q)
+    end
 end
 
 """Layer thickness h obtained by adding sea surface height η to bottom height H."""
@@ -191,31 +167,6 @@ function momentum_v!(dv,qhu,dpdy)
         end
     end
 end
-
-# """Sum up the tendencies of the non-diffusive right-hand side for the u-component."""
-# function momentum_u_pressure!(du,dpdx,Fx)
-#     m,n = size(du) .- (2*halo,2*halo) # cut off the halo
-#     @boundscheck (m+2-ep,n+2) == size(dpdx) || throw(BoundsError())
-#     @boundscheck (m,n) == size(Fx) || throw(BoundsError())
-#
-#     @inbounds for j ∈ 1:n
-#         for i ∈ 1:m
-#             du[i+2,j+2] = -g*dpdx[i+1-ep,j+1] + Fx[i,j]
-#         end
-#     end
-# end
-#
-# """Sum up the tendencies of the non-diffusive right-hand side for the v-component."""
-# function momentum_v_pressure!(dv,qhu,dpdy)
-#     m,n = size(dv) .- (2*halo,2*halo) # cut off the halo
-#     @boundscheck (m+2,n+2) == size(dpdy) || throw(BoundsError())
-#
-#     @inbounds for j ∈ 1:n
-#         for i ∈ 1:m
-#              dv[i+2,j+2] = -g*dpdy[i+1,j+1]
-#         end
-#     end
-# end
 
 """Continuity equation's right-hand side with surface relaxation
 -∂x(uh) - ∂y(vh) + γ*(η_ref - η)."""
