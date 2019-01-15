@@ -16,8 +16,6 @@ end
 """Advection of potential voriticity qhv,qhu as in Sadourny, 1975
 enstrophy conserving scheme."""
 function PV_adv_Sadourny!(qhv,qhu,q,qα,qβ,qγ,qδ,q_u,q_v,U,V,V_u,U_v)
-    Iy!(q_u,q)
-    Ix!(q_v,q)
     Ixy!(V_u,V)
     Ixy!(U_v,U)
 
@@ -45,11 +43,6 @@ end
 """Advection of potential vorticity qhv,qhu as in Arakawa and Hsu, 1990
 Energy and enstrophy conserving (in the limit of non-divergent mass flux) scheme with τ = 0."""
 function PV_adv_ArakawaHsu!(qhv,qhu,q,qα,qβ,qγ,qδ,q_u,q_v,U,V,V_u,U_v)
-    # Linear combinations α,β,γ,δ of potential vorticity q
-    #AHα!(qα,q)
-    #AHβ!(qβ,q)
-    #AHγ!(qγ,q)
-    #AHδ!(qδ,q)
 
     # Linear combinations of q and V=hv to yield qhv
     m,n = size(qhv)
@@ -122,8 +115,6 @@ function AHδ!(δ::AbstractMatrix,q::AbstractMatrix)
     end
 end
 
-
-# Sadourny, 1975 enstrophy conserving scheme
 if adv_scheme == "Sadourny"
     PV_adv! = PV_adv_Sadourny!
 elseif adv_scheme == "ArakawaHsu"

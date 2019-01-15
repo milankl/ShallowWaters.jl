@@ -55,18 +55,16 @@ function time_integration(u,v,η,sst)
                 qhv,qhu,q,q_u,q_v,
                 qα,qβ,qγ,qδ)
 
-            #rhs_pressure!(du,dv,dη,u1,v1,η1,Fx,H,h,h_u,h_v,U,V,dUdx,dVdy,dpdx,dpdy,η_ref)
-
             if rki < RKo
-                u1 .= u .+ RKb[rki]*Δt*du
-                v1 .= v .+ RKb[rki]*Δt*dv
-                η1 .= η .+ RKb[rki]*Δt*dη
+                caxb!(u1,u,RKb[rki]*Δt,du)  #u1 .= u .+ RKb[rki]*Δt*du
+                caxb!(v1,v,RKb[rki]*Δt,dv)  #v1 .= v .+ RKb[rki]*Δt*dv
+                caxb!(η1,η,RKb[rki]*Δt,dη)  #η1 .= η .+ RKb[rki]*Δt*dη
             end
 
             # sum RK-substeps on the go
-            u0 .+= RKa[rki]*Δt*du
-            v0 .+= RKa[rki]*Δt*dv
-            η0 .+= RKa[rki]*Δt*dη
+            axb!(u0,RKa[rki]*Δt,du)  #u0 .+= RKa[rki]*Δt*du
+            axb!(v0,RKa[rki]*Δt,dv)  #v0 .+= RKa[rki]*Δt*dv
+            axb!(η0,RKa[rki]*Δt,dη)  #η0 .+= RKa[rki]*Δt*dη
         end
 
         ghost_points!(u0,v0,η0)
@@ -77,16 +75,6 @@ function time_integration(u,v,η,sst)
         if (i % nstep_advcor) == 0
             rhs_advcor!(u0,v0,η0,H,h,h_u,h_v,h_q,U,V,dvdx,dudy,u²,v²,KEu,KEv,
                         q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v,V_u,U_v)
-
-            if adv_scheme == "Sadourny"
-                Iy!(q_u,q)
-                Ix!(q_v,q)
-            elseif adv_scheme == "ArakawaHsu"
-                AHα!(qα,q)
-                AHβ!(qβ,q)
-                AHγ!(qγ,q)
-                AHδ!(qδ,q)
-            end
         end
 
         # DIFFUSIVE TERMS - SEMI-IMPLICIT EULER
@@ -141,4 +129,29 @@ function time_integration(u,v,η,sst)
     output_close(ncs,progrtxt)
 
     return u,v,η,sst
+end
+
+""" Add multiply a with b. a += x*b """
+function axb!(a::AbstractMatrix,x::Real,b::AbstractMatrix)
+    m,n = size(a)
+    @boundscheck (m,n) == size(b) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+           a[i,j] += x*b[i,j]
+        end
+    end
+end
+
+""" C equals add multiply a with b. c = a + x*b """
+function caxb!(c::AbstractMatrix,a::AbstractMatrix,x::Real,b::AbstractMatrix)
+    m,n = size(a)
+    @boundscheck (m,n) == size(b) || throw(BoundsError())
+    @boundscheck (m,n) == size(c) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+           c[i,j] = a[i,j] + x*b[i,j]
+        end
+    end
 end
