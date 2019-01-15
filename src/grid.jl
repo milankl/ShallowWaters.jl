@@ -38,7 +38,8 @@ function timestep()
     nt = Int(ceil(Ndays*3600*24/dtint))    # number of time steps to integrate
     dt = Numtype(dtint)                    # convert to Numtype for multiplication of the RHS
     Δt = Numtype(dtint/Δ)                  # timestep combined with grid spacing Δ
-    return dt,Δt,dtint,nt
+    nΔt_diff = Numtype(nstep_diff)*Δt      # timestep for diffusive terms
+    return dt,Δt,nΔt_diff,dtint,nt
 end
 
 """ Returns the tracer advection time step dtadv and the number of timesteps nadvstep after which
@@ -82,8 +83,8 @@ const y_v = Δ*Array(1:ny-1)
 const x_q = if bc_x == "periodic" x_u else Δ*Array(1:nx+1) .- Δ end
 const y_q = Δ*Array(1:ny+1) .- Δ
 
-# halo of ghost points (because of the biharmonic operator) - don't change.
-const halo = 2
+# halo of ghost points - don't change.
+const halo = 2          # 2 because of biharmonic diffusion operator (wider stencil)
 const haloη = 1
 const halosstx = 1      #TODO change for domain decomposition
 const halossty = 0
@@ -107,16 +108,13 @@ const y_v_halo = Δ*Array(-1:ny+1)
 const x_q_halo = if bc_x == "periodic" x_u_halo else Δ*Array(-1:nx+3) .- Δ end
 const y_q_halo = Δ*Array(-1:ny+3) .- Δ
 
-# matrices of x and y positions with halo (dimensionless - actually indices!)
-#TODO think about a grid that works well with nx/ny large and 16bit
-#TODO delete for relative grid - redundant
-const xxT,yyT = meshgrid(Numtype.(Array(1:nx)),Numtype.(Array(1:ny)))
-
 # time and output
-const dt,Δt,dtint,nt = timestep()
+const dt,Δt,nΔt_diff,dtint,nt = timestep()
 const nout = Int(floor(output_dt*3600/dtint))   # output every nout time steps
 const nout_total = (nt ÷ nout)+1                # total number of time steps for output
 const t_vec = Array(0:nout_total-1)*dtint       # time vector for output
 
 # advection time step
 const dtadvu,dtadvv,dtadvint,nadvstep,nadvstep_half = adv_timestep()
+
+println((dtint,dtint*nstep_diff,dtint*nstep_advcor,dtadvint,output_dt*3600))
