@@ -13,25 +13,25 @@ function departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
     Iy!(vm_T,vm)
 
     # simple mid-point in time advection
-    #backtraj!(xd,xxT,dtadvu,um_T)
-    #backtraj!(yd,yyT,dtadvv,vm_T)
+    #backtraj!(xd,dtadvu,um_T)
+    #backtraj!(yd,dtadvv,vm_T)
 
     # fixed-point iteration for departure point
     # initial guess for departure point - mid point
-    backtraj!(xd,xxT,one_half*dtadvu,u_T)
-    backtraj!(yd,yyT,one_half*dtadvv,v_T)
+    backtraj!(xd,one_half*dtadvu,u_T)
+    backtraj!(yd,one_half*dtadvv,v_T)
 
     # interpolate um,vm onto mid-point
     interp_uv!(uinterp,um_T,xd,yd)
     interp_uv!(vinterp,vm_T,xd,yd)
 
     # update departure point
-    backtraj!(xd,xxT,dtadvu,uinterp)
-    backtraj!(yd,yyT,dtadvv,vinterp)
+    backtraj!(xd,dtadvu,uinterp)
+    backtraj!(yd,dtadvv,vinterp)
 end
 
-""" Solves the trajectory equation for a given arrival point ra (this can be either x or y),
-a time step dt and the velocity uv (this can be u or v). One function for three cases
+""" Solves the trajectory equation for a given time step dt and the velocity uv (this can be u or v).
+One function for three cases
 
 (i) u is interpolated from u-grid with halo onto T-grid
 (ii) v is interpolated from v-grid with halo onto T-grid
@@ -39,9 +39,8 @@ a time step dt and the velocity uv (this can be u or v). One function for three 
 
 Uses relative grid nodes in the departure points rd, such that actually solved is rd = 0 - dt*uv.
 The indices i,j of rd determine the arrival grid point."""
-function backtraj!(rd::AbstractMatrix,ra::AbstractMatrix,dt::Real,uv::AbstractMatrix)
+function backtraj!(rd::AbstractMatrix,dt::Real,uv::AbstractMatrix)
     m,n = size(rd)
-    @boundscheck (m,n) == size(ra) || throw(BoundsError())
 
     if (m,n) == size(uv)            # update departue point case, matrices have same size
         ishift = 0

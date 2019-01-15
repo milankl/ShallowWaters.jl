@@ -46,10 +46,10 @@ end
 Energy and enstrophy conserving (in the limit of non-divergent mass flux) scheme with τ = 0."""
 function PV_adv_ArakawaHsu!(qhv,qhu,q,qα,qβ,qγ,qδ,q_u,q_v,U,V,V_u,U_v)
     # Linear combinations α,β,γ,δ of potential vorticity q
-    AHα!(qα,q)
-    AHβ!(qβ,q)
-    AHγ!(qγ,q)
-    AHδ!(qδ,q)
+    #AHα!(qα,q)
+    #AHβ!(qβ,q)
+    #AHγ!(qγ,q)
+    #AHδ!(qδ,q)
 
     # Linear combinations of q and V=hv to yield qhv
     m,n = size(qhv)

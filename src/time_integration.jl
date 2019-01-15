@@ -55,6 +55,8 @@ function time_integration(u,v,η,sst)
                 qhv,qhu,q,q_u,q_v,
                 qα,qβ,qγ,qδ)
 
+            #rhs_pressure!(du,dv,dη,u1,v1,η1,Fx,H,h,h_u,h_v,U,V,dUdx,dVdy,dpdx,dpdy,η_ref)
+
             if rki < RKo
                 u1 .= u .+ RKb[rki]*Δt*du
                 v1 .= v .+ RKb[rki]*Δt*dv
@@ -67,15 +69,36 @@ function time_integration(u,v,η,sst)
             η0 .+= RKa[rki]*Δt*dη
         end
 
-        # DIFFUSIVE PART - SEMI-IMPLICIT EULER
-        # use u0 = u^(n+1) to evaluate tendencies, add to u0 = u^n + rhs
         ghost_points!(u0,v0,η0)
-        bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u0,v0,η0,
+
+        # ADVECTION and CORIOLIS TERMS
+        # although included in the tendency of every RK substep,
+        # only update every nstep_advcor steps!
+        if (i % nstep_advcor) == 0
+            rhs_advcor!(u0,v0,η0,H,h,h_u,h_v,h_q,U,V,dvdx,dudy,u²,v²,KEu,KEv,
+                        q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v,V_u,U_v)
+
+            if adv_scheme == "Sadourny"
+                Iy!(q_u,q)
+                Ix!(q_v,q)
+            elseif adv_scheme == "ArakawaHsu"
+                AHα!(qα,q)
+                AHβ!(qβ,q)
+                AHγ!(qγ,q)
+                AHδ!(qδ,q)
+            end
+        end
+
+        # DIFFUSIVE TERMS - SEMI-IMPLICIT EULER
+        # use u0 = u^(n+1) to evaluate tendencies, add to u0 = u^n + rhs
+        if (i % nstep_diff) == 0    # evaluate only every nstep_diff time steps
+            bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u0,v0,η0,
                 H,h,u²,v²,h_u,h_v)
-        diffusive!(dudx,dudy,dvdx,dvdy,DS,DS_q,DT,νSmag,νSmag_q,Lu,Lv,
+            diffusive!(dudx,dudy,dvdx,dvdy,DS,DS_q,DT,νSmag,νSmag_q,Lu,Lv,
                 dLudx,dLudy,dLvdx,dLvdy,S11,S12,S21,S22,
                 LLu1,LLu2,LLv1,LLv2,u0,v0)
-        add_drag_diff_tendencies!(u0,v0,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
+            add_drag_diff_tendencies!(u0,v0,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
+        end
 
         # RK3/4 copy back from substeps
         u .= u0
@@ -86,19 +109,11 @@ function time_integration(u,v,η,sst)
         # TRACER ADVECTION
         # mid point (in time) velocity for the advective time step
         if tracer_advection && ((i+nadvstep_half) % nadvstep) == 0
-            # um .= zero(u)#.+Numtype(0.5)
-            # um[:,end-2] .-= Numtype(0.5)
-            # um[:,3] .-= Numtype(0.5)
-            #
-            # vm .= zero(v)
-            # vm[3,:] .+= Numtype(0.5)
-            # vm[end-2,:] .+= Numtype(0.5)
             um .= u
             vm .= v
         end
 
         if tracer_advection && (i % nadvstep) == 0
-            #departure!(um,vm,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
             departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
             adv_sst!(ssti,sst,xd,yd)
             if tracer_relaxation
