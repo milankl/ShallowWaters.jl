@@ -1,7 +1,7 @@
 """ Factorizes the positive Integer n into its two largest factors.
 e.g. factorization(12) yields (3,4) as 3*4=12 (instead of 2*6)."""
 function factorization(n::Int)
-    s = Int(floor(sqrt(n)))
+    s = floor(Int, sqrt(n)))
     m = mod(n,s)
 
     while m != 0
