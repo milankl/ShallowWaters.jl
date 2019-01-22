@@ -38,6 +38,20 @@ function ridges()
     return Numtype.(H)
 end
 
+"""Bathtub"""
+function bathtub()
+
+    x = range(-2.0,stop=1.1,length=length(x_T_halo))
+    y = range(-1.1,stop=1.1,length=length(y_T_halo))
+    xx,yy = meshgrid(x,y)
+
+    B = xx.^10 + yy.^10
+    B[B .> 1.0] .= 1.0
+
+    H = water_depth .- topofeat_height*B
+    return Numtype.(H)
+end
+
 """Returns a matrix of constant water depth specified by the constant water_depth."""
 function flat_bottom()
     H = fill(water_depth,(nx+2*haloη,ny+2*haloη))
@@ -53,6 +67,8 @@ elseif topography_feature == "seamount"
     topography = seamount
 elseif topography_feature == "flat"
     topography = flat_bottom
+elseif topography_feature == "bathtub"
+    topography = bathtub
 else
     throw(error("Topography feature not correctly declared."))
 end
