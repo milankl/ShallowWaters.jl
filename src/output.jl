@@ -78,7 +78,7 @@ function output_ini(u,v,η,sst)
             tdim = NcDim("t",0,unlimited=true)
 
             uvar = NcVar("u",[xudim,yudim,tdim],t=Float32)
-            tvaru = NcVar("t",tdim,t=Int64)
+            tvaru = NcVar("t",tdim,t=Int32)
 
             ncu = NetCDF.create(runpath*"u.nc",[uvar,tvaru],mode=NC_NETCDF4)
             NetCDF.putatt(ncu,"u",Dict("units"=>"m/s","long_name"=>"zonal velocity"))
@@ -92,7 +92,7 @@ function output_ini(u,v,η,sst)
             tdim = NcDim("t",0,unlimited=true)
 
             vvar = NcVar("v",[xvdim,yvdim,tdim],t=Float32)
-            tvarv = NcVar("t",tdim,t=Int64)
+            tvarv = NcVar("t",tdim,t=Int32)
 
             ncv = NetCDF.create(runpath*"v.nc",[vvar,tvarv],mode=NC_NETCDF4)
             NetCDF.putatt(ncv,"v",Dict("units"=>"m/s","long_name"=>"meridional velocity"))
@@ -106,7 +106,7 @@ function output_ini(u,v,η,sst)
             tdim = NcDim("t",0,unlimited=true)
 
             ηvar = NcVar("eta",[xTdim,yTdim,tdim],t=Float32)
-            tvarη = NcVar("t",tdim,t=Int64)
+            tvarη = NcVar("t",tdim,t=Int32)
 
             ncη = NetCDF.create(runpath*"eta.nc",[ηvar,tvarη],mode=NC_NETCDF4)
             NetCDF.putatt(ncη,"eta",Dict("units"=>"m","long_name"=>"sea surface height"))
@@ -120,7 +120,7 @@ function output_ini(u,v,η,sst)
             tdim = NcDim("t",0,unlimited=true)
 
             ηvar = NcVar("sst",[xTdim,yTdim,tdim],t=Float32)
-            tvarη = NcVar("t",tdim,t=Int64)
+            tvarη = NcVar("t",tdim,t=Int32)
 
             ncsst = NetCDF.create(runpath*"sst.nc",[ηvar,tvarη],mode=NC_NETCDF4)
             NetCDF.putatt(ncsst,"sst",Dict("units"=>"1","long_name"=>"sea surface temperature"))
