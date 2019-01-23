@@ -9,7 +9,10 @@ function preallocate_u_vars()
     dudx = zeros(Numtype,nux+2*halo-1,nuy+2*halo)
     dudy = zeros(Numtype,nux+2*halo,nuy+2*halo-1)
 
-    return du,u0,u1,dudx,dudy
+    # bilinear interpolation: one less in both x and y
+    u_v = zeros(Numtype,nux+2*halo-1,nuy+2*halo-1)
+
+    return du,u0,u1,dudx,dudy,u_v
 end
 
 """Returns preallocated variables of different size that derive from v."""
@@ -23,7 +26,10 @@ function preallocate_v_vars()
     dvdx = zeros(Numtype,nvx+2*halo-1,nvy+2*halo)
     dvdy = zeros(Numtype,nvx+2*halo,nvy+2*halo-1)
 
-    return dv,v0,v1,dvdx,dvdy
+    # bilinear interpolation: one less in both x and y
+    v_u = zeros(Numtype,nvx+2*halo-1,nvy+2*halo-1)
+
+    return dv,v0,v1,dvdx,dvdy,v_u
 end
 
 """Returns preallocated variables of different size that derive from η."""
@@ -38,7 +44,7 @@ function preallocate_η_vars()
 end
 
 """Returns preallocated variables of different size that will be used in the contuinity equation."""
-function preallocate_continuity()
+function preallocate_continuity(H)
     # interpolation: one less in x-direction
     h_u = zeros(Numtype,nx+2*haloη-1,ny+2*haloη)
     U = zero(h_u)
@@ -50,6 +56,12 @@ function preallocate_continuity()
     # Derivatives: two less in x- or y-direction
     dUdx = zeros(Numtype,nx+2*haloη-2,ny+2*haloη)
     dVdy = zeros(Numtype,nx+2*haloη,ny+2*haloη-2)
+
+    if dynamics == "linear"
+        # layer thickness
+        Ix!(h_u,H)
+        Iy!(h_v,H)
+    end
 
     return h_u,U,h_v,V,dUdx,dVdy
 end
