@@ -2,7 +2,7 @@ function time_integration(u,v,η,sst)
 
     # FORCING
     Fx = wind()
-    f_q = beta_plane()
+    f_u,f_v,f_q = beta_plane()
     H = topography()
     η_ref = interface_relaxation()
     sst_ref = sst_initial()
@@ -11,10 +11,10 @@ function time_integration(u,v,η,sst)
     u,v,η,sst = add_halo(u,v,η,sst)
 
     # PREALLOCATE
-    du,u0,u1,dudx,dudy = preallocate_u_vars()
-    dv,v0,v1,dvdx,dvdy = preallocate_v_vars()
+    du,u0,u1,dudx,dudy,u_v = preallocate_u_vars()
+    dv,v0,v1,dvdx,dvdy,v_u = preallocate_v_vars()
     dη,η0,η1,h = preallocate_η_vars()
-    h_u,U,h_v,V,dUdx,dVdy = preallocate_continuity()
+    h_u,U,h_v,V,dUdx,dVdy = preallocate_continuity(H)
     h_q,q,q_v,qhu,U_v,q_u,qhv,V_u = preallocate_Sadourny()
     qα,qβ,qγ,qδ = preallocate_ArakawaHsu()
     u²,v²,KEu,KEv,p,dpdx,dpdy = preallocate_Bernoulli()
@@ -48,10 +48,10 @@ function time_integration(u,v,η,sst)
                 ghost_points!(u1,v1,η1)
             end
 
-            rhs!(du,dv,dη,u1,v1,η1,Fx,f_q,H,η_ref,
+            rhs!(du,dv,dη,u1,v1,η1,Fx,f_u,f_v,f_q,H,η_ref,
                 dvdx,dudy,dpdx,dpdy,
-                p,u²,v²,KEu,KEv,dUdx,dVdy,
-                h,h_u,h_v,h_q,U,V,U_v,V_u,
+                p,KEu,KEv,dUdx,dVdy,
+                h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
                 qhv,qhu,q,q_u,q_v,
                 qα,qβ,qγ,qδ)
 
@@ -72,9 +72,9 @@ function time_integration(u,v,η,sst)
         # ADVECTION and CORIOLIS TERMS
         # although included in the tendency of every RK substep,
         # only update every nstep_advcor steps!
-        if (i % nstep_advcor) == 0
-            rhs_advcor!(u0,v0,η0,H,h,h_u,h_v,h_q,U,V,dvdx,dudy,u²,v²,KEu,KEv,
-                        q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v,V_u,U_v)
+        if dynamics == "nonlinear" && (i % nstep_advcor) == 0
+            rhs_advcor!(u0,v0,η0,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
+                                q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v)
         end
 
         # DIFFUSIVE TERMS - SEMI-IMPLICIT EULER

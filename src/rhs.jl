@@ -1,8 +1,8 @@
-"""Tendencies du,dv,dη of the non-diffusive right-hand side."""
-function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,η_ref,
+"""Tendencies du,dv,dη of the non-diffusive right-hand side for the nonlinear shallow water equations."""
+function rhs_nonlin!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
             dvdx,dudy,dpdx,dpdy,
-            p,u²,v²,KEu,KEv,dUdx,dVdy,
-            h,h_u,h_v,h_q,U,V,U_v,V_u,
+            p,KEu,KEv,dUdx,dVdy,
+            h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
             qhv,qhu,q,q_u,q_v,
             qα,qβ,qγ,qδ)
 
@@ -19,7 +19,7 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,η_ref,
     ∂x!(dUdx,U)
     ∂y!(dVdy,V)
 
-    # Bernoulli potential - recalculate for new η
+    # Bernoulli potential - recalculate for new η, KEu,KEv are only updated outside
     Bernoulli!(p,KEu,KEv,η)
     ∂x!(dpdx,p)
     ∂y!(dpdy,p)
@@ -34,14 +34,46 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,η_ref,
     continuity!(dη,dUdx,dVdy,η,η_ref)
 end
 
+"""Tendencies du,dv,dη of the non-diffusive right-hand side for the linear shallow water equations."""
+function rhs_lin!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
+            dvdx,dudy,dpdx,dpdy,
+            p,KEu,KEv,dUdx,dVdy,
+            h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
+            qhv,qhu,q,q_u,q_v,
+            qα,qβ,qγ,qδ)
+
+    # mass or volume flux U,V = uH,vH; h_u, h_v are actually H_u, H_v
+    Uflux!(U,u,h_u)
+    Vflux!(V,v,h_v)
+
+    # divergence of mass flux
+    ∂x!(dUdx,U)
+    ∂y!(dVdy,V)
+
+    # Pressure gradient
+    ∂x!(dpdx,g*η)
+    ∂y!(dpdy,g*η)
+
+    # Coriolis force
+    Ixy!(v_u,v)
+    Ixy!(u_v,u)
+    fv!(qhv,f_u,v_u)
+    fu!(qhu,f_v,u_v)
+
+    # adding the terms
+    momentum_u!(du,qhv,dpdx,Fx)
+    momentum_v!(dv,qhu,dpdy)
+    continuity!(dη,dUdx,dVdy,η,η_ref)
+end
+
 """ Update advective and Coriolis tendencies."""
-function rhs_advcor!(u,v,η,H,h,h_u,h_v,h_q,U,V,dvdx,dudy,u²,v²,KEu,KEv,
-                    q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v,V_u,U_v)
+function rhs_advcor!(u,v,η,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
+                    q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v)
 
     thickness!(h,η,H)
     Ixy!(h_q,h)
 
-    # off-diagonals of stress tensor ∇(u,v), ∇(U,V)
+    # off-diagonals of stress tensor ∇(u,v)
     ∂x!(dvdx,v)
     ∂y!(dudy,u)
 
@@ -201,4 +233,12 @@ if surface_forcing
     continuity! = continuity_surf_forc!
 else
     continuity! = continuity_itself!
+end
+
+if dynamics == "linear"
+    rhs! = rhs_lin!
+elseif dynamics == "nonlinear"
+    rhs! = rhs_nonlin!
+else
+    throw(error("Dynamics linear/nonlinear incorrectly specified."))
 end
