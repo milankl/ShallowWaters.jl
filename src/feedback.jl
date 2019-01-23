@@ -63,6 +63,8 @@ function feedback_ini()
         end
         write(progrtxt,"Boundary conditions are $bc_x with lbc=$lbc.\n")
         write(progrtxt,"Numtype is "*string(Numtype)*".\n")
+        write(progrtxt,"Time steps are (Lin,Diff,Advcor,Lagr,Output)\n")
+        write(progrtxt,"$dtint, $(dtint*nstep_diff), $(dtint*nstep_advcor), $dtadvint, $(output_dt*3600)\n")
         write(progrtxt,"\nAll data will be stored in $runpath\n")
     else
         println("Starting juls on "*Dates.format(now(),Dates.RFC1123Format)*" without output.")
