@@ -6,8 +6,8 @@ const Numtype = Float32
 #setprecision(7)
 
 # DOMAIN RESOLUTION AND RATIO
-const nx = 200                  # number of grid cells in x-direction
-const Lx = 2000e3               # length of the domain in x-direction
+const nx = 80                  # number of grid cells in x-direction
+const Lx = 8000e3               # length of the domain in x-direction
 const L_ratio = 1               # Domain aspect ratio of Lx/Ly
 
 # PHYSICAL CONSTANTS
@@ -36,7 +36,7 @@ const η_refw = 100e3             # width [m] of the tangent used for the interf
 # TIME STEPPING OPTIONS
 const RKo = 4                   # Order of the RK time stepping scheme (3 or 4)
 const cfl = 1.0                 # CFL number (1.0 recommended for RK4, 0.6 for RK3)
-const Ndays = 100                # number of days to integrate for
+const Ndays = 300                # number of days to integrate for
 const nstep_diff = 10           # diffusive part every nstep_diff time steps.
 const nstep_advcor = 1         # advection and coriolis every nstep_advcor time steps.
 

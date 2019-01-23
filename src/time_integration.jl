@@ -50,7 +50,7 @@ function time_integration(u,v,η,sst)
 
             rhs!(du,dv,dη,u1,v1,η1,Fx,f_q,H,η_ref,
                 dvdx,dudy,dpdx,dpdy,
-                p,u²,v²,KEu,KEv,dUdx,dVdy,
+                p,KEu,KEv,dUdx,dVdy,
                 h,h_u,h_v,h_q,U,V,U_v,V_u,
                 qhv,qhu,q,q_u,q_v,
                 qα,qβ,qγ,qδ)
@@ -73,8 +73,8 @@ function time_integration(u,v,η,sst)
         # although included in the tendency of every RK substep,
         # only update every nstep_advcor steps!
         if (i % nstep_advcor) == 0
-            rhs_advcor!(u0,v0,η0,H,h,h_u,h_v,h_q,U,V,dvdx,dudy,u²,v²,KEu,KEv,
-                        q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v,V_u,U_v)
+            rhs_advcor!(u0,v0,η0,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
+                                q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v)
         end
 
         # DIFFUSIVE TERMS - SEMI-IMPLICIT EULER

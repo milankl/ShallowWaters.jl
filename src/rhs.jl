@@ -1,7 +1,7 @@
 """Tendencies du,dv,dη of the non-diffusive right-hand side."""
 function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,η_ref,
             dvdx,dudy,dpdx,dpdy,
-            p,u²,v²,KEu,KEv,dUdx,dVdy,
+            p,KEu,KEv,dUdx,dVdy,
             h,h_u,h_v,h_q,U,V,U_v,V_u,
             qhv,qhu,q,q_u,q_v,
             qα,qβ,qγ,qδ)
@@ -35,13 +35,13 @@ function rhs!(du,dv,dη,u,v,η,Fx,f_q,H,η_ref,
 end
 
 """ Update advective and Coriolis tendencies."""
-function rhs_advcor!(u,v,η,H,h,h_u,h_v,h_q,U,V,dvdx,dudy,u²,v²,KEu,KEv,
-                    q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v,V_u,U_v)
+function rhs_advcor!(u,v,η,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
+                    q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v)
 
     thickness!(h,η,H)
     Ixy!(h_q,h)
 
-    # off-diagonals of stress tensor ∇(u,v), ∇(U,V)
+    # off-diagonals of stress tensor ∇(u,v)
     ∂x!(dvdx,v)
     ∂y!(dudy,u)
 
