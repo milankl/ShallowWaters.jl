@@ -1,4 +1,14 @@
-"""Tendencies du,dv,dη of the non-diffusive right-hand side for the nonlinear shallow water equations."""
+"""Tendencies du,dv,dη of
+
+        ∂u/∂t = qhv - ∂(1/2*(u²+v²) + gη)/∂x + Fx
+        ∂v/∂t = -qhu - ∂(1/2*(u²+v²) + gη)/∂y
+        ∂η/∂t =  -∂(uh)/∂x - ∂(vh)/∂y + γ(η_ref-η)
+
+where non-linear terms
+
+        q, (u²+v²)
+
+of the mom eq. are only updated outside the function (slowly varying terms)."""
 function rhs_nonlin!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
             dvdx,dudy,dpdx,dpdy,
             p,KEu,KEv,dUdx,dVdy,
@@ -34,7 +44,13 @@ function rhs_nonlin!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
     continuity!(dη,dUdx,dVdy,η,η_ref)
 end
 
-"""Tendencies du,dv,dη of the non-diffusive right-hand side for the linear shallow water equations."""
+"""Tendencies du,dv,dη of
+
+        ∂u/∂t = gv - g∂η/∂x + Fx
+        ∂v/∂t = -fu - g∂η/∂y
+        ∂η/∂t =  -∂(uH)/∂x - ∂(vH)/∂y + γ(η_ref-η),
+
+the linear shallow water equations."""
 function rhs_lin!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
             dvdx,dudy,dpdx,dpdy,
             p,KEu,KEv,dUdx,dVdy,
@@ -43,6 +59,49 @@ function rhs_lin!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
             qα,qβ,qγ,qδ)
 
     # mass or volume flux U,V = uH,vH; h_u, h_v are actually H_u, H_v
+    Uflux!(U,u,h_u)
+    Vflux!(V,v,h_v)
+
+    # divergence of mass flux
+    ∂x!(dUdx,U)
+    ∂y!(dVdy,V)
+
+    # Pressure gradient
+    ∂x!(dpdx,g*η)
+    ∂y!(dpdy,g*η)
+
+    # Coriolis force
+    Ixy!(v_u,v)
+    Ixy!(u_v,u)
+    fv!(qhv,f_u,v_u)
+    fu!(qhu,f_v,u_v)
+
+    # adding the terms
+    momentum_u!(du,qhv,dpdx,Fx)
+    momentum_v!(dv,qhu,dpdy)
+    continuity!(dη,dUdx,dVdy,η,η_ref)
+end
+
+"""Tendencies du,dv,dη of
+
+        ∂u/∂t = gv - g∂η/∂x + Fx
+        ∂v/∂t = -fu - g∂η/∂y
+        ∂η/∂t =  -∂(uh)/∂x - ∂(vh)/∂y + γ(η_ref-η),
+
+the shallow water equations which are linear in momentum but non-linear in continuity."""
+function rhs_linmom!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
+            dvdx,dudy,dpdx,dpdy,
+            p,KEu,KEv,dUdx,dVdy,
+            h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
+            qhv,qhu,q,q_u,q_v,
+            qα,qβ,qγ,qδ)
+
+    # layer thickness
+    thickness!(h,η,H)
+    Ix!(h_u,h)
+    Iy!(h_v,h)
+
+    # mass or volume flux U,V = uh,vh; - the continuity eq. is non-linear.
     Uflux!(U,u,h_u)
     Vflux!(V,v,h_v)
 
