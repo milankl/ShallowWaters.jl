@@ -1,24 +1,44 @@
-"""Initialises netCDF files for data output of the prognostic variables."""
-function output_ini(u,v,η,sst,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
+"""Initialises netCDF files for data output of the prognostic, tendency and diagnostic variables."""
+function output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2,
+                        q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd)
     # only process with rank 0 defines the netCDF file
     if output #&& prank == 0
 
+        # PROGNOSTIC VARIABLES OUTPUT STRINGS
         all_output_progn_vars = ["u","v","eta","sst"]
         units_progn = ["m/s","m/s","m","degC"]
         longnames_progn = ["zonal velocity","meridional velocity","sea surface height","sea surface temperature"]
 
-        all_output_diagn_vars = ["Bu","Bv","LLu1","LLu2","LLv1","LLv2"]
-        units_diagn = ["m^2/s^2","m^2/s^2","m^2/s^2","m^2/s^2","m^2/s^2","m^2/s^2"]
-        longnames_diagn = ["Bottom friction u-comp.","Bottom friction v-comp.",
+        # TENDENCY VARIABLES OUTPUT STRINGS
+        all_output_tend_vars = ["du","dv","deta","qhv","qhu","dpdx","dpdy","dUdx","dVdy","Bu","Bv","LLu1","LLu2","LLv1","LLv2"]
+        unit1,unit2 = "m^2/s^2","m^2/s"
+        units_tend = cat(repeat([unit1],7),repeat([unit2],2),repeat([unit1],6),dims=1)
+        longnames_tend = ["u tendency","v tendency","eta tendency",
+                    "Advection of PV u-comp.","Advection of PV v-comp.",
+                    "Bernoulli potential x-gradient","Bernoulli potential y-gradient",
+                    "Volume flux x-gradient","Volume flux y-gradient",
+                    "Bottom friction u-comp.","Bottom friction v-comp.",
                             "Diffusion u-comp. 1","Diffusion u-comp. 2",
                             "Diffusion v-comp. 1","Diffusion v-comp. 2"]
 
-        allx = (x_u,x_v,x_T,x_q)    # collect all grids
+        # DIAGNOSTIC VARIABLES OUTPUT STRINGS#
+        all_output_diagn_vars = ["q","p","dudx","dvdy","dudy","dvdx","Lu","Lv","xd","yd"]
+        units_diagn = ["1/s","m^2/s^2","m/s","m/s","m/s","m/s","m/s","m/s","1","1"]
+        longnames_diagn = ["Potential vorticity","Bernoulli potential",
+                            "Zonal velocity x-gradient","Meridional velocity y-gradient",
+                            "Zonal velocity y-gradient","Meridional velocity x-gradient",
+                            "Laplace of u velocity", "Laplace of v velocity",
+                            "Relative departure point x","Relative departure point y"]
+
+        # collect all grids for easy access per index
+        allx = (x_u,x_v,x_T,x_q)
         ally = (y_u,y_v,y_T,y_q)
         grids_progn = [1,2,3,3]           # for easy access per index
-        grids_diagn = [1,2,1,1,2,2]
+        grids_tend = [1,2,3,1,2,1,2,3,3,1,2,1,1,2,2]
+        grids_diagn = [4,3,3,3,4,4,1,2,3,3]
 
         ncs_progn = Array{Any,1}(zeros(Int,length(all_output_progn_vars)))
+        ncs_tend = Array{Any,1}(zeros(Int,length(all_output_tend_vars)))
         ncs_diagn = Array{Any,1}(zeros(Int,length(all_output_diagn_vars)))
 
         # loop over all outputtable variables
@@ -27,6 +47,16 @@ function output_ini(u,v,η,sst,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
             if outvar in output_progn_vars    # check whether output is desired (specified in parameters.jl)
                 ncs_progn[ivarout] = nccreate(allx[grids_progn[ivarout]],ally[grids_progn[ivarout]],
                                 outvar,runpath,units_progn[ivarout],longnames_progn[ivarout])
+            end
+        end
+
+        # TENDENCY VARIABLES
+        if output_tend
+            for (ivarout,outvar) in enumerate(all_output_tend_vars)
+                if outvar in output_tend_vars    # check whether output is desired (specified in parameters.jl)
+                    ncs_tend[ivarout] = nccreate(allx[grids_tend[ivarout]],ally[grids_tend[ivarout]],
+                                    outvar,runpath,units_tend[ivarout],longnames_tend[ivarout])
+                end
             end
         end
 
@@ -43,7 +73,7 @@ function output_ini(u,v,η,sst,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
         # Write attributes and units for dimensions
         Dictu = output_dict()
 
-        for nc in cat(ncs_progn,ncs_diagn,dims=1)
+        for nc in cat(ncs_progn,ncs_tend,ncs_diagn,dims=1)
             if nc != 0
                 NetCDF.putatt(nc,"global",Dictu)
                 NetCDF.putatt(nc,"t",Dict("units"=>"s","long_name"=>"time"))
@@ -54,15 +84,16 @@ function output_ini(u,v,η,sst,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
 
         # write initial conditions
         iout = 1   # counter for output time steps
-        ncs_diagn = output_diagn_nc(ncs_diagn,0,iout,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
+        ncs_diag = output_diagn_nc(ncs_diagn,0,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd)
+        ncs_tend = output_tend_nc(ncs_tend,0,iout,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
         ncs_progn,iout = output_progn_nc(ncs_progn,0,iout,u,v,η,sst)
 
         # also output scripts
         scripts_output()
 
-        return ncs_progn,ncs_diagn,iout
+        return ncs_progn,ncs_tend,ncs_diagn,iout
     else
-        return nothing,nothing,nothing
+        return nothing,nothing,nothing,nothing
     end
 end
 
@@ -79,7 +110,7 @@ function nccreate(x::Array{Float64,1},y::Array{Float64,1},name::String,path::Str
     return nc
 end
 
-"""Writes prognostic variables to pre-initialised netCDF file."""
+"""Writes prognostic variables to pre-initialised netCDF files."""
 function output_progn_nc(ncs,i,iout,u,v,η,sst)
 
     # if nprocs > 1
@@ -121,28 +152,105 @@ function output_progn_nc(ncs,i,iout,u,v,η,sst)
     return ncs,iout
 end
 
+""" Writes tendency variables to pre-initialised netCDF files."""
+function output_tend_nc(ncs,i,iout,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
+    if i % nout == 0 && output && output_tend #&& prank == 0
+
+        # cut off the halo
+        if ncs[1] != 0
+            NetCDF.putvar(ncs[1],"du",Float32.(du[halo+1:end-halo,halo+1:end-halo]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[2] != 0
+            NetCDF.putvar(ncs[2],"dv",Float32.(dv[halo+1:end-halo,halo+1:end-halo]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[3] != 0
+            NetCDF.putvar(ncs[3],"deta",Float32.(dη[haloη+1:end-haloη,haloη+1:end-haloη]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[4] != 0
+            NetCDF.putvar(ncs[4],"qhv",Float32.(qhv),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[5] != 0
+            NetCDF.putvar(ncs[5],"qhu",Float32.(qhu),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[6] != 0
+            NetCDF.putvar(ncs[6],"dpdx",Float32.(dpdx[2-ep:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[7] != 0
+            NetCDF.putvar(ncs[7],"dpdy",Float32.(dpdy[2:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[8] != 0
+            NetCDF.putvar(ncs[8],"dUdx",Float32.(dUdx[:,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[9] != 0
+            NetCDF.putvar(ncs[9],"dVdy",Float32.(dVdy[2:end-1,:]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[10] != 0
+            NetCDF.putvar(ncs[10],"Bu",Float32.(Bu[2-ep:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[11] != 0
+            NetCDF.putvar(ncs[11],"Bv",Float32.(Bv[2:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[12] != 0
+            NetCDF.putvar(ncs[12],"LLu1",Float32.(LLu1[:,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[13] != 0
+            NetCDF.putvar(ncs[13],"LLu2",Float32.(LLu2[2-ep:end,:]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[14] != 0
+            NetCDF.putvar(ncs[14],"LLv1",Float32.(LLv1[:,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[15] != 0
+            NetCDF.putvar(ncs[15],"LLv2",Float32.(LLv2[2:end-1,:]),start=[1,1,iout],count=[-1,-1,1])
+        end
+
+        for nc in ncs
+            if nc !=0
+                #TODO check whether Int64 here clashes with the Int32 of type of time dimension
+                NetCDF.putvar(nc,"t",Int64[i*dtint],start=[iout])
+                NetCDF.sync(nc)     # sync to view netcdf while model is still running
+            end
+        end
+    end
+
+    #TODO MPI Barrier, Waitall?
+
+    return ncs
+end
+
 """ Writes data to a netCDF file."""
-function output_diagn_nc(ncs,i,iout,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
+function output_diagn_nc(ncs,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd)
     if i % nout == 0 && output && output_diagn #&& prank == 0
 
         # cut off the halo
         if ncs[1] != 0
-            NetCDF.putvar(ncs[1],"Bu",Float32.(Bu[2-ep:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs[1],"q",Float32.(q[1:end-ep,:]),start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs[2] != 0
-            NetCDF.putvar(ncs[2],"Bv",Float32.(Bv[2:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs[2],"p",Float32.(p[2:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs[3] != 0
-            NetCDF.putvar(ncs[3],"LLu1",Float32.(LLu1[:,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs[3],"dudx",Float32.(dudx[2+ep:end-1,3:end-2]),start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs[4] != 0
-            NetCDF.putvar(ncs[4],"LLu2",Float32.(LLu2[2-ep:end,:]),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs[4],"dvdy",Float32.(dvdy[3:end-2,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs[5] != 0
-            NetCDF.putvar(ncs[5],"LLv1",Float32.(LLv1[:,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs[5],"dudy",Float32.(dudy[2+ep:end-1-ep]),start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs[6] != 0
-            NetCDF.putvar(ncs[6],"LLv2",Float32.(LLv2[2:end-1,:]),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs[6],"dvdx",Float32.(dvdx[2:end-1-ep,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[7] != 0
+            NetCDF.putvar(ncs[7],"Lu",Float32.(Lu[2:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[8] != 0
+            NetCDF.putvar(ncs[8],"Lv",Float32.(Lv[2:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[9] != 0
+            NetCDF.putvar(ncs[9],"xd",Float32.(xd),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[10] != 0
+            NetCDF.putvar(ncs[10],"yd",Float32.(yd),start=[1,1,iout],count=[-1,-1,1])
         end
 
         for nc in ncs
@@ -160,9 +268,9 @@ function output_diagn_nc(ncs,i,iout,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
 end
 
 """Closes netCDF and progress.txt files."""
-function output_close(ncs_progn,ncs_diagn,progrtxt)
+function output_close(ncs_progn,ncs_tend,ncs_diagn,progrtxt)
     if output #&& prank == 0
-        for nc in cat(ncs_progn,ncs_diagn,dims=1)
+        for nc in cat(ncs_progn,ncs_tend,ncs_diagn,dims=1)
             if nc !=0
                 NetCDF.close(nc)
             end

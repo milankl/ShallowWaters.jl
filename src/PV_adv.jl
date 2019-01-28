@@ -13,7 +13,7 @@ function PV!(q,f_q,dvdx,dudy,h_q)
     end
 end
 
-"""Advection of potential voriticity qhv,qhu as in Sadourny, 1975
+"""Advection of potential vorticity qhv,qhu as in Sadourny, 1975
 enstrophy conserving scheme."""
 function PV_adv_Sadourny!(qhv,qhu,q,qα,qβ,qγ,qδ,q_u,q_v,U,V,V_u,U_v)
     Ixy!(V_u,V)
