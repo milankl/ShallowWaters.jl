@@ -8,7 +8,7 @@ const Numtype = Float32
 # DOMAIN RESOLUTION AND RATIO
 const nx = 100                  # number of grid cells in x-direction
 const Lx = 1000e3               # length of the domain in x-direction
-const L_ratio = 2               # Domain aspect ratio of Lx/Ly
+const L_ratio = 1               # Domain aspect ratio of Lx/Ly
 
 # PHYSICAL CONSTANTS
 const gravity = 10.             # gravitational acceleration
@@ -23,7 +23,7 @@ const wind_forcing = "double_gyre"  # "channel", "double_gyre", "shear" or "none
 const Fx0 = 0.12                # wind stress strength [Pa], default 0.12
 
 # BOTTOM TOPOGRAPHY OPTIONS
-const topography_feature = "ridges" # "ridge", "seamount", "flat", "ridges", "bathtub"
+const topography_feature = "ridge" # "ridge", "seamount", "flat", "ridges", "bathtub"
 const topofeat_height = 80.      # height of seamount
 const topofeat_width = 200e3    # horizontal scale [m] of the seamount
 
@@ -37,12 +37,12 @@ const η_refw = 100e3             # width [m] of the tangent used for the interf
 const RKo = 4                   # Order of the RK time stepping scheme (3 or 4)
 const cfl = 1.0                 # CFL number (1.0 recommended for RK4, 0.6 for RK3)
 const Ndays = 100                # number of days to integrate for
-const nstep_diff = 10           # diffusive part every nstep_diff time steps.
+const nstep_diff = 1           # diffusive part every nstep_diff time steps.
 const nstep_advcor = 1         # advection and coriolis every nstep_advcor time steps.
 
 # BOUNDARY CONDITION OPTIONS
-const bc_x = "periodic"      # "periodic" or anything else for nonperiodic
-const lbc = 1.                  # lateral boundary condition parameter
+const bc_x = "nonperiodic"      # "periodic" or anything else for nonperiodic
+const lbc = 2.                  # lateral boundary condition parameter
                                 # 0 free-slip, 0<lbc<2 partial-slip, 2 no-slip
 
 # MOMENTUM ADVECTION OPTIONS
@@ -73,13 +73,17 @@ const SSTϕ = 0.5                # latitude/longitude ∈ [0,1] of sst edge
 
 # OUTPUT OPTIONS
 const output = true                # for nc output
-const output_diagn = true      # output tendencies & diagnostic variables as well?
+const output_tend = false           # ouput for tendencies as well?
+const output_diagn = true          # output diagnostic variables as well?
 const output_progn_vars = ["u","v","eta","sst"]
-const output_diagn_vars = ["Bu","Bv","LLu1","LLu2","LLv1","LLv2"]
-const output_dt = 24             # output time step in hours
+#const output_tend_vars = ["du","dv","deta","Bu","Bv","LLu1","LLu2","LLv1","LLv2"]
+const output_tend_vars = ["qhv","qhu","dpdx","dpdy","dUdx","dVdy"]
+const output_diagn_vars = ["q","p","dudx","dvdy","dudy","dvdx","Lu","Lv","xd","yd"]
+
+const output_dt = 8             # output time step in hours
 #const outpath = "/network/aopp/chaos/pred/kloewer/julsdata/ssthr/"
-#const outpath = "/local/kloewer/julsdata/linear/"
-const outpath = "/Users/milan/phd/outtest/"
+const outpath = "/local/kloewer/julsdata/outtest/"
+#const outpath = "/Users/milan/phd/outtest/"
 
 # INITIAL CONDITIONS
 const initial_cond = "rest"   # "rest" or "ncfile"
