@@ -1,137 +1,49 @@
-"""initialises netCDF files for data output."""
-function output_ini(u,v,η,sst)
+"""Initialises netCDF files for data output of the prognostic variables."""
+function output_ini(u,v,η,sst,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
     # only process with rank 0 defines the netCDF file
     if output #&& prank == 0
 
-        # Attributes
-        Dictu = Dict{String,Any}("description"=>"Data from shallow-water model juls.")
-        Dictu["details"] = "Cartesian coordinates, f or beta-plane, Arakawa C-grid"
-        Dictu["reference"] = "github.com/milankl/juls"
+        all_output_progn_vars = ["u","v","eta","sst"]
+        units_progn = ["m/s","m/s","m","degC"]
+        longnames_progn = ["zonal velocity","meridional velocity","sea surface height","sea surface temperature"]
 
-        Dictu["nx"] = nx
-        Dictu["Lx"] = Lx
-        Dictu["L_ratio"] = L_ratio
-        Dictu["delta"] = Δ
+        all_output_diagn_vars = ["Bu","Bv","LLu1","LLu2","LLv1","LLv2"]
+        units_diagn = ["m^2/s^2","m^2/s^2","m^2/s^2","m^2/s^2","m^2/s^2","m^2/s^2"]
+        longnames_diagn = ["Bottom friction u-comp.","Bottom friction v-comp.",
+                            "Diffusion u-comp. 1","Diffusion u-comp. 2",
+                            "Diffusion v-comp. 1","Diffusion v-comp. 2"]
 
-        Dictu["halo"] = halo
-        Dictu["haloeta"] = haloη
-        Dictu["halosstx"] = halosstx
-        Dictu["halossty"] = halossty
+        allx = (x_u,x_v,x_T,x_q)    # collect all grids
+        ally = (y_u,y_v,y_T,y_q)
+        grids_progn = [1,2,3,3]           # for easy access per index
+        grids_diagn = [1,2,1,1,2,2]
 
-        Dictu["g"] = gravity
-        Dictu["water_depth"] = water_depth
-        Dictu["phi"] = ϕ
-        Dictu["density"] = ρ
+        ncs_progn = Array{Any,1}(zeros(Int,length(all_output_progn_vars)))
+        ncs_diagn = Array{Any,1}(zeros(Int,length(all_output_diagn_vars)))
 
-        Dictu["wind_forcing"] = wind_forcing
-        Dictu["Fx0"] = Fx0
-
-        Dictu["topography_feature"] = topography_feature
-        Dictu["topofeat_height"] = topofeat_height
-        Dictu["topofeat_width"] = topofeat_width
-
-        Dictu["surface_forcing"] = string(surface_forcing)
-        Dictu["t_relax"] = t_relax
-        Dictu["eta_refh"] = η_refh
-        Dictu["η_refw"] = η_refw
-
-        Dictu["Numtype"] = string(Numtype)
-        Dictu["output_dt"] = output_dt
-        Dictu["nout"] = nout
-        Dictu["nadvstep"] = nadvstep
-
-        Dictu["RKo"] = RKo
-        Dictu["cfl"] = cfl
-        Dictu["Ndays"] = Ndays
-
-        Dictu["bc_x"] = bc_x
-        Dictu["lbc"] = lbc
-
-        Dictu["adv_scheme"] = adv_scheme
-
-        Dictu["bottom_friction"] = bottom_friction
-        Dictu["drag"] = drag
-        Dictu["taudrag"] = τdrag
-
-        Dictu["diffusion"] = diffusion
-        Dictu["nuConst"] = ν_const
-        Dictu["c_smag"] = c_smag
-
-        Dictu["tracer_advcetion"] = string(tracer_advection)
-        Dictu["tracer_relaxation"] = string(tracer_relaxation)
-        Dictu["injection_region"] = injection_region
-        Dictu["sstrestart"] = string(sstrestart)
-        Dictu["Uadv"] = Uadv
-        Dictu["SSTmax"] = SSTmax
-        Dictu["SSTmin"] = SSTmin
-        Dictu["tauSST"] = τSST
-        Dictu["SSTw"] = SSTw
-        Dictu["SSTphi"] = SSTϕ
-
-        Dictu["initial_cond"] = initial_cond
-        Dictu["init_run_id"] = init_run_id
-        Dictu["initpath"] = initpath
-
-        if "u" in output_vars
-            xudim = NcDim("x",nux,values=x_u)
-            yudim = NcDim("y",nuy,values=y_u)
-            tdim = NcDim("t",0,unlimited=true)
-
-            uvar = NcVar("u",[xudim,yudim,tdim],t=Float32)
-            tvaru = NcVar("t",tdim,t=Int32)
-
-            ncu = NetCDF.create(runpath*"u.nc",[uvar,tvaru],mode=NC_NETCDF4)
-            NetCDF.putatt(ncu,"u",Dict("units"=>"m/s","long_name"=>"zonal velocity"))
-        else
-            ncu = 0
+        # loop over all outputtable variables
+        # PROGNOSTIC VARIABLES
+        for (ivarout,outvar) in enumerate(all_output_progn_vars)
+            if outvar in output_progn_vars    # check whether output is desired (specified in parameters.jl)
+                ncs_progn[ivarout] = nccreate(allx[grids_progn[ivarout]],ally[grids_progn[ivarout]],
+                                outvar,runpath,units_progn[ivarout],longnames_progn[ivarout])
+            end
         end
 
-        if "v" in output_vars
-            xvdim = NcDim("x",nvx,values=x_v)
-            yvdim = NcDim("y",nvy,values=y_v)
-            tdim = NcDim("t",0,unlimited=true)
-
-            vvar = NcVar("v",[xvdim,yvdim,tdim],t=Float32)
-            tvarv = NcVar("t",tdim,t=Int32)
-
-            ncv = NetCDF.create(runpath*"v.nc",[vvar,tvarv],mode=NC_NETCDF4)
-            NetCDF.putatt(ncv,"v",Dict("units"=>"m/s","long_name"=>"meridional velocity"))
-        else
-            ncv = 0
+        # DIAGNOSTIC VARIABLES
+        if output_diagn
+            for (ivarout,outvar) in enumerate(all_output_diagn_vars)
+                if outvar in output_diagn_vars    # check whether output is desired (specified in parameters.jl)
+                    ncs_diagn[ivarout] = nccreate(allx[grids_diagn[ivarout]],ally[grids_diagn[ivarout]],
+                                    outvar,runpath,units_diagn[ivarout],longnames_diagn[ivarout])
+                end
+            end
         end
 
-        if "eta" in output_vars
-            xTdim = NcDim("x",nx,values=x_T)
-            yTdim = NcDim("y",ny,values=y_T)
-            tdim = NcDim("t",0,unlimited=true)
+        # Write attributes and units for dimensions
+        Dictu = output_dict()
 
-            ηvar = NcVar("eta",[xTdim,yTdim,tdim],t=Float32)
-            tvarη = NcVar("t",tdim,t=Int32)
-
-            ncη = NetCDF.create(runpath*"eta.nc",[ηvar,tvarη],mode=NC_NETCDF4)
-            NetCDF.putatt(ncη,"eta",Dict("units"=>"m","long_name"=>"sea surface height"))
-        else
-            ncη = 0
-        end
-
-        if "sst" in output_vars
-            xTdim = NcDim("x",nx,values=x_T)
-            yTdim = NcDim("y",ny,values=y_T)
-            tdim = NcDim("t",0,unlimited=true)
-
-            ηvar = NcVar("sst",[xTdim,yTdim,tdim],t=Float32)
-            tvarη = NcVar("t",tdim,t=Int32)
-
-            ncsst = NetCDF.create(runpath*"sst.nc",[ηvar,tvarη],mode=NC_NETCDF4)
-            NetCDF.putatt(ncsst,"sst",Dict("units"=>"1","long_name"=>"sea surface temperature"))
-        else
-            ncsst = 0
-        end
-
-        ncs = (ncu,ncv,ncη,ncsst)
-
-        # Write attributes and units
-        for nc in ncs
+        for nc in cat(ncs_progn,ncs_diagn,dims=1)
             if nc != 0
                 NetCDF.putatt(nc,"global",Dictu)
                 NetCDF.putatt(nc,"t",Dict("units"=>"s","long_name"=>"time"))
@@ -142,19 +54,33 @@ function output_ini(u,v,η,sst)
 
         # write initial conditions
         iout = 1   # counter for output time steps
-        ncs,iout = output_nc(ncs,u,v,η,sst,0,iout)
+        ncs_diagn = output_diagn_nc(ncs_diagn,0,iout,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
+        ncs_progn,iout = output_progn_nc(ncs_progn,0,iout,u,v,η,sst)
 
         # also output scripts
         scripts_output()
 
-        return ncs,iout
+        return ncs_progn,ncs_diagn,iout
     else
-        return nothing, nothing
+        return nothing,nothing,nothing
     end
 end
 
-""" Writes data to a netCDF file."""
-function output_nc(ncs,u,v,η,sst,i,iout)
+function nccreate(x::Array{Float64,1},y::Array{Float64,1},name::String,path::String,unit::String,long_name::String)
+    xdim = NcDim("x",length(x),values=x)
+    ydim = NcDim("y",length(y),values=y)
+    tdim = NcDim("t",0,unlimited=true)
+
+    var = NcVar(name,[xdim,ydim,tdim],t=Float32)
+    tvar = NcVar("t",tdim,t=Int32)
+
+    nc = NetCDF.create(path*name*".nc",[var,tvar],mode=NC_NETCDF4)
+    NetCDF.putatt(nc,name,Dict("units"=>unit,"long_name"=>long_name))
+    return nc
+end
+
+"""Writes prognostic variables to pre-initialised netCDF file."""
+function output_progn_nc(ncs,i,iout,u,v,η,sst)
 
     # if nprocs > 1
     #     #TODO MPI Gather data
@@ -181,6 +107,7 @@ function output_nc(ncs,u,v,η,sst,i,iout)
 
         for nc in ncs
             if nc !=0
+                #TODO check whether Int64 here clashes with the Int32 of type of time dimension
                 NetCDF.putvar(nc,"t",Int64[i*dtint],start=[iout])
                 NetCDF.sync(nc)     # sync to view netcdf while model is still running
             end
@@ -194,10 +121,48 @@ function output_nc(ncs,u,v,η,sst,i,iout)
     return ncs,iout
 end
 
-"""Closes netCDF and progress.txt files."""
-function output_close(ncs,progrtxt)
-    if output #&& prank == 0
+""" Writes data to a netCDF file."""
+function output_diagn_nc(ncs,i,iout,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
+    if i % nout == 0 && output && output_diagn #&& prank == 0
+
+        # cut off the halo
+        if ncs[1] != 0
+            NetCDF.putvar(ncs[1],"Bu",Float32.(Bu[2-ep:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[2] != 0
+            NetCDF.putvar(ncs[2],"Bv",Float32.(Bv[2:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[3] != 0
+            NetCDF.putvar(ncs[3],"LLu1",Float32.(LLu1[:,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[4] != 0
+            NetCDF.putvar(ncs[4],"LLu2",Float32.(LLu2[2-ep:end,:]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[5] != 0
+            NetCDF.putvar(ncs[5],"LLv1",Float32.(LLv1[:,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs[6] != 0
+            NetCDF.putvar(ncs[6],"LLv2",Float32.(LLv2[2:end-1,:]),start=[1,1,iout],count=[-1,-1,1])
+        end
+
         for nc in ncs
+            if nc !=0
+                #TODO check whether Int64 here clashes with the Int32 of type of time dimension
+                NetCDF.putvar(nc,"t",Int64[i*dtint],start=[iout])
+                NetCDF.sync(nc)     # sync to view netcdf while model is still running
+            end
+        end
+    end
+
+    #TODO MPI Barrier, Waitall?
+
+    return ncs
+end
+
+"""Closes netCDF and progress.txt files."""
+function output_close(ncs_progn,ncs_diagn,progrtxt)
+    if output #&& prank == 0
+        for nc in cat(ncs_progn,ncs_diagn,dims=1)
             if nc !=0
                 NetCDF.close(nc)
             end
@@ -274,4 +239,81 @@ function scripts_output()
             cp("src/"*juliafile,runpath*"scripts/src/"*juliafile)
         end
     end
+end
+
+"""Creates a dictionary with many parameter constants to be included in the nc files."""
+function output_dict()
+    # Attributes for nc
+    Dictu = Dict{String,Any}("description"=>"Data from shallow-water model juls.")
+    Dictu["details"] = "Cartesian coordinates, f or beta-plane, Arakawa C-grid"
+    Dictu["reference"] = "github.com/milankl/juls"
+
+    Dictu["nx"] = nx
+    Dictu["Lx"] = Lx
+    Dictu["L_ratio"] = L_ratio
+    Dictu["delta"] = Δ
+
+    Dictu["halo"] = halo
+    Dictu["haloeta"] = haloη
+    Dictu["halosstx"] = halosstx
+    Dictu["halossty"] = halossty
+
+    Dictu["g"] = gravity
+    Dictu["water_depth"] = water_depth
+    Dictu["phi"] = ϕ
+    Dictu["density"] = ρ
+
+    Dictu["wind_forcing"] = wind_forcing
+    Dictu["Fx0"] = Fx0
+
+    Dictu["topography_feature"] = topography_feature
+    Dictu["topofeat_height"] = topofeat_height
+    Dictu["topofeat_width"] = topofeat_width
+
+    Dictu["surface_forcing"] = string(surface_forcing)
+    Dictu["t_relax"] = t_relax
+    Dictu["eta_refh"] = η_refh
+    Dictu["η_refw"] = η_refw
+
+    Dictu["Numtype"] = string(Numtype)
+    Dictu["output_dt"] = output_dt
+    Dictu["nout"] = nout
+    Dictu["nadvstep"] = nadvstep
+    Dictu["nstep_diff"] = nstep_diff
+    Dictu["nstep_advcor"] = nstep_advcor
+
+    Dictu["RKo"] = RKo
+    Dictu["cfl"] = cfl
+    Dictu["Ndays"] = Ndays
+
+    Dictu["bc_x"] = bc_x
+    Dictu["lbc"] = lbc
+
+    Dictu["adv_scheme"] = adv_scheme
+    Dictu["dynamics"] = dynamics
+
+    Dictu["bottom_friction"] = bottom_friction
+    Dictu["drag"] = drag
+    Dictu["taudrag"] = τdrag
+
+    Dictu["diffusion"] = diffusion
+    Dictu["nuConst"] = ν_const
+    Dictu["c_smag"] = c_smag
+
+    Dictu["tracer_advcetion"] = string(tracer_advection)
+    Dictu["tracer_relaxation"] = string(tracer_relaxation)
+    Dictu["injection_region"] = injection_region
+    Dictu["sstrestart"] = string(sstrestart)
+    Dictu["Uadv"] = Uadv
+    Dictu["SSTmax"] = SSTmax
+    Dictu["SSTmin"] = SSTmin
+    Dictu["tauSST"] = τSST
+    Dictu["SSTw"] = SSTw
+    Dictu["SSTphi"] = SSTϕ
+
+    Dictu["initial_cond"] = initial_cond
+    Dictu["init_run_id"] = init_run_id
+    Dictu["initpath"] = initpath
+
+    return Dictu
 end
