@@ -30,7 +30,7 @@ function time_integration(u,v,η,sst)
 
     # feedback and output
     t0,progrtxt = feedback_ini()
-    ncs, iout = output_ini(u,v,η,sst)
+    ncs_progn, ncs_diagn, iout = output_ini(u,v,η,sst,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
     nans_detected = false
 
     t = 0           # model time
@@ -116,7 +116,9 @@ function time_integration(u,v,η,sst)
 
         # feedback and output
         t0,nans_detected = feedback(u,v,η,sst,i,t0,nt,nans_detected,progrtxt)
-        ncs,iout = output_nc(ncs,u,v,η,sst,i,iout)
+
+        ncs_diagn = output_diagn_nc(ncs_diagn,i,iout,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
+        ncs_progn,iout = output_progn_nc(ncs_progn,i,iout,u,v,η,sst)
 
         if nans_detected
             break
@@ -126,7 +128,7 @@ function time_integration(u,v,η,sst)
 
     # finalise feeback and output
     feedback_end(progrtxt,t0)
-    output_close(ncs,progrtxt)
+    output_close(ncs_progn,ncs_diagn,progrtxt)
 
     return u,v,η,sst
 end
