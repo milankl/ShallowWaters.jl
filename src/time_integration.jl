@@ -51,7 +51,7 @@ function time_integration(u,v,η,sst)
 
             rhs!(du,dv,dη,u1,v1,η1,Fx,f_u,f_v,f_q,H,η_ref,
                 dvdx,dudy,dpdx,dpdy,
-                p,KEu,KEv,dUdx,dVdy,
+                p,u²,v²,KEu,KEv,dUdx,dVdy,
                 h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
                 qhv,qhu,q,q_u,q_v,
                 qα,qβ,qγ,qδ)
@@ -73,10 +73,10 @@ function time_integration(u,v,η,sst)
         # ADVECTION and CORIOLIS TERMS
         # although included in the tendency of every RK substep,
         # only update every nstep_advcor steps!
-        if dynamics == "nonlinear" && (i % nstep_advcor) == 0
-            rhs_advcor!(u0,v0,η0,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
-                                q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v)
-        end
+        # if dynamics == "nonlinear" && (i % nstep_advcor) == 0
+        #     rhs_advcor!(u0,v0,η0,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
+        #                         q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v)
+        # end
 
         # DIFFUSIVE TERMS - SEMI-IMPLICIT EULER
         # use u0 = u^(n+1) to evaluate tendencies, add to u0 = u^n + rhs

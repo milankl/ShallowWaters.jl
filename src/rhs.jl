@@ -11,7 +11,7 @@ where non-linear terms
 of the mom eq. are only updated outside the function (slowly varying terms)."""
 function rhs_nonlin!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
             dvdx,dudy,dpdx,dpdy,
-            p,KEu,KEv,dUdx,dVdy,
+            p,u²,v²,KEu,KEv,dUdx,dVdy,
             h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
             qhv,qhu,q,q_u,q_v,
             qα,qβ,qγ,qδ)
@@ -28,6 +28,9 @@ function rhs_nonlin!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
     # divergence of mass flux
     ∂x!(dUdx,U)
     ∂y!(dVdy,V)
+
+    rhs_advcor!(u,v,η,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
+                        q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v)
 
     # Bernoulli potential - recalculate for new η, KEu,KEv are only updated outside
     Bernoulli!(p,KEu,KEv,η)
@@ -53,7 +56,7 @@ end
 the linear shallow water equations."""
 function rhs_lin!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
             dvdx,dudy,dpdx,dpdy,
-            p,KEu,KEv,dUdx,dVdy,
+            p,u²,v²,KEu,KEv,dUdx,dVdy,
             h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
             qhv,qhu,q,q_u,q_v,
             qα,qβ,qγ,qδ)
