@@ -1,8 +1,8 @@
-# juls
+# juls - A 16bit shallow water model
 ![sst](figs/sst_posit16.png?raw=true "SST")
 (simulated with 16bit posits)
 
-A shallow water model (but going to be 2-Layer primitive equation model) written in Julia, with a focus on flexible number types: 16/32/64bit floats; Arbitrary precision floats (Julia's BigFloat environment); Arbitrary precision posits via the SigmoidNumber package; Maybe in the future also Integers.
+A shallow water model (but hopefully going to be 2-Layer primitive equation model) written in Julia, with a focus on flexible number types: 16/32/64bit floats; Arbitrary precision floats (Julia's BigFloat environment); Arbitrary precision posits via the SigmoidNumber package; Maybe in the future also Integers.
 
 Juls is fully-explicit with a Smagorinsky-like biharmonic diffusion operator, the advective terms are written in the vector-invariant form and discretized with either the energy and enstrophy conserving scheme by Arakawa and Hsu, 1990 or the simpler Sadourny 1975 enstrophy conserving scheme. Tracer advection (sofar only passive) is implemented with a semi-Lagrangian advection scheme, that allows for really large time steps, similar to Diamantakis, 2014. Runge Kutte 4th order is used for pressure, advective and coriolis terms and the continuity equation. Semi-implicit time stepping for the diffusive terms (biharmonic diffusion and bottom friction).
 
