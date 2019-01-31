@@ -19,3 +19,9 @@ Change the parameters of your model run in ```parameters.jl``` and then do
 ```
 julia run_juls.jl
 ```
+
+# THE EQUATIONS
+
+          ∂u/∂t + u*∂u/∂x + v*∂u/∂y - f*v = -g*∂η/∂x - c_D*|u|*u + ν∇²u + Fx(x,y)     (1)
+          ∂v/∂t + u*∂v/∂x + v*∂v/∂y + f*u = -g*∂η/∂y - c_D*|u|*v + ν∇²v               (2)
+          ∂η/∂t = -∂(uh)/∂x -∂(vh)/∂y                                                 (3)
