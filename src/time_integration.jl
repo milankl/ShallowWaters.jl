@@ -31,7 +31,7 @@ function time_integration(u,v,η,sst)
     # feedback and output
     t0,progrtxt = feedback_ini()
     ncs_progn,ncs_tend,ncs_diagn,iout = output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2,
-                                                    q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd)
+                                                    q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
     nans_detected = false
 
     t = 0           # model time
@@ -118,7 +118,7 @@ function time_integration(u,v,η,sst)
         # feedback and output
         t0,nans_detected = feedback(u,v,η,sst,i,t0,nt,nans_detected,progrtxt)
 
-        ncs_diagn = output_diagn_nc(ncs_diagn,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd)
+        ncs_diagn = output_diagn_nc(ncs_diagn,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
         ncs_tend = output_tend_nc(ncs_tend,i,iout,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
         ncs_progn,iout = output_progn_nc(ncs_progn,i,iout,u,v,η,sst)
 

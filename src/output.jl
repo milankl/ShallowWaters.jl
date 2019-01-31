@@ -1,6 +1,6 @@
 """Initialises netCDF files for data output of the prognostic, tendency and diagnostic variables."""
 function output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2,
-                        q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd)
+                        q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
     # only process with rank 0 defines the netCDF file
     if output #&& prank == 0
 
@@ -22,20 +22,21 @@ function output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,
                             "Diffusion v-comp. 1","Diffusion v-comp. 2"]
 
         # DIAGNOSTIC VARIABLES OUTPUT STRINGS#
-        all_output_diagn_vars = ["q","p","dudx","dvdy","dudy","dvdx","Lu","Lv","xd","yd"]
-        units_diagn = ["1/s","m^2/s^2","m/s","m/s","m/s","m/s","m/s","m/s","1","1"]
+        all_output_diagn_vars = ["q","p","dudx","dvdy","dudy","dvdx","Lu","Lv","xd","yd","relvort"]
+        units_diagn = ["1/(ms)","m^2/s^2","m/s","m/s","m/s","m/s","m/s","m/s","1","1","1"]
         longnames_diagn = ["Potential vorticity","Bernoulli potential",
                             "Zonal velocity x-gradient","Meridional velocity y-gradient",
                             "Zonal velocity y-gradient","Meridional velocity x-gradient",
                             "Laplace of u velocity", "Laplace of v velocity",
-                            "Relative departure point x","Relative departure point y"]
+                            "Relative departure point x","Relative departure point y",
+                            "Relative vorticity"]
 
         # collect all grids for easy access per index
-        allx = (x_u,x_v,x_T,x_q)
+        allx = (x_u,x_v,x_T,x_q_halo[3:end-2+ep])
         ally = (y_u,y_v,y_T,y_q)
         grids_progn = [1,2,3,3]           # for easy access per index
         grids_tend = [1,2,3,1,2,1,2,3,3,1,2,1,1,2,2]
-        grids_diagn = [4,3,3,3,4,4,1,2,3,3]
+        grids_diagn = [4,3,3,3,4,4,1,2,3,3,4]
 
         ncs_progn = Array{Any,1}(zeros(Int,length(all_output_progn_vars)))
         ncs_tend = Array{Any,1}(zeros(Int,length(all_output_tend_vars)))
@@ -84,7 +85,7 @@ function output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,
 
         # write initial conditions
         iout = 1   # counter for output time steps
-        ncs_diag = output_diagn_nc(ncs_diagn,0,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd)
+        ncs_diag = output_diagn_nc(ncs_diagn,0,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
         ncs_tend = output_tend_nc(ncs_tend,0,iout,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
         ncs_progn,iout = output_progn_nc(ncs_progn,0,iout,u,v,η,sst)
 
@@ -218,12 +219,13 @@ function output_tend_nc(ncs,i,iout,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,L
 end
 
 """ Writes data to a netCDF file."""
-function output_diagn_nc(ncs,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd)
+function output_diagn_nc(ncs,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
     if i % nout == 0 && output && output_diagn #&& prank == 0
 
         # cut off the halo
         if ncs[1] != 0
-            NetCDF.putvar(ncs[1],"q",Float32.(q[1:end-ep,:]),start=[1,1,iout],count=[-1,-1,1])
+            #TODO for periodic BC q[1,:] = q[end,:] avoid this redundant output?
+            NetCDF.putvar(ncs[1],"q",Float32.(q)/Δ,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs[2] != 0
             NetCDF.putvar(ncs[2],"p",Float32.(p[2:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
@@ -235,10 +237,10 @@ function output_diagn_nc(ncs,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd)
             NetCDF.putvar(ncs[4],"dvdy",Float32.(dvdy[3:end-2,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs[5] != 0
-            NetCDF.putvar(ncs[5],"dudy",Float32.(dudy[2+ep:end-1-ep]),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs[5],"dudy",Float32.(dudy[2+ep:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs[6] != 0
-            NetCDF.putvar(ncs[6],"dvdx",Float32.(dvdx[2:end-1-ep,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs[6],"dvdx",Float32.(dvdx[2:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs[7] != 0
             NetCDF.putvar(ncs[7],"Lu",Float32.(Lu[2:end-1,2:end-1]),start=[1,1,iout],count=[-1,-1,1])
@@ -252,6 +254,11 @@ function output_diagn_nc(ncs,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd)
         if ncs[10] != 0
             NetCDF.putvar(ncs[10],"yd",Float32.(yd),start=[1,1,iout],count=[-1,-1,1])
         end
+        if ncs[11] != 0
+            #TODO for periodic BC relvort[1,:] = relvort[end,:] avoid this redundant output?
+            NetCDF.putvar(ncs[11],"relvort",Float32.((dvdx[2:end-1,2:end-1]-dudy[2+ep:end-1,2:end-1])./f_q),start=[1,1,iout],count=[-1,-1,1])
+        end
+
 
         for nc in ncs
             if nc !=0
