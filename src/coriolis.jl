@@ -15,14 +15,14 @@ function beta_plane()
     β = 2*ω/R*cosd(ϕ)     # Coriolis derivative wrt latitude [(ms)^-1]
 
     # for non-dimensional gradient operators f contains the grid spacing Δ
-    f_u = Numtype.(Δ*(f₀ .+ β*yy_u))
-    f_v = Numtype.(Δ*(f₀ .+ β*yy_v))
-    f_q = Numtype.(Δ*(f₀ .+ β*yy_q))
+    f_u = Numtype.(Δ*(f₀ .+ β*(yy_u .- Ly/2)))
+    f_v = Numtype.(Δ*(f₀ .+ β*(yy_v .- Ly/2)))
+    f_q = Numtype.(Δ*(f₀ .+ β*(yy_q .- Ly/2)))
 
     return f_u,f_v,f_q
 end
 
-""" Coriolis term f*v. """
+"""Coriolis term f*v. """
 function fv!(qhv,f_u,v_u)
     m,n = size(qhv)
     @boundscheck (m,n) == size(f_u) || throw(BoundsError())
@@ -35,7 +35,7 @@ function fv!(qhv,f_u,v_u)
     end
 end
 
-""" Coriolis term f*u. """
+"""Coriolis term f*u. """
 function fu!(qhu,f_v,u_v)
     m,n = size(qhu)
     @boundscheck (m,n) == size(f_v) || throw(BoundsError())

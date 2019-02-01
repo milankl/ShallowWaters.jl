@@ -17,6 +17,14 @@ function shear_wind()
     return Numtype.(Fx)
 end
 
+"""Returns the constant in space forcing matrix Fx."""
+function constant_wind()
+    # for non-dimensional gradients the wind forcing needs to contain the grid spacing Δ
+    xx_u,yy_u = meshgrid(x_u,y_u)
+    Fx = (Δ*Fx0/ρ/water_depth)*ones(size(xx_u))
+    return Numtype.(Fx)
+end
+
 """Returns the constant forcing matrix Fx that varies only meriodionally
 with a superposition of sin & cos for a double gyre circulation.
 See Cooper&Zanna 2015 or Kloewer et al 2018."""
@@ -48,6 +56,8 @@ elseif wind_forcing == "shear"
     wind = shear_wind
 elseif wind_forcing == "double_gyre"
     wind = double_gyre_wind
+elseif wind_forcing == "constant"
+    wind = constant_wind
 elseif wind_forcing == "none"
     wind = no_wind
 else
