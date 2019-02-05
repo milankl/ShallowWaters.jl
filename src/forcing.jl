@@ -25,6 +25,14 @@ function constant_wind()
     return Numtype.(Fx)
 end
 
+"""Returns the constant in space forcing matrix Fy."""
+function constant_wind_y()
+    # for non-dimensional gradients the wind forcing needs to contain the grid spacing Δ
+    xx_v,yy_v = meshgrid(x_v,y_v)
+    Fy = (Δ*Fy0/ρ/water_depth)*ones(size(xx_v))
+    return Numtype.(Fy)
+end
+
 """Returns the constant forcing matrix Fx that varies only meriodionally
 with a superposition of sin & cos for a double gyre circulation.
 See Cooper&Zanna 2015 or Kloewer et al 2018."""
@@ -35,12 +43,6 @@ function double_gyre_wind()
     return Numtype.(Fx)
 end
 
-"""Returns a zero matrix for no wind forcing."""
-function no_wind()
-    return zeros(Numtype,nux,nuy)
-end
-
-
 """Returns a reference state for Newtonian cooling/surface relaxation shaped as a
 hyperbolic tangent to force the continuity equation."""
 function interface_relaxation()
@@ -50,16 +52,20 @@ function interface_relaxation()
     return Numtype.(η_ref)
 end
 
-if wind_forcing == "channel"
-    wind = channel_wind
-elseif wind_forcing == "shear"
-    wind = shear_wind
-elseif wind_forcing == "double_gyre"
-    wind = double_gyre_wind
-elseif wind_forcing == "constant"
-    wind = constant_wind
-elseif wind_forcing == "none"
-    wind = no_wind
+if wind_forcing_x == "channel"
+    windx = channel_wind
+elseif wind_forcing_x == "shear"
+    windx = shear_wind
+elseif wind_forcing_x == "double_gyre"
+    windx = double_gyre_wind
+elseif wind_forcing_x == "constant"
+    windx = constant_wind
+else
+    throw(error("Wind forcing not correctly specified."))
+end
+
+if wind_forcing_y == "constant"
+    windy = constant_wind_y
 else
     throw(error("Wind forcing not correctly specified."))
 end

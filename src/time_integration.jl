@@ -1,7 +1,8 @@
 function time_integration(u,v,η,sst)
 
     # FORCING
-    Fx = wind()
+    Fx = windx()
+    Fy = windy()
     f_u,f_v,f_q = beta_plane()
     H = topography()
     η_ref = interface_relaxation()
@@ -49,7 +50,7 @@ function time_integration(u,v,η,sst)
                 ghost_points!(u1,v1,η1)
             end
 
-            rhs!(du,dv,dη,u1,v1,η1,Fx,f_u,f_v,f_q,H,η_ref,
+            rhs!(du,dv,dη,u1,v1,η1,Fx,Fy,f_u,f_v,f_q,H,η_ref,
                 dvdx,dudy,dpdx,dpdy,
                 p,u²,v²,KEu,KEv,dUdx,dVdy,
                 h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,

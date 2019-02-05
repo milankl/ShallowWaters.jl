@@ -1,7 +1,7 @@
 """Tendencies du,dv,dη of
 
         ∂u/∂t = qhv - ∂(1/2*(u²+v²) + gη)/∂x + Fx
-        ∂v/∂t = -qhu - ∂(1/2*(u²+v²) + gη)/∂y
+        ∂v/∂t = -qhu - ∂(1/2*(u²+v²) + gη)/∂y + Fy
         ∂η/∂t =  -∂(uh)/∂x - ∂(vh)/∂y + γ(η_ref-η)
 
 where non-linear terms
@@ -9,7 +9,7 @@ where non-linear terms
         q, (u²+v²)
 
 of the mom eq. are only updated outside the function (slowly varying terms)."""
-function rhs_nonlin!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
+function rhs_nonlin!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,
             dvdx,dudy,dpdx,dpdy,
             p,u²,v²,KEu,KEv,dUdx,dVdy,
             h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
@@ -43,7 +43,7 @@ function rhs_nonlin!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
 
     # adding the terms
     momentum_u!(du,qhv,dpdx,Fx)
-    momentum_v!(dv,qhu,dpdy)
+    momentum_v!(dv,qhu,dpdy,Fy)
     continuity!(dη,dUdx,dVdy,η,η_ref)
 end
 
@@ -54,7 +54,7 @@ end
         ∂η/∂t =  -∂(uH)/∂x - ∂(vH)/∂y + γ(η_ref-η),
 
 the linear shallow water equations."""
-function rhs_lin!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
+function rhs_lin!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,
             dvdx,dudy,dpdx,dpdy,
             p,u²,v²,KEu,KEv,dUdx,dVdy,
             h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
@@ -81,7 +81,7 @@ function rhs_lin!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
 
     # adding the terms
     momentum_u!(du,qhv,dpdx,Fx)
-    momentum_v!(dv,qhu,dpdy)
+    momentum_v!(dv,qhu,dpdy,Fy)
     continuity!(dη,dUdx,dVdy,η,η_ref)
 end
 
@@ -92,7 +92,7 @@ end
         ∂η/∂t =  -∂(uh)/∂x - ∂(vh)/∂y + γ(η_ref-η),
 
 the shallow water equations which are linear in momentum but non-linear in continuity."""
-function rhs_linmom!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
+function rhs_linmom!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,
             dvdx,dudy,dpdx,dpdy,
             p,KEu,KEv,dUdx,dVdy,
             h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
@@ -124,7 +124,7 @@ function rhs_linmom!(du,dv,dη,u,v,η,Fx,f_u,f_v,f_q,H,η_ref,
 
     # adding the terms
     momentum_u!(du,qhv,dpdx,Fx)
-    momentum_v!(dv,qhu,dpdy)
+    momentum_v!(dv,qhu,dpdy,Fy)
     continuity!(dη,dUdx,dVdy,η,η_ref)
 end
 
@@ -250,14 +250,14 @@ function momentum_u!(du,qhv,dpdx,Fx)
 end
 
 """Sum up the tendencies of the non-diffusive right-hand side for the v-component."""
-function momentum_v!(dv,qhu,dpdy)
+function momentum_v!(dv,qhu,dpdy,Fy)
     m,n = size(dv) .- (2*halo,2*halo) # cut off the halo
     @boundscheck (m,n) == size(qhu) || throw(BoundsError())
     @boundscheck (m+2,n+2) == size(dpdy) || throw(BoundsError())
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-             dv[i+2,j+2] = -qhu[i,j] - dpdy[i+1,j+1]
+             dv[i+2,j+2] = -qhu[i,j] - dpdy[i+1,j+1] + Fy[i,j]
         end
     end
 end
