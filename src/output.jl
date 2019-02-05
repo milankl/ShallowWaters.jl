@@ -378,8 +378,10 @@ function output_dict()
     Dictu["phi"] = ϕ
     Dictu["density"] = ρ
 
-    Dictu["wind_forcing"] = wind_forcing
+    Dictu["wind_forcing_x"] = wind_forcing_x
+    Dictu["wind_forcing_y"] = wind_forcing_y
     Dictu["Fx0"] = Fx0
+    Dictu["Fy0"] = Fy0
 
     Dictu["topography_feature"] = topography_feature
     Dictu["topofeat_height"] = topofeat_height
