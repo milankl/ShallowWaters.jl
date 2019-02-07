@@ -21,7 +21,7 @@ julia run_juls.jl
 The non-linear shallow water model plus tracer equation is
 
           ∂u/∂t + (u⃗⋅∇)u - f*v = -g*∂η/∂x - c_D*|u⃗|*u + ∇⋅ν*∇(∇²u) + Fx(x,y)     (1)
-          ∂v/∂t + (u⃗⋅∇)v + f*u = -g*∂η/∂y - c_D*|u⃗|*v + ∇⋅ν*∇(∇²v)               (2)
+          ∂v/∂t + (u⃗⋅∇)v + f*u = -g*∂η/∂y - c_D*|u⃗|*v + ∇⋅ν*∇(∇²v) + Fy(x,y)     (2)
           ∂η/∂t = -∇⋅(u⃗h)                                                        (3)
           ∂ϕ/∂t = -u⃗⋅∇ϕ                                                          (4)
 
@@ -30,7 +30,7 @@ with the prognostic variables velocity u⃗ = (u,v) and sea surface heigth η. T
 The linear shallow water model equivalent is
 
           ∂u/∂t - f*v = -g*∂η/∂x - r*u + ∇⋅ν*∇(∇²u) + Fx(x,y)     (1)
-          ∂v/∂t + f*u = -g*∂η/∂y - r*v + ∇⋅ν*∇(∇²v)               (2)
+          ∂v/∂t + f*u = -g*∂η/∂y - r*v + ∇⋅ν*∇(∇²v) + Fy(x,y)     (2)
           ∂η/∂t = -H*∇⋅u⃗                                          (3)
           ∂ϕ/∂t = -u⃗⋅∇ϕ                                           (4)
 
