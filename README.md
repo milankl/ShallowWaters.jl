@@ -22,7 +22,7 @@ The non-linear shallow water model plus tracer equation is
 
           ∂u/∂t + (u⃗⋅∇)u - f*v = -g*∂η/∂x - c_D*|u⃗|*u + ∇⋅ν*∇(∇²u) + Fx(x,y)     (1)
           ∂v/∂t + (u⃗⋅∇)v + f*u = -g*∂η/∂y - c_D*|u⃗|*v + ∇⋅ν*∇(∇²v) + Fy(x,y)     (2)
-          ∂η/∂t = -∇⋅(u⃗h)                                                        (3)
+          ∂η/∂t = -∇⋅(u⃗h) + γ*(η_ref - η)                                        (3)
           ∂ϕ/∂t = -u⃗⋅∇ϕ                                                          (4)
 
 with the prognostic variables velocity u⃗ = (u,v) and sea surface heigth η. The layer thickness is h = η + H(x,y). The Coriolis parameter is f = f₀ + βy with beta-plane approximation. The graviational acceleration is g. Bottom friction is either quadratic with drag coefficient c_D or linear with inverse time scale r. Diffusion is realized with a biharmonic diffusion operator, with either a constant viscosity coefficient ν, or a Smagorinsky-like coefficient that scales as ν = c_Smag*|D|, with deformation rate |D| = √((∂u/∂x - ∂v/∂y)² + (∂u/∂y + ∂v/∂x)²). Wind forcing Fx is constant in time, but may vary in space.
@@ -31,7 +31,7 @@ The linear shallow water model equivalent is
 
           ∂u/∂t - f*v = -g*∂η/∂x - r*u + ∇⋅ν*∇(∇²u) + Fx(x,y)     (1)
           ∂v/∂t + f*u = -g*∂η/∂y - r*v + ∇⋅ν*∇(∇²v) + Fy(x,y)     (2)
-          ∂η/∂t = -H*∇⋅u⃗                                          (3)
+          ∂η/∂t = -H*∇⋅u⃗ + γ*(η_ref - η)                          (3)
           ∂ϕ/∂t = -u⃗⋅∇ϕ                                           (4)
 
 Juls discretises the equation on an equi-distant Arakawa C-grid, with 2nd order finite-difference operators. Boundary conditions are implemented via a ghost-point copy and each variable has a halo of variable size to account for different stencil sizes of various operators. 
