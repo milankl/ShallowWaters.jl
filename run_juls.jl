@@ -6,10 +6,10 @@ using NetCDF
 using FileIO
 using Printf
 
-if VERSION == v"0.7.0"
-    using Printf
-    #using Statistics
-end
+# if VERSION == v"0.7.0"
+#     using Printf
+#     #using Statistics
+# end
 
 #using MPI
 #using SigmoidNumbers
