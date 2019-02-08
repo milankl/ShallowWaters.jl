@@ -52,6 +52,36 @@ function interface_relaxation()
     return Numtype.(η_ref)
 end
 
+"""Returns Kelvin wave pumping forcing of the continuity equation at the equator."""
+function kelvin_pump(x::AbstractVector,y::AbstractVector)
+    β = β_at_lat(ϕ)
+    c = wave_speed(gravity,water_depth)
+    xx,yy = meshgrid(x,y)
+
+
+    # y-coordinate of the Equator
+    mϕ = m_per_lat()
+    y_eq = Ly/2 - ϕ*mϕ
+    y_15S = Ly/2 - (ϕ+15)*mϕ
+    y_15N = Ly/2 - (ϕ-15)*mϕ
+
+    w_win = 300e3
+    Lx_win = 0.8
+
+    Fη = A₀*Δ*exp.(-β*(yy.-y_eq).^2/(2c)).*
+        (1/2 .+ 1/2*tanh.(2π*(Lx/(4*w_win))*(xx/Lx .- (1-Lx_win)/2))).*
+        (1/2 .- 1/2*tanh.(2π*(Lx/(4*w_win))*(xx/Lx .- (1-(1-Lx_win)/2))))
+
+    #Fη[yy .< y_15S] .= 0.0
+    #Fη[yy .> y_15N] .= 0.0
+
+    return Numtype.(Fη)
+end
+
+function Fηt(t::Real)
+    return -1*Numtype(sin(2*π*ωyr*t/3600/24/365))
+end
+
 if wind_forcing_x == "channel"
     windx = channel_wind
 elseif wind_forcing_x == "shear"

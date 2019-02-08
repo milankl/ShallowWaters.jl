@@ -3,9 +3,10 @@ function time_integration(u,v,η,sst)
     # FORCING
     Fx = windx()
     Fy = windy()
-    f_u,f_v,f_q = beta_plane()
+    f_u,f_v,f_q = coriolis_parameter()
     H = topography()
     η_ref = interface_relaxation()
+    Fη = kelvin_pump(x_T,y_T)
     sst_ref = sst_initial()
 
     # add halo with ghost point copy
@@ -50,7 +51,7 @@ function time_integration(u,v,η,sst)
                 ghost_points!(u1,v1,η1)
             end
 
-            rhs!(du,dv,dη,u1,v1,η1,Fx,Fy,f_u,f_v,f_q,H,η_ref,
+            rhs!(du,dv,dη,u1,v1,η1,Fx,Fy,f_u,f_v,f_q,H,η_ref,Fη,t,
                 dvdx,dudy,dpdx,dpdy,
                 p,u²,v²,KEu,KEv,dUdx,dVdy,
                 h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
@@ -74,10 +75,10 @@ function time_integration(u,v,η,sst)
         # ADVECTION and CORIOLIS TERMS
         # although included in the tendency of every RK substep,
         # only update every nstep_advcor steps!
-        # if dynamics == "nonlinear" && (i % nstep_advcor) == 0
-        #     rhs_advcor!(u0,v0,η0,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
-        #                         q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v)
-        # end
+        if dynamics == "nonlinear" && nstep_advcor > 0 && (i % nstep_advcor) == 0
+            rhs_advcor!(u0,v0,η0,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
+                                q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v)
+        end
 
         # DIFFUSIVE TERMS - SEMI-IMPLICIT EULER
         # use u0 = u^(n+1) to evaluate tendencies, add to u0 = u^n + rhs
