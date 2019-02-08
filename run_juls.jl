@@ -4,6 +4,7 @@ etc, and runs the model =#
 using Dates
 using NetCDF
 using FileIO
+using Printf
 
 if VERSION == v"0.7.0"
     using Printf
@@ -33,6 +34,7 @@ include("src/coriolis.jl")
 include("src/forcing.jl")
 include("src/bottom_topography.jl")
 include("src/rhs.jl")
+include("src/continuity.jl")
 include("src/time_integration.jl")
 include("src/ghost_points.jl")
 include("src/initial_conditions.jl")

@@ -10,31 +10,43 @@ end
 """Similar to the numpy meshgrid function:
 repeats x length(y)-times and vice versa. Returns two matrices xx,yy of same shape so that
 each row of xx is x and each column of yy is y."""
-function meshgrid(x,y)
-    # preallocate preserving the data type of x,y
-    xx = zeros(typeof(x[1]),length(x),length(y))
-    yy = zeros(typeof(y[1]),length(x),length(y))
+function meshgrid(x::AbstractVector,y::AbstractVector)
+    m,n = length(x),length(y)
 
-    for i in 1:length(x)
+    # preallocate preserving the data type of x,y
+    xx = zeros(typeof(x[1]),m,n)
+    yy = zeros(typeof(y[1]),m,n)
+
+    for i in 1:m
         xx[i,:] .= x[i]
     end
 
-    for i in 1:length(y)
+    for i in 1:n
         yy[:,i] .= y[i]
     end
 
     return xx,yy
 end
 
+"""Shallow water gravity wave speed."""
+function wave_speed(gravity::Real,water_depth::Real)
+    return sqrt(gravity*water_depth)
+end
+
+"""Meter per Latitude (or Longitude at the equator)."""
+function m_per_lat()
+    return 2π*R/360.
+end
+
 """ Returns the time step dt,Δt,dtint and the total number of steps to integrate nt
 based on the CFL criterion to resolve shallow water gravity waves. """
 function timestep()
     # shallow water gravity wave phase speed
-    c_phase = sqrt(gravity*water_depth)
+    c = wave_speed(gravity,water_depth)
 
     # the model timestep dt based on cfl stability criterion to resolve gravity waves
     # converting to integer, i.e. rounding up (ceil)
-    dtint = Int(floor(cfl*Δ/c_phase))      # make the timestep slightly shorter due to floor
+    dtint = Int(floor(cfl*Δ/c))      # make the timestep slightly shorter due to floor
     nt = Int(ceil(Ndays*3600*24/dtint))    # number of time steps to integrate
     dt = Numtype(dtint)                    # convert to Numtype for multiplication of the RHS
     Δt = Numtype(dtint/Δ)                  # timestep combined with grid spacing Δ

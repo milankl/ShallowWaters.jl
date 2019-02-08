@@ -2,14 +2,14 @@
 
         ∂u/∂t = qhv - ∂(1/2*(u²+v²) + gη)/∂x + Fx
         ∂v/∂t = -qhu - ∂(1/2*(u²+v²) + gη)/∂y + Fy
-        ∂η/∂t =  -∂(uh)/∂x - ∂(vh)/∂y + γ(η_ref-η)
+        ∂η/∂t =  -∂(uh)/∂x - ∂(vh)/∂y + γ(η_ref-η) + Fηt*Fη
 
 where non-linear terms
 
         q, (u²+v²)
 
 of the mom eq. are only updated outside the function (slowly varying terms)."""
-function rhs_nonlin!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,
+function rhs_nonlin!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,Fη,t,
             dvdx,dudy,dpdx,dpdy,
             p,u²,v²,KEu,KEv,dUdx,dVdy,
             h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
@@ -29,8 +29,10 @@ function rhs_nonlin!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,
     ∂x!(dUdx,U)
     ∂y!(dVdy,V)
 
-    rhs_advcor!(u,v,η,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
+    if nstep_advcor == 0    # evaluate every RK substep
+        rhs_advcor!(u,v,η,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
                         q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v)
+    end
 
     # Bernoulli potential - recalculate for new η, KEu,KEv are only updated outside
     Bernoulli!(p,KEu,KEv,η)
@@ -44,17 +46,17 @@ function rhs_nonlin!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,
     # adding the terms
     momentum_u!(du,qhv,dpdx,Fx)
     momentum_v!(dv,qhu,dpdy,Fy)
-    continuity!(dη,dUdx,dVdy,η,η_ref)
+    continuity!(dη,dUdx,dVdy,η,η_ref,Fη,t)
 end
 
 """Tendencies du,dv,dη of
 
         ∂u/∂t = gv - g∂η/∂x + Fx
         ∂v/∂t = -fu - g∂η/∂y
-        ∂η/∂t =  -∂(uH)/∂x - ∂(vH)/∂y + γ(η_ref-η),
+        ∂η/∂t =  -∂(uH)/∂x - ∂(vH)/∂y + γ(η_ref-η) + Fηt*Fη,
 
 the linear shallow water equations."""
-function rhs_lin!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,
+function rhs_lin!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,Fη,t,
             dvdx,dudy,dpdx,dpdy,
             p,u²,v²,KEu,KEv,dUdx,dVdy,
             h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
@@ -82,17 +84,17 @@ function rhs_lin!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,
     # adding the terms
     momentum_u!(du,qhv,dpdx,Fx)
     momentum_v!(dv,qhu,dpdy,Fy)
-    continuity!(dη,dUdx,dVdy,η,η_ref)
+    continuity!(dη,dUdx,dVdy,η,η_ref,Fη,t)
 end
 
 """Tendencies du,dv,dη of
 
         ∂u/∂t = gv - g∂η/∂x + Fx
         ∂v/∂t = -fu - g∂η/∂y
-        ∂η/∂t =  -∂(uh)/∂x - ∂(vh)/∂y + γ(η_ref-η),
+        ∂η/∂t =  -∂(uh)/∂x - ∂(vh)/∂y + γ(η_ref-η) + Fηt*Fη,
 
 the shallow water equations which are linear in momentum but non-linear in continuity."""
-function rhs_linmom!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,
+function rhs_linmom!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,Fη,t,
             dvdx,dudy,dpdx,dpdy,
             p,KEu,KEv,dUdx,dVdy,
             h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
@@ -125,7 +127,7 @@ function rhs_linmom!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,
     # adding the terms
     momentum_u!(du,qhv,dpdx,Fx)
     momentum_v!(dv,qhu,dpdy,Fy)
-    continuity!(dη,dUdx,dVdy,η,η_ref)
+    continuity!(dη,dUdx,dVdy,η,η_ref,Fη,t)
 end
 
 """ Update advective and Coriolis tendencies."""
@@ -260,41 +262,6 @@ function momentum_v!(dv,qhu,dpdy,Fy)
              dv[i+2,j+2] = -qhu[i,j] - dpdy[i+1,j+1] + Fy[i,j]
         end
     end
-end
-
-"""Continuity equation's right-hand side with surface relaxation
--∂x(uh) - ∂y(vh) + γ*(η_ref - η)."""
-function continuity_surf_forc!(dη,dUdx,dVdy,η,η_ref)
-    m,n = size(dη) .- (2*haloη,2*haloη)
-    @boundscheck (m,n+2) == size(dUdx) || throw(BoundsError())
-    @boundscheck (m+2,n) == size(dVdy) || throw(BoundsError())
-    @boundscheck (m+2,n+2) == size(η) || throw(BoundsError())
-    @boundscheck (m,n) == size(η_ref) || throw(BoundsError())
-
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            dη[i+1,j+1] = -(dUdx[i,j+1] + dVdy[i+1,j]) + γ*(η_ref[i,j]-η[i+1,j+1])
-        end
-    end
-end
-
-"""Continuity equation's right-hand side -∂x(uh) - ∂y(vh) without forcing."""
-function continuity_itself!(dη,dUdx,dVdy,η,η_ref)
-    m,n = size(dη) .- (2*haloη,2*haloη)
-    @boundscheck (m,n+2) == size(dUdx) || throw(BoundsError())
-    @boundscheck (m+2,n) == size(dVdy) || throw(BoundsError())
-
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            dη[i+1,j+1] = -(dUdx[i,j+1] + dVdy[i+1,j])
-        end
-    end
-end
-
-if surface_forcing
-    continuity! = continuity_surf_forc!
-else
-    continuity! = continuity_itself!
 end
 
 if dynamics == "linear"
