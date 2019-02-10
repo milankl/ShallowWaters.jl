@@ -35,7 +35,9 @@ const νB = Numtype(-ν_const/30000)   # linear scaling based on 540m^s/s at Δ=
 # for semi-Lagrangian advection / interpolation
 const zeero = Numtype(0.)
 const oone = Numtype(1.)
-const r_SST = Numtype(dtadvint/(τSST*3600*24))    # [1]
+const r_SST = Numtype(dtadvint/(τSST*3600*24))    # [1], dimensionless
+const SST_J = Numtype(dtadvint/(jSST*3600*24))    # [1]
+const SST0 = Numtype(SSTmin)
 
 # for analysis the old operators with boundary conditions are kept. Constants for these
 const one_over_Δ = Numtype(1/Δ)
