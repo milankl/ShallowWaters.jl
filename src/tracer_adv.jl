@@ -116,8 +116,6 @@ function adv_sst!(ssti::AbstractMatrix,sst::AbstractMatrix,xx::AbstractMatrix,yy
     @boundscheck (m-2*halosstx,n-2*halossty) == size(xx) || throw(BoundsError())
     @boundscheck (m-2*halosstx,n-2*halossty) == size(yy) || throw(BoundsError())
 
-    #println((maximum(xx),minimum(xx)))
-
     @inbounds for j ∈ 1:n-2*halossty
         for i ∈ 1:m-2*halosstx
 
@@ -173,15 +171,40 @@ function bilin(f00::Real,f10::Real,f01::Real,f11::Real,x::Real,y::Real)
 end
 
 """Tracer relaxation."""
-function tracer_relax!(sst::AbstractMatrix,sst_ref::AbstractMatrix)
+function tracer_relax!(sst::AbstractMatrix,sst_ref::AbstractMatrix,SSTγ::AbstractMatrix)
     m,n = size(sst)
     @boundscheck (m-2*halosstx,n-2*halossty) == size(sst_ref) || throw(BoundsError())
+    @boundscheck (m-2*halosstx,n-2*halossty) == size(SSTγ) || throw(BoundsError())
 
     @inbounds for j ∈ 1+halossty:n-halossty
         for i ∈ 1+halosstx:m-halosstx
-            sst[i,j] += r_SST*(sst_ref[i-halosstx,j-halossty] - sst[i,j])
+            sst[i,j] += SSTγ[i-halosstx,j-halossty]*(sst_ref[i-halosstx,j-halossty] - sst[i,j])
         end
     end
+end
+
+"""Tracer consumption."""
+function tracer_consumption!(sst::AbstractMatrix)
+    m,n = size(sst)
+
+    @inbounds for j ∈ 1+halossty:n-halossty
+        for i ∈ 1+halosstx:m-halosstx
+            sst[i,j] += SST_J*(SST0 - sst[i,j])
+        end
+    end
+end
+
+"""Spatially dependent relaxation time scale."""
+function sst_γ(x::AbstractVector,y::AbstractVector)
+    xx,yy = meshgrid(x,y)
+
+    # convert from days to one over 1/s and include adv time step
+    γ0 = dtadvint/(SST_γ0*3600*24)
+
+    x10E = 10*m_per_lat()   # assume Equator: lat/lon equivalence
+    γ = γ0/2 .* (1 .- tanh.((xx.-SST_λ0)./SST_λs))
+    γ[xx .> x10E] .= 0.0
+    return Numtype.(γ)
 end
 
 if bc_x == "periodic"

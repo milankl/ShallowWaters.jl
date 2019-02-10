@@ -10,7 +10,7 @@ function initial_conditions(starti=-1)
         u = zeros(Numtype,nux,nuy)
         v = zeros(Numtype,nvx,nvy)
         η = zeros(Numtype,nx,ny)
-        sst = sst_initial()
+        sst = sst_inicond()
 
     elseif initial_cond == "ncfile"
 
@@ -73,8 +73,8 @@ end
 """Initial conditions as a rectangle with SSTmax inside, SSTmin outside."""
 function sst_rect()
 
-    x0,x1 = 0.1,0.5     # left right border in [0,1]
-    y0,y1 = 0.2,0.8     # north south border in [0,1]
+    x0,x1 = 0.0,0.15     # left right border in [0,1]
+    y0,y1 = 0.,1.0     # north south border in [0,1]
 
     xx_T,yy_T = meshgrid(x_T,y_T)
 
@@ -84,10 +84,28 @@ function sst_rect()
     return Numtype.(sst)
 end
 
+"""Initial conditions as with SSTmin everywhere."""
+function sst_flat()
+
+    xx_T,yy_T = meshgrid(x_T,y_T)
+    sst = fill(SSTmin,size(xx_T))
+    return Numtype.(sst)
+end
+
 if injection_region == "south"
-    sst_initial = sst_south
+    sst_inj_region = sst_south
 elseif injection_region == "west"
-    sst_initial = sst_west
+    sst_inj_region = sst_west
 elseif injection_region == "rect"
-    sst_initial = sst_rect
+    sst_inj_region = sst_rect
+end
+
+if sst_initial == "south"
+    sst_inicond = sst_south
+elseif sst_initial == "west"
+    sst_inicond = sst_west
+elseif sst_initial == "rect"
+    sst_inicond = sst_rect
+elseif sst_initial == "flat"
+    sst_inicond = sst_flat
 end

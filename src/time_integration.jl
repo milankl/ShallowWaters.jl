@@ -7,7 +7,8 @@ function time_integration(u,v,η,sst)
     H = topography()
     η_ref = interface_relaxation()
     Fη = kelvin_pump(x_T,y_T)
-    sst_ref = sst_initial()
+    sst_ref = sst_inj_region()
+    SSTγ = sst_γ(x_T,y_T)
 
     # add halo with ghost point copy
     u,v,η,sst = add_halo(u,v,η,sst)
@@ -108,7 +109,10 @@ function time_integration(u,v,η,sst)
             departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
             adv_sst!(ssti,sst,xd,yd)
             if tracer_relaxation
-                tracer_relax!(ssti,sst_ref)
+                tracer_relax!(ssti,sst_ref,SSTγ)
+            end
+            if tracer_consumption
+                tracer_consumption!(ssti)
             end
             ghost_points_sst!(ssti)
             sst .= ssti
@@ -137,7 +141,7 @@ function time_integration(u,v,η,sst)
     return u,v,η,sst
 end
 
-""" Add multiply a with b. a += x*b """
+"""Add to a x multiplied with b. a += x*b """
 function axb!(a::AbstractMatrix,x::Real,b::AbstractMatrix)
     m,n = size(a)
     @boundscheck (m,n) == size(b) || throw(BoundsError())
@@ -149,7 +153,7 @@ function axb!(a::AbstractMatrix,x::Real,b::AbstractMatrix)
     end
 end
 
-""" C equals add multiply a with b. c = a + x*b """
+"""c equals add a to x multiplied with b. c = a + x*b """
 function caxb!(c::AbstractMatrix,a::AbstractMatrix,x::Real,b::AbstractMatrix)
     m,n = size(a)
     @boundscheck (m,n) == size(b) || throw(BoundsError())

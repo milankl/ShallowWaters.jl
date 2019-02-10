@@ -256,7 +256,7 @@ function output_diagn_nc(ncs,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
         end
         if ncs[11] != 0
             #TODO for periodic BC relvort[1,:] = relvort[end,:] avoid this redundant output?
-            NetCDF.putvar(ncs[11],"relvort",Float32.((dvdx[2:end-1,2:end-1]-dudy[2+ep:end-1,2:end-1])./f_q),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs[11],"relvort",Float32.((dvdx[2:end-1,2:end-1]-dudy[2+ep:end-1,2:end-1])./abs.(f_q)),start=[1,1,iout],count=[-1,-1,1])
         end
 
 

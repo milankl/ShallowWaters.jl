@@ -128,8 +128,8 @@ function viscous_tensor_Smagorinsky!(S11,S12,S21,S22,νSmag,νSmag_q,dLudx,dLudy
     end
 end
 
-"""Biharmonic stress tensor times Smagorinsky coefficient
-νSmag * ∇∇² ⃗u = (S11, S12; S21, S22)"""
+"""Biharmonic stress tensor times constant viscosity coefficient
+νB * ∇∇² ⃗u = (S11, S12; S21, S22)"""
 function viscous_tensor_Constant!(S11,S12,S21,S22,dLudx,dLudy,dLvdx,dLvdy)
     m,n = size(S11)
     @boundscheck (m,n) == size(dLudx) || throw(BoundsError())
