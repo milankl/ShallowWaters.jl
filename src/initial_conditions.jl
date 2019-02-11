@@ -41,7 +41,7 @@ function initial_conditions(starti=-1)
             sst = ncsst.vars["sst"][:,:,starti]
             NetCDF.close(ncsst)
 
-            sst = Numtpe.(reshape(sst,size(sst)[1:2]))
+            sst = Numtype.(reshape(sst,size(sst)[1:2]))
         else
             sst = sst_initial()
         end
