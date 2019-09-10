@@ -13,7 +13,7 @@ Juls is fully-explicit with a Smagorinsky-like biharmonic diffusion operator, th
 
 Forcing is either with a wind-stress applied to the momentum equations, or surface/interface relaxation or forcing of the contuinity equation is possible. Boundary conditions are either periodic (only in x direction) or super-slip/free-slip/partial-slip/no-slip for non-periodic BCs. Output of all prognositc and various diagnostic variables & tendencies is done via NetCDF.
 
-Requires Julia either v0.6, v0.7 or v1.x and NetCDF.
+Requires Julia v1.x and NetCDF.
 
 # HOW TO USE
 
@@ -40,6 +40,6 @@ The linear shallow water model equivalent is
           ∂η/∂t = -H*∇⋅u⃗ + γ*(η_ref - η) + Fηt(t)*Fη(x,y)         (3)
           ∂ϕ/∂t = -u⃗⋅∇ϕ                                           (4)
 
-Juls discretises the equation on an equi-distant Arakawa C-grid, with 2nd order finite-difference operators. Boundary conditions are implemented via a ghost-point copy and each variable has a halo of variable size to account for different stencil sizes of various operators. 
+Juls discretises the equation on an equi-distant Arakawa C-grid, with 2nd order finite-difference operators. Boundary conditions are implemented via a ghost-point copy and each variable has a halo of variable size to account for different stencil sizes of various operators.
 
 Juls splits the time steps for various terms: Runge Kutta 4th order scheme for the fast varying terms. The diffusive terms (bottom friction and diffusion) are solved semi-implicitly every n-th time step. The tracer equation is solved with a semi-Lagrangian scheme that uses usually much larger time steps.
