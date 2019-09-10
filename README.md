@@ -1,4 +1,10 @@
-# juls - A 16bit shallow water model
+[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
+[![Build Status](https://travis-ci.com/milankl/Juls.jl.svg?branch=master)](https://travis-ci.com/milankl/Juls.jl)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/milankl/Juls.jl?svg=true)](https://ci.appveyor.com/project/milankl/Juls-jl)
+[![Build Status](https://api.cirrus-ci.com/github/milankl/Juls.jl.svg)](https://cirrus-ci.com/github/milankl/Juls.jl)
+
+
+# Juls.jl - A type-flexible 16bit shallow water model
 ![sst](figs/sst_posit16.png?raw=true "SST")
 
 A shallow water model written in Julia, which allows arithmetic operations with various number types: 16/32/64bit floats; Arbitrary precision floats (Julia's BigFloat environment); Arbitrary precision posits via the SigmoidNumber package.
