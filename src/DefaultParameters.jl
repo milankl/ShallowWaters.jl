@@ -1,4 +1,4 @@
-@with_kw mutable struct ParameterStruct
+@with_kw mutable struct Parameter
 
     T::DataType=Float32                 # number format
 
@@ -104,4 +104,12 @@
     initial_cond::String="rest"         # "rest" or "ncfile" for restart from file
     initpath::String="data/"            # folder where to pick the restart files from
     init_run_id::Int=0                  # run id for restart from run number
+
+
+    # ASSERT - CHECK THAT THE INPUT PARAMETERS MAKE SENSE
+    @assert all((nx,Lx,L_ratio) .> 0.)
+    @assert all((g,H,ρ,ω,R) .> 0.)
+    @assert ϕ <= 90.0 && ϕ >= -90.0
+    #TODO more of that
+
 end

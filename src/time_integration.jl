@@ -146,6 +146,7 @@ function axb!(a::AbstractMatrix,x::Real,b::AbstractMatrix)
     m,n = size(a)
     @boundscheck (m,n) == size(b) || throw(BoundsError())
 
+    #TODO @simd?
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
            a[i,j] += x*b[i,j]
@@ -159,6 +160,7 @@ function caxb!(c::AbstractMatrix,a::AbstractMatrix,x::Real,b::AbstractMatrix)
     @boundscheck (m,n) == size(b) || throw(BoundsError())
     @boundscheck (m,n) == size(c) || throw(BoundsError())
 
+    #TODO @simd?
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
            c[i,j] = a[i,j] + x*b[i,j]
