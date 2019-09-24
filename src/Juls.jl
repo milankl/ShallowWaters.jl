@@ -2,15 +2,20 @@ module Juls
 
 export RunJuls
 
-using Dates, NetCDF, FileIO, Printf
+using Dates, NetCDF, FileIO, Printf, Parameters
 
 # GRID
-include("grid.jl")
+include("DefaultParameters.jl")
+include("Grid.jl")
+include("RunJuls.jl")
+
+
+
 include("constants.jl")
 #include("domain_decomposition.jl")
 
 # OPERATORS and everything that is needed for the RHS
-include("gradients.jl")
+include("Gradients.jl")
 include("interpolations.jl")
 include("PV_adv.jl")
 include("bottom_friction.jl")
@@ -27,7 +32,9 @@ include("initial_conditions.jl")
 include("preallocate.jl")
 
 # OUTPUT AND FEEDBACK
-include("src/feedback.jl")
-include("src/output.jl")
+include("feedback.jl")
+include("output.jl")
+
+include("RunJuls.jl")
 
 end
