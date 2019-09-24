@@ -8,11 +8,8 @@ using Dates, NetCDF, FileIO, Printf, Parameters
 include("DefaultParameters.jl")
 include("Grid.jl")
 include("RunJuls.jl")
+include("Constants.jl")
 
-
-
-include("constants.jl")
-#include("domain_decomposition.jl")
 
 # OPERATORS and everything that is needed for the RHS
 include("Gradients.jl")
