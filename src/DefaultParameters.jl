@@ -46,9 +46,9 @@
                                         # 0 means it is included in every RK4 substep
 
     # BOUNDARY CONDITION OPTIONS
-    bc_x::String="periodic"             # "periodic" or anything else for nonperiodic
-    lbc::Real=2.                        # lateral boundary condition parameter
-                                        # 0 free-slip, 0<lbc<2 partial-slip, 2 no-slip
+    bc::String="periodic"               # "periodic" or anything else for nonperiodic
+    α::Real=2.                          # lateral boundary condition parameter
+                                        # 0 free-slip, 0<α<2 partial-slip, 2 no-slip
 
     # MOMENTUM ADVECTION OPTIONS
     adv_scheme::String="ArakawaHsu"     # "Sadourny" or "ArakawaHsu"
@@ -56,13 +56,13 @@
 
     # BOTTOM FRICTION OPTIONS
     bottom_friction::String="quadratic" # "linear", "quadratic" or "none"
-    drag::Real=1e-5                     # bottom drag coefficient [dimensionless] for quadratic
-    τdrag::Real=300.                    # bottom drag coefficient [days] for linear
+    cD::Real=1e-5                       # bottom drag coefficient [dimensionless] for quadratic
+    τD::Real=300.                       # bottom drag coefficient [days] for linear
 
     # DIFFUSION OPTIONS
     diffusion::String="Smagorinsky"     # "Smagorinsky" or "Constant", biharmonic in both cases
-    ν_const::Real=500.0                 # [m^2/s] scaling constant for Constant biharmonic diffusion
-    c_smag::Real=0.15                   # Smagorinsky coefficient [dimensionless]
+    νB::Real=500.0                       # [m^2/s] scaling constant for Constant biharmonic diffusion
+    cSmag::Real=0.15                    # Smagorinsky coefficient [dimensionless]
 
     # TRACER ADVECTION
     tracer_advection::Bool=true         # yes?
@@ -104,7 +104,6 @@
     initial_cond::String="rest"         # "rest" or "ncfile" for restart from file
     initpath::String="data/"            # folder where to pick the restart files from
     init_run_id::Int=0                  # run id for restart from run number
-
 
     # ASSERT - CHECK THAT THE INPUT PARAMETERS MAKE SENSE
     @assert all((nx,Lx,L_ratio) .> 0.)

@@ -15,11 +15,11 @@ function RunJuls(::Type{T}=Float32;     # number format
 
     P = Parameter(T=T;kwargs...)
     G = Grid(T,P)
-    # C = ConstantsStruct(P)
+    C = Constants(T,P,G)
     # Prog = InitialConditions(P)
     # Diag = PreallocateDiagnosticVars()
     # S = State(P,G,C,Prog,Diag)
     # time_integration(S)
 
-    return P,G
+    return P,G,C
 end

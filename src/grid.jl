@@ -79,7 +79,7 @@ end
 function Grid(::Type{T},P::Parameter) where {T<:AbstractFloat}
 
     @unpack nx,Lx,L_ratio = P
-    @unpack bc_x = P
+    @unpack bc = P
     @unpack g,H = P
     @unpack cfl = P
     @unpack Ndays,nstep_diff = P
@@ -96,10 +96,10 @@ function Grid(::Type{T},P::Parameter) where {T<:AbstractFloat}
     G.Δ,G.ny,G.Ly = Δ,ny,Ly                 # pack
 
     # NUMBER OF GRID POINTS
-    G.nux = if (bc_x == "periodic") nx else nx-1 end
+    G.nux = if (bc == "periodic") nx else nx-1 end
     G.nuy = ny
     G.nvx,G.nvy = nx,ny-1
-    G.nqx = if (bc_x == "periodic") nx else nx+1 end
+    G.nqx = if (bc == "periodic") nx else nx+1 end
     G.nqy = ny+1
 
     # TOTAL NUMBER of T,u,v,q-points
@@ -112,17 +112,17 @@ function Grid(::Type{T},P::Parameter) where {T<:AbstractFloat}
     G.x_T = Δ*Array(1:nx) .- Δ/2
     G.y_T = Δ*Array(1:ny) .- Δ/2
 
-    G.x_u = if (bc_x == "periodic") Δ*Array(0:nx-1) else Δ*Array(1:nx-1) end
+    G.x_u = if (bc == "periodic") Δ*Array(0:nx-1) else Δ*Array(1:nx-1) end
     G.y_u = G.y_T
 
     G.x_v = G.x_T
     G.y_v = Δ*Array(1:ny-1)
 
-    G.x_q = if bc_x == "periodic" G.x_u else Δ*Array(1:nx+1) .- Δ end
+    G.x_q = if bc == "periodic" G.x_u else Δ*Array(1:nx+1) .- Δ end
     G.y_q = Δ*Array(1:ny+1) .- Δ
 
     # EDGE POINT - used in some functions of rhs.jl to avoid an if
-    G.ep = if bc_x == "periodic" 1 else 0 end
+    G.ep = if bc == "periodic" 1 else 0 end
 
     # HALO SIZE
     G.halo = 2          # halo size for u,v (Biharmonic stencil requires 2)
@@ -134,13 +134,13 @@ function Grid(::Type{T},P::Parameter) where {T<:AbstractFloat}
     G.x_T_halo = Δ*Array(0:nx+1) .- Δ/2
     G.y_T_halo = Δ*Array(0:ny+1) .- Δ/2
 
-    G.x_u_halo = if (bc_x == "periodic") Δ*Array(-2:nx+1) else Δ*Array(-1:nx+1) end
+    G.x_u_halo = if (bc == "periodic") Δ*Array(-2:nx+1) else Δ*Array(-1:nx+1) end
     G.y_u_halo = Δ*Array(-1:ny+2) .- Δ/2
 
     G.x_v_halo = Δ*Array(-1:nx+2) .- Δ/2
     G.y_v_halo = Δ*Array(-1:ny+1)
 
-    G.x_q_halo = if bc_x == "periodic" G.x_u_halo else Δ*Array(-1:nx+3) .- Δ end
+    G.x_q_halo = if bc == "periodic" G.x_u_halo else Δ*Array(-1:nx+3) .- Δ end
     G.y_q_halo = Δ*Array(-1:ny+3) .- Δ
 
     # TIME STEPS - based on CFL to resolve gravity waves
@@ -171,6 +171,11 @@ function Grid(::Type{T},P::Parameter) where {T<:AbstractFloat}
     return G
 end
 
+"""Meter per 1 degree of latitude (or longitude at the equator)."""
+function m_per_lat(R::Real)
+    return 2π*R/360.
+end
+
 """Similar to the numpy meshgrid function:
 repeats x length(y)-times and vice versa. Returns two matrices xx,yy of same shape so that
 each row of xx is x and each column of yy is y."""
@@ -190,9 +195,4 @@ function meshgrid(x::AbstractVector,y::AbstractVector)
     end
 
     return xx,yy
-end
-
-"""Meter per 1 degree of latitude (or longitude at the equator)."""
-function m_per_lat(R::Real)
-    return 2π*R/360.
 end
