@@ -4,12 +4,11 @@ export RunJuls
 
 using Dates, NetCDF, FileIO, Printf, Parameters
 
-# GRID
 include("DefaultParameters.jl")
 include("Grid.jl")
 include("RunJuls.jl")
 include("Constants.jl")
-
+include("InitialConditions.jl")
 
 # OPERATORS and everything that is needed for the RHS
 include("Gradients.jl")
