@@ -21,5 +21,5 @@ function RunJuls(::Type{T}=Float32;     # number format
     # S = State(P,G,C,Prog,Diag)
     # time_integration(S)
 
-    return Prog
+    return P,G,C,Prog
 end
