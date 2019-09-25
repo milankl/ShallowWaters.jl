@@ -1,3 +1,9 @@
+
+
+
+
+
+
 """Returns preallocated variables of different size that derive from u."""
 function preallocate_u_vars()
     # with full halo
@@ -189,4 +195,26 @@ function preallocate_semiLagrange()
     ssti = zeros(Numtype,nx+2*halosstx,ny+2*halossty)
 
     return xd,yd,um,vm,u_T,um_T,v_T,vm_T,uinterp,vinterp,ssti
+end
+
+struct SemiLagrangeVars{T<:AbstractFloat,NT}
+    data::NT
+end
+
+Base.getproperty(S::SemiLagrangeVars,field::Symbol) = getfield(getfield(S,:data), field)
+
+function SemiLagrangeVars{T}(G::Grid) where T
+
+    @unpack nx,ny,nux,nuy,nvx,nvy = G
+    @unpack halo,halosstx,halossty = G
+
+
+    SL = (  xd = Array{T,2}(undef,nx,ny),
+            yd = Array{T,2}(undef,nx,ny),
+
+            um = Array{T,2}(undef,nux+2*halo,nuy+2*halo),
+            vm = Array{T,2}(undef,nvx+2*halo,nvy+2*halo),
+            )
+
+    return SemiLagrangeVars{T,typeof(SL)}(SL)
 end
