@@ -1,3 +1,9 @@
+
+
+
+
+
+
 """Returns preallocated variables of different size that derive from u."""
 function preallocate_u_vars()
     # with full halo
@@ -189,4 +195,32 @@ function preallocate_semiLagrange()
     ssti = zeros(Numtype,nx+2*halosstx,ny+2*halossty)
 
     return xd,yd,um,vm,u_T,um_T,v_T,vm_T,uinterp,vinterp,ssti
+end
+
+Base.@kwdef mutable struct LagrangeVars{T<:AbstractFloat,n<:Int}
+    xd::Array{T,2} = zeros(n,n)
+    yd::Array{T,2} = zeros(n,n)
+
+    # um::Array{T,2}
+    # vm::Array{T,2}
+    #
+    # u_T::Array{T,2}
+    # um_T::Array{T,2}
+    # v_T::Array{T,2}
+    # vm_T::Array{T,2}
+    #
+    # uinterp::Array{T,2}
+    # vinterp::Array{T,2}
+    #
+    # fields
+end
+
+function LagrangeVars(::Type{T},n::Int) where T
+    LagrangeVars{T}(zeros(n,n),zeros(n,n))
+end
+
+function ABC(::Type{T},n::Int) where T
+    return (A=Array{T,2}(undef,n,n),
+            B=Array{T,2}(undef,n-1,n-1),
+            C=Array{T,2}(undef,n+1,n-1))
 end
