@@ -1,9 +1,3 @@
-
-
-
-
-
-
 """Returns preallocated variables of different size that derive from u."""
 function preallocate_u_vars()
     # with full halo
