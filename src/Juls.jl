@@ -9,6 +9,7 @@ include("Grid.jl")
 include("RunJuls.jl")
 include("Constants.jl")
 include("InitialConditions.jl")
+include("Preallocate.jl")
 
 # OPERATORS and everything that is needed for the RHS
 include("Gradients.jl")

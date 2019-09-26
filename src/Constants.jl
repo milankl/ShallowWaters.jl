@@ -42,7 +42,7 @@ mutable struct Constants{T<:AbstractFloat}
     Constants{T}() where T = new{T}()
 end
 
-function Constants(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
+function Constants{T}(P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     C = Constants{T}()
 
