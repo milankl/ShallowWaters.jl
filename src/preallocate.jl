@@ -167,48 +167,71 @@ function preallocate_Smagorinsky()
     return DT,DS,DS_q,νSmag,νSmag_q,S11,S12,S21,S22,LLu1,LLu2,LLv1,LLv2
 end
 
-"""Returns preallocated variables of different size that will be used for the semi-Lagrangian tracer advection."""
-function preallocate_semiLagrange()
-    xd = zeros(Numtype,nx,ny)
-    yd = zero(xd)
+# """Returns preallocated variables of different size that will be used for the semi-Lagrangian tracer advection."""
+# function preallocate_semiLagrange()
+#     xd = zeros(Numtype,nx,ny)
+#     yd = zero(xd)
+#
+#     um = zeros(Numtype,nux+2*halo,nuy+2*halo)
+#     vm = zeros(Numtype,nvx+2*halo,nvy+2*halo)
+#
+#     # u on T-grid one less in x-direction
+#     u_T = zeros(Numtype,nux+2*halo-1,nuy+2*halo)
+#     um_T = zero(u_T)
+#
+#     # v on T-grid one less in y-direction
+#     v_T = zeros(Numtype,nvx+2*halo,nvy+2*halo-1)
+#     vm_T = zero(v_T)
+#
+#     uinterp = zeros(Numtype,nx,ny)
+#     vinterp = zero(uinterp)
+#
+#     ssti = zeros(Numtype,nx+2*halosstx,ny+2*halossty)
+#
+#     return xd,yd,um,vm,u_T,um_T,v_T,vm_T,uinterp,vinterp,ssti
+# end
 
-    um = zeros(Numtype,nux+2*halo,nuy+2*halo)
-    vm = zeros(Numtype,nvx+2*halo,nvy+2*halo)
+abstract type NamedTupleInStruct end
 
-    # u on T-grid one less in x-direction
-    u_T = zeros(Numtype,nux+2*halo-1,nuy+2*halo)
-    um_T = zero(u_T)
-
-    # v on T-grid one less in y-direction
-    v_T = zeros(Numtype,nvx+2*halo,nvy+2*halo-1)
-    vm_T = zero(v_T)
-
-    uinterp = zeros(Numtype,nx,ny)
-    vinterp = zero(uinterp)
-
-    ssti = zeros(Numtype,nx+2*halosstx,ny+2*halossty)
-
-    return xd,yd,um,vm,u_T,um_T,v_T,vm_T,uinterp,vinterp,ssti
+for XVars in (  :Tendencies,
+                :ProgUpdates,
+                :Bernoulli,
+                :Bottomdrag,
+                :Sadourny,
+                :ArakawaHsu,
+                :Laplace,
+                :Smagorinsky,
+                :SemiLagrange)
+    @eval begin
+        struct $XVars{NamedTup} <: NamedTupleInStruct
+            data::NamedTup
+        end
+    end
 end
 
-struct SemiLagrangeVars{T<:AbstractFloat,NT}
-    data::NT
-end
+Base.getproperty(S::NamedTupleInStruct,field::Symbol) = getfield(getfield(S,:data), field)
 
-Base.getproperty(S::SemiLagrangeVars,field::Symbol) = getfield(getfield(S,:data), field)
-
-function SemiLagrangeVars{T}(G::Grid) where T
+function SemiLagrange{T}(G::Grid) where {T<:AbstractFloat}
 
     @unpack nx,ny,nux,nuy,nvx,nvy = G
     @unpack halo,halosstx,halossty = G
-
 
     SL = (  xd = Array{T,2}(undef,nx,ny),
             yd = Array{T,2}(undef,nx,ny),
 
             um = Array{T,2}(undef,nux+2*halo,nuy+2*halo),
             vm = Array{T,2}(undef,nvx+2*halo,nvy+2*halo),
+
+            u_T = Array{T,2}(undef,nux+2*halo-1,nuy+2*halo),
+            um_T = Array{T,2}(undef,nux+2*halo-1,nuy+2*halo),
+            v_T = Array{T,2}(undef,nvx+2*halo,nvy+2*halo-1),
+            vm_T = Array{T,2}(undef,nvx+2*halo,nvy+2*halo-1),
+
+            uinterp = Array{T,2}(undef,nx,ny),
+            vinterp = Array{T,2}(undef,nx,ny),
+
+            ssti = Array{T,2}(undef,nx+2*halosstx,ny+2*halossty)
             )
 
-    return SemiLagrangeVars{T,typeof(SL)}(SL)
+    return SemiLagrange{typeof(SL)}(SL)
 end

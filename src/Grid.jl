@@ -76,7 +76,7 @@ mutable struct Grid{T<:AbstractFloat}
 end
 
 """ Creates the Grid struct based on the parameter struct P."""
-function Grid(::Type{T},P::Parameter) where {T<:AbstractFloat}
+function Grid{T}(P::Parameter) where {T<:AbstractFloat}
 
     @unpack nx,Lx,L_ratio = P
     @unpack bc = P

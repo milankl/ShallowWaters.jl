@@ -1,4 +1,4 @@
-@with_kw mutable struct Parameter
+@with_kw struct Parameter
 
     T::DataType=Float32                 # number format
 

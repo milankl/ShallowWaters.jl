@@ -14,8 +14,8 @@ function RunJuls(::Type{T}=Float32;     # number format
     ) where {T<:AbstractFloat}
 
     P = Parameter(T=T;kwargs...)
-    G = Grid(T,P)
-    C = Constants(T,P,G)
+    G = Grid{T}(P)
+    C = Constants{T}(P,G)
     Prog = InitialConditions(T,P,G)
     # Diag = PreallocateDiagnosticVars()
     # S = State(P,G,C,Prog,Diag)

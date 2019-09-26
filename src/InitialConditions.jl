@@ -11,9 +11,7 @@ struct ProgVars{T<:AbstractFloat}
 end
 
 
-function InitialConditions(::Type{T},
-                        P::Parameter,
-                        G::Grid) where {T<:AbstractFloat}
+function InitialConditions(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     # if initial_cond == "rest"
 
