@@ -1,6 +1,6 @@
 module Juls
 
-export RunJuls
+export RunJuls, Parameter
 
 using Dates, NetCDF, FileIO, Printf, Parameters
 
