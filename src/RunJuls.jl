@@ -14,6 +14,16 @@ function RunJuls(::Type{T}=Float32;     # number format
     ) where {T<:AbstractFloat}
 
     P = Parameter(T=T;kwargs...)
+    return RunJuls(T,P)
+end
+
+function RunJuls(;P::Parameter)
+    @unpack T = P
+    return RunJuls(T,P)
+end
+
+function RunJuls(::Type{T}=Float32,P::Parameter) where {T<:AbstractFloat}
+
     G = Grid{T}(P)
     C = Constants{T}(P,G)
     Prog = InitialConditions(T,P,G)
