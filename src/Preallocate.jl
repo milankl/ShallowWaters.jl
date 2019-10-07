@@ -1,200 +1,9 @@
-"""Returns preallocated variables of different size that derive from u."""
-function preallocate_u_vars()
-    # with full halo
-    du = zeros(Numtype,nux+2*halo,nuy+2*halo)
-    u0 = zero(du)
-    u1 = zero(du)
-
-    # derivative: one less in x or y direction
-    dudx = zeros(Numtype,nux+2*halo-1,nuy+2*halo)
-    dudy = zeros(Numtype,nux+2*halo,nuy+2*halo-1)
-
-    # bilinear interpolation: one less in both x and y
-    u_v = zeros(Numtype,nux+2*halo-1,nuy+2*halo-1)
-
-    return du,u0,u1,dudx,dudy,u_v
-end
-
-"""Returns preallocated variables of different size that derive from v."""
-function preallocate_v_vars()
-    # with full halo
-    dv = zeros(Numtype,nvx+2*halo,nvy+2*halo)
-    v0 = zero(dv)
-    v1 = zero(dv)
-
-    # derivative: one less in x or y direction
-    dvdx = zeros(Numtype,nvx+2*halo-1,nvy+2*halo)
-    dvdy = zeros(Numtype,nvx+2*halo,nvy+2*halo-1)
-
-    # bilinear interpolation: one less in both x and y
-    v_u = zeros(Numtype,nvx+2*halo-1,nvy+2*halo-1)
-
-    return dv,v0,v1,dvdx,dvdy,v_u
-end
-
-"""Returns preallocated variables of different size that derive from η."""
-function preallocate_η_vars()
-    # with full halo
-    dη = zeros(Numtype,nx+2*haloη,ny+2*haloη)
-    η0 = zero(dη)
-    η1 = zero(dη)
-    h = zero(dη)
-
-    return dη,η0,η1,h
-end
-
-"""Returns preallocated variables of different size that will be used in the contuinity equation."""
-function preallocate_continuity(H)
-    # interpolation: one less in x-direction
-    h_u = zeros(Numtype,nx+2*haloη-1,ny+2*haloη)
-    U = zero(h_u)
-
-    # interpolation: one less in y-direction
-    h_v = zeros(Numtype,nx+2*haloη,ny+2*haloη-1)
-    V = zero(h_v)
-
-    # Derivatives: two less in x- or y-direction
-    dUdx = zeros(Numtype,nx+2*haloη-2,ny+2*haloη)
-    dVdy = zeros(Numtype,nx+2*haloη,ny+2*haloη-2)
-
-    if dynamics == "linear"
-        # layer thickness
-        Ix!(h_u,H)
-        Iy!(h_v,H)
-    end
-
-    return h_u,U,h_v,V,dUdx,dVdy
-end
-
-"""Returns preallocated variables of different size that will be used for PV and the Sadourny adv scheme."""
-function preallocate_Sadourny()
-
-    # interpolation from h: ones less in both directions
-    h_q = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-1)
-    q = zero(h_q)
-
-    # two less in x direction, one less in y
-    q_v = zeros(Numtype,nx+2*haloη-2,ny+2*haloη-1)
-    U_v = zero(q_v)
-
-    # two less in y direction, one less in x
-    q_u = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-2)
-    V_u = zero(q_u)
-
-    #
-    qhu = zeros(Numtype,nvx,nvy)
-    qhv = zeros(Numtype,nux,nuy)
-
-    return h_q,q,q_v,qhu,U_v,q_u,qhv,V_u
-end
-
-# """Returns preallocated variables of different size for the PV linear combinations in the Arakawa&Hsu advection scheme."""
-# function preallocate_ArakawaHsu()
-#     qα = zeros(Numtype,nx+2*haloη-2,ny+2*haloη-2)
-#     qβ = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-2)
-#     qγ = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-2)
-#     qδ = zeros(Numtype,nx+2*haloη-2,ny+2*haloη-2)
-#     return qα,qβ,qγ,qδ
-# end
-
-# """Returns preallocated variables of different size that will be used for the Bernoulli potential."""
-# function preallocate_Bernoulli()
-#     # with full halo
-#     u² = zeros(Numtype,nux+2*halo,nuy+2*halo)
-#     v² = zeros(Numtype,nvx+2*halo,nvy+2*halo)
-#
-#     KEu = zeros(Numtype,nux+2*halo-1,nuy+2*halo)
-#     KEv = zeros(Numtype,nvx+2*halo,nvy+2*halo-1)
-#
-#     p = zeros(Numtype,nx+2*haloη,ny+2*haloη)
-#     dpdx = zeros(Numtype,nx+2*haloη-1,ny+2*haloη)
-#     dpdy = zeros(Numtype,nx+2*haloη,ny+2*haloη-1)
-#
-#     return u²,v²,KEu,KEv,p,dpdx,dpdy
-# end
-
-# """Returns preallocated variables of different size that will be used for the bottom drag term."""
-# function preallocate_bottomdrag()
-#     sqrtKE = zeros(Numtype,nx+2*haloη,ny+2*haloη)
-#     sqrtKE_u = zeros(Numtype,nx+2*haloη-1,ny+2*haloη)
-#     sqrtKE_v = zeros(Numtype,nx+2*haloη,ny+2*haloη-1)
-#
-#     Bu = zeros(Numtype,nx+2*haloη-1,ny+2*haloη)
-#     Bv = zeros(Numtype,nx+2*haloη,ny+2*haloη-1)
-#
-#     return sqrtKE,sqrtKE_u,sqrtKE_v,Bu,Bv
-# end
-
-# """Returns preallocated variables of different size that will be used for the momentum diffusion term."""
-# function preallocate_Laplace()
-#     # two less in both directions
-#     Lu = zeros(Numtype,nux+2*halo-2,nuy+2*halo-2)
-#     Lv = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-2)
-#
-#     # Derivatives of Lu,Lv
-#     dLudx = zeros(Numtype,nux+2*halo-3,nuy+2*halo-2)
-#     dLudy = zeros(Numtype,nux+2*halo-2,nuy+2*halo-3)
-#     dLvdx = zeros(Numtype,nvx+2*halo-3,nvy+2*halo-2)
-#     dLvdy = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-3)
-#
-#     return Lu,Lv,dLudx,dLudy,dLvdx,dLvdy
-# end
-
-# """Returns preallocated variables of different size that will be used in the contuinity equation."""
-# function preallocate_Smagorinsky()
-#     # on the η-grid including halo
-#     DT = zeros(Numtype,nx+2*haloη,ny+2*haloη)
-#     DS = zero(DT)
-#     νSmag = zero(DT)
-#
-#     # DS_q has same size as dvdx
-#     DS_q = zeros(Numtype,nvx+2*halo-1,nvy+2*halo)
-#
-#     # one less in both directions, the q-grid
-#     νSmag_q = zeros(Numtype,nx+2*haloη-1,ny+2*haloη-1)
-#     S12 = zero(νSmag_q)
-#     S21 = zero(νSmag_q)
-#
-#     S11 = zeros(Numtype,nux+2*halo-3,nuy+2*halo-2)
-#     S22 = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-3)
-#
-#     LLu1 = zeros(Numtype,nux+2*halo-4,nuy+2*halo-2)
-#     LLu2 = zeros(Numtype,nx+1,ny)
-#
-#     LLv1 = zeros(Numtype,nx,ny+1)
-#     LLv2 = zeros(Numtype,nvx+2*halo-2,nvy+2*halo-4)
-#
-#     return DT,DS,DS_q,νSmag,νSmag_q,S11,S12,S21,S22,LLu1,LLu2,LLv1,LLv2
-# end
-
-# """Returns preallocated variables of different size that will be used for the semi-Lagrangian tracer advection."""
-# function preallocate_semiLagrange()
-#     xd = zeros(Numtype,nx,ny)
-#     yd = zero(xd)
-#
-#     um = zeros(Numtype,nux+2*halo,nuy+2*halo)
-#     vm = zeros(Numtype,nvx+2*halo,nvy+2*halo)
-#
-#     # u on T-grid one less in x-direction
-#     u_T = zeros(Numtype,nux+2*halo-1,nuy+2*halo)
-#     um_T = zero(u_T)
-#
-#     # v on T-grid one less in y-direction
-#     v_T = zeros(Numtype,nvx+2*halo,nvy+2*halo-1)
-#     vm_T = zero(v_T)
-#
-#     uinterp = zeros(Numtype,nx,ny)
-#     vinterp = zero(uinterp)
-#
-#     ssti = zeros(Numtype,nx+2*halosstx,ny+2*halossty)
-#
-#     return xd,yd,um,vm,u_T,um_T,v_T,vm_T,uinterp,vinterp,ssti
-# end
-
 abstract type NamedTupleInStruct end
 
-for XVars in (  :Tendencies,
-                :ProgUpdates,
+for XVars in (  :RungeKutta,
+                :Tendencies,
+                :VolumeFluxes,
+                :Vorticity,
                 :Bernoulli,
                 :Bottomdrag,
                 :Sadourny,
@@ -211,56 +20,141 @@ end
 
 Base.getproperty(S::NamedTupleInStruct,field::Symbol) = getfield(getfield(S,:data), field)
 
-function SemiLagrange{T}(G::Grid) where {T<:AbstractFloat}
-
-    @unpack nx,ny,nux,nuy,nvx,nvy = G
-    @unpack halo,halosstx,halossty = G
-
-    NT = (  xd = Array{T,2}(undef,nx,ny),
-            yd = Array{T,2}(undef,nx,ny),
-
-            um = Array{T,2}(undef,nux+2*halo,nuy+2*halo),
-            vm = Array{T,2}(undef,nvx+2*halo,nvy+2*halo),
-
-            u_T = Array{T,2}(undef,nux+2*halo-1,nuy+2*halo),
-            um_T = Array{T,2}(undef,nux+2*halo-1,nuy+2*halo),
-            v_T = Array{T,2}(undef,nvx+2*halo,nvy+2*halo-1),
-            vm_T = Array{T,2}(undef,nvx+2*halo,nvy+2*halo-1),
-
-            uinterp = Array{T,2}(undef,nx,ny),
-            vinterp = Array{T,2}(undef,nx,ny),
-
-            ssti = Array{T,2}(undef,nx+2*halosstx,ny+2*halossty)
-            )
-
-    return SemiLagrange{typeof(NT)}(NT)
+struct DiagnosticVars
+    RungeKutta::NamedTupleInStruct
+    Tendencies::NamedTupleInStruct
+    VolumeFluxes::NamedTupleInStruct
+    Vorticity::NamedTupleInStruct
+    Bernoulli::NamedTupleInStruct
+    Bottomdrag::NamedTupleInStruct
+    ArakawaHsu::NamedTupleInStruct
+    Laplace::NamedTupleInStruct
+    Smagorinsky::NamedTupleInStruct
+    SemiLagrange::NamedTupleInStruct
 end
 
-function Smagorinsky{T}(G::Grid) where {T<:AbstractFloat}
+function Preallocate(::Type{T},G::Grid) where {T<:AbstractFloat}
+    RK = RungeKutta{T}(G)
+    TD = Tendencies{T}(G)
+    VF = VolumeFluxes{T}(G)
+    VT = Vorticity{T}(G)
+    BN = Bernoulli{T}(G)
+    BD = Bottomdrag{T}(G)
+    AH = ArakawaHsu{T}(G)
+    LP = Laplace{T}(G)
+    SM = Smagorinsky{T}(G)
+    SL = SemiLagrange{T}(G)
+
+    return DiagnosticVars(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL)
+end
+
+function RungeKutta{T}(G::Grid) where {T<:AbstractFloat}
 
     @unpack nx,ny,nux,nuy,nvx,nvy = G
     @unpack halo,haloη = G
 
-    NT = (  DT = Array{T,2}(undef,nx+2*haloη,ny+2*haloη),
-            DS = Array{T,2}(undef,nx+2*haloη,ny+2*haloη),
-            νSmag = Array{T,2}(undef,nx+2*haloη,ny+2*haloη),
+    NT = (  u0 = Array{T,2}(undef,nux+2*halo,nuy+2*halo),       # u-velocities for RK updates
+            u1 = Array{T,2}(undef,nux+2*halo,nuy+2*halo),
 
-            DS_q = Array{T,2}(undef,nvx+2*halo-1,nvy+2*halo),
-            νSmag_q = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-1),
-            S12 = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-1),
-            S21 = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-1),
+            v0 = Array{T,2}(undef,nvx+2*halo,nvy+2*halo),       # v-velocities for RK updates
+            v1 = Array{T,2}(undef,nvx+2*halo,nvy+2*halo),
 
-            S11 = Array{T,2}(undef,nux+2*halo-3,nuy+2*halo-2),
-            S22 = Array{T,2}(undef,nvx+2*halo-2,nvy+2*halo-3),
-
-            LLu1 = Array{T,2}(undef,nux+2*halo-4,nuy+2*halo-2),
-            LLu2 = Array{T,2}(undef,nx+1,ny),
-
-            LLv1 = Array{T,2}(undef,nx,ny+1),
-            LLv2 = Array{T,2}(undef,nvx+2*halo-2,nvy+2*halo-4)
+            η0 = Array{T,2}(undef,nx+2*haloη,ny+2*haloη),       # sea surface height for RK updates
+            η1 = Array{T,2}(undef,nx+2*haloη,ny+2*haloη)
             )
+    return RungeKutta{typeof(NT)}(NT)
+end
 
-    return Smagorinsky{typeof(NT)}(NT)
+function Tendencies{T}(G::Grid) where {T<:AbstractFloat}
+
+    @unpack nx,ny,nux,nuy,nvx,nvy = G
+    @unpack halo,haloη = G
+
+    NT = (  du = Array{T,2}(undef,nux+2*halo,nuy+2*halo),       # tendency of u without time step
+            dv = Array{T,2}(undef,nvx+2*halo,nvy+2*halo),       # tendency of v without time step
+            dη = Array{T,2}(undef,nx+2*haloη,ny+2*haloη)        # tendency of η without time step
+            )
+    return Tendencies{typeof(NT)}(NT)
+end
+
+function VolumeFluxes{T}(G::Grid) where {T<:AbstractFloat}
+
+    @unpack nx,ny,nux,nuy,nvx,nvy = G
+    @unpack halo,haloη = G
+
+    NT = (  h = Array{T,2}(undef,nx+2*haloη,ny+2*haloη),        # layer thickness
+            h_u = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη),    # layer thickness on u-grid
+            U = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη),      # U=uh volume flux
+
+            h_v = Array{T,2}(undef,nx+2*haloη,ny+2*haloη-1),    # layer thickness on v-grid
+            V = Array{T,2}(undef,nx+2*haloη,ny+2*haloη-1),      # V=vh volume flux
+
+            dUdx = Array{T,2}(undef,nx+2*haloη-2,ny+2*haloη),   # gradients thereof
+            dVdy = Array{T,2}(undef,nx+2*haloη,ny+2*haloη-2)
+            )
+    return VolumeFluxes{typeof(NT)}(NT)
+end
+
+function Vorticity{T}(G::Grid) where {T<:AbstractFloat}
+
+    @unpack nx,ny,nux,nuy,nvx,nvy = G
+    @unpack halo,haloη = G
+
+    NT = (  h_q = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-1),  # layer thickness h interpolated on q-grid
+            q = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-1),    # potential vorticity
+
+            q_v = Array{T,2}(undef,nx+2*haloη-2,ny+2*haloη-1),  # q interpolated on v-grid
+            U_v = Array{T,2}(undef,nx+2*haloη-2,ny+2*haloη-1),  # mass flux U=uh on v-grid
+
+            q_u = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-2),  # q interpolated on u-grid
+            V_u = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-2),  # mass flux V=vh on v-grid
+
+            qhu = Array{T,2}(undef,nvx,nvy),            # potential vorticity advection term u-component
+            qhv = Array{T,2}(undef,nux,nuy),            # potential vorticity advection term v-component
+
+            u_v = Array{T,2}(undef,nux+2*halo-1,nuy+2*halo-1),  # u-velocity on v-grid
+            v_u = Array{T,2}(undef,nvx+2*halo-1,nvy+2*halo-1),  # v-velocity on u-grid
+
+            dudx = Array{T,2}(undef,nux+2*halo-1,nuy+2*halo),   # ∂u/∂x
+            dudy = Array{T,2}(undef,nux+2*halo,nuy+2*halo-1),   # ∂u/∂y
+
+            dvdx = Array{T,2}(undef,nvx+2*halo-1,nvy+2*halo),   # ∂v/∂x
+            dvdy = Array{T,2}(undef,nvx+2*halo,nvy+2*halo-1)    # ∂v/∂y
+            )
+    return Vorticity{typeof(NT)}(NT)
+end
+
+function Bernoulli{T}(G::Grid) where {T<:AbstractFloat}
+
+    @unpack nx,ny,nux,nuy,nvx,nvy = G
+    @unpack halo,haloη = G
+
+    NT = (  u² = Array{T,2}(undef,nux+2*halo,nuy+2*halo),       # u-velocity squared
+            v² = Array{T,2}(undef,nvx+2*halo,nvy+2*halo),       # v-velocity squared
+
+            KEu = Array{T,2}(undef,nux+2*halo-1,nuy+2*halo),    # u-velocity squared on T-grid
+            KEv = Array{T,2}(undef,nvx+2*halo,nvy+2*halo-1),    # v-velocity squared on T-grid
+
+            p = Array{T,2}(undef,nx+2*haloη,ny+2*haloη),        # Bernoulli potential
+            dpdx = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη),   # ∂p/∂x
+            dpdy = Array{T,2}(undef,nx+2*haloη,ny+2*haloη-1)    # ∂p/∂y
+            )
+    return Bernoulli{typeof(NT)}(NT)
+end
+
+function Bottomdrag{T}(G::Grid) where {T<:AbstractFloat}
+
+    @unpack nx,ny,nux,nuy,nvx,nvy = G
+    @unpack halo, haloη = G
+
+    NT = (  sqrtKE = Array{T,2}(undef,nx+2*haloη,ny+2*haloη),       # sqrt of kinetic energy
+            sqrtKE_u = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη),   # interpolated on u-grid
+            sqrtKE_v = Array{T,2}(undef,nx+2*haloη,ny+2*haloη-1),   # interpolated on v-grid
+
+            Bu = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη),         # bottom friction term u-component
+            Bv = Array{T,2}(undef,nx+2*haloη,ny+2*haloη-1)          # bottom friction term v-component
+            )
+    return Bottomdrag{typeof(NT)}(NT)
 end
 
 function ArakawaHsu{T}(G::Grid) where {T<:AbstractFloat}
@@ -268,12 +162,12 @@ function ArakawaHsu{T}(G::Grid) where {T<:AbstractFloat}
     @unpack nx,ny,nux,nuy,nvx,nvy = G
     @unpack halo,haloη = G
 
+    # Linear combination of potential vorticity
     NT = (  qα = Array{T,2}(undef,nx+2*haloη-2,ny+2*haloη-2),
             qβ = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-2),
             qγ = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-2),
             qδ = Array{T,2}(undef,nx+2*haloη-2,ny+2*haloη-2)
             )
-
     return ArakawaHsu{typeof(NT)}(NT)
 end
 
@@ -282,8 +176,8 @@ function Laplace{T}(G::Grid) where {T<:AbstractFloat}
     @unpack nx,ny,nux,nuy,nvx,nvy = G
     @unpack halo = G
 
-    NT = (  Lu = Array{T,2}(undef,nux+2*halo-2,nuy+2*halo-2),
-            Lv = Array{T,2}(undef,nvx+2*halo-2,nvy+2*halo-2),
+    NT = (  Lu = Array{T,2}(undef,nux+2*halo-2,nuy+2*halo-2),       # ∇²u
+            Lv = Array{T,2}(undef,nvx+2*halo-2,nvy+2*halo-2),       # ∇²v
 
             # Derivatives of Lu,Lv
             dLudx = Array{T,2}(undef,nux+2*halo-3,nuy+2*halo-2),
@@ -291,66 +185,61 @@ function Laplace{T}(G::Grid) where {T<:AbstractFloat}
             dLvdx = Array{T,2}(undef,nvx+2*halo-3,nvy+2*halo-2),
             dLvdy = Array{T,2}(undef,nvx+2*halo-2,nvy+2*halo-3)
             )
-
     return Laplace{typeof(NT)}(NT)
 end
 
-
-function Bottomdrag{T}(G::Grid) where {T<:AbstractFloat}
-
-    @unpack nx,ny,nux,nuy,nvx,nvy = G
-    @unpack halo = G
-
-    NT = (  sqrtKE = Array{T,2}(undef,nx+2*haloη,ny+2*haloη),
-            sqrtKE_u = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη),
-            sqrtKE_v = Array{T,2}(undef,nx+2*haloη,ny+2*haloη-1),
-
-            Bu = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη),
-            Bv = Array{T,2}(undef,nx+2*haloη,ny+2*haloη-1)
-            )
-
-    return Bottomdrag{typeof(NT)}(NT)
-end
-
-function Bernoulli{T}(G::Grid) where {T<:AbstractFloat}
+function Smagorinsky{T}(G::Grid) where {T<:AbstractFloat}
 
     @unpack nx,ny,nux,nuy,nvx,nvy = G
     @unpack halo,haloη = G
 
-    NT = (  u² = Array{T,2}(undef,nux+2*halo,nuy+2*halo),
-            v² = Array{T,2}(undef,nvx+2*halo,nvy+2*halo),
+    NT = (  DT = Array{T,2}(undef,nx+2*haloη,ny+2*haloη),       # Tension squared (on the T-grid)
+            DS = Array{T,2}(undef,nx+2*haloη,ny+2*haloη),       # Shearing strain squared (on the T-grid)
+            νSmag = Array{T,2}(undef,nx+2*haloη,ny+2*haloη),    # Viscosity coefficient
 
-            KEu = Array{T,2}(undef,nux+2*halo-1,nuy+2*halo),
-            KEv = Array{T,2}(undef,nvx+2*halo,nvy+2*halo-1),
+            # Tension squared on the q-grid
+            DS_q = Array{T,2}(undef,nvx+2*halo-1,nvy+2*halo),
 
-            p = Array{T,2}(undef,nx+2*haloη,ny+2*haloη),
-            dpdx = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη),
-            dpdy = Array{T,2}(undef,nx+2*haloη,ny+2*haloη-1)
+            # Smagorinsky viscosity coefficient on the q-grid
+            νSmag_q = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-1),
+
+            # Entries of the Smagorinsky viscous tensor
+            S12 = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-1),
+            S21 = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-1),
+
+            S11 = Array{T,2}(undef,nux+2*halo-3,nuy+2*halo-2),
+            S22 = Array{T,2}(undef,nvx+2*halo-2,nvy+2*halo-3),
+
+            # u- and v-components 1 and 2 of the biharmonic diffusion tendencies
+            LLu1 = Array{T,2}(undef,nux+2*halo-4,nuy+2*halo-2),
+            LLu2 = Array{T,2}(undef,nx+1,ny),
+
+            LLv1 = Array{T,2}(undef,nx,ny+1),
+            LLv2 = Array{T,2}(undef,nvx+2*halo-2,nvy+2*halo-4)
             )
-
-    return Bernoulli{typeof(NT)}(NT)
+    return Smagorinsky{typeof(NT)}(NT)
 end
 
-function Sadourny{T}(G::Grid) where {T<:AbstractFloat}
+function SemiLagrange{T}(G::Grid) where {T<:AbstractFloat}
 
     @unpack nx,ny,nux,nuy,nvx,nvy = G
-    @unpack halo,haloη = G
+    @unpack halo,halosstx,halossty = G
 
-    NT = (  h_q = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-1),
-            q = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-1),
+    NT = (  xd = Array{T,2}(undef,nx,ny),                       # departure points x-coord
+            yd = Array{T,2}(undef,nx,ny),                       # departure points y-coord
 
-            # two less in x direction, one less in y
-            q_v = Array{T,2}(undef,nx+2*haloη-2,ny+2*haloη-1),
-            U_v = Array{T,2}(undef,nx+2*haloη-2,ny+2*haloη-1),
+            um = Array{T,2}(undef,nux+2*halo,nuy+2*halo),       # u-velocity temporal mid-point
+            vm = Array{T,2}(undef,nvx+2*halo,nvy+2*halo),       # v-velocity temporal mid-point
 
-            # two less in y direction, one less in x
-            q_u = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-2),
-            V_u = Array{T,2}(undef,nx+2*haloη-1,ny+2*haloη-2),
+            u_T = Array{T,2}(undef,nux+2*halo-1,nuy+2*halo),    # u-velocity interpolated on T-grid
+            um_T = Array{T,2}(undef,nux+2*halo-1,nuy+2*halo),   # um interpolated on T-grid
+            v_T = Array{T,2}(undef,nvx+2*halo,nvy+2*halo-1),    # v-velocity interpolated on T-grid
+            vm_T = Array{T,2}(undef,nvx+2*halo,nvy+2*halo-1),   # vm interpolated on T-grid
 
-            #
-            qhu = Array{T,2}(undef,nvx,nvy),
-            qhv = Array{T,2}(undef,nux,nuy)
+            uinterp = Array{T,2}(undef,nx,ny),                  # u interpolated on mid-point xd,yd
+            vinterp = Array{T,2}(undef,nx,ny),                  # v interpolated on mid-point xd,yd
+
+            ssti = Array{T,2}(undef,nx+2*halosstx,ny+2*halossty)# sst interpolated on departure points
             )
-
-    return Sadourny{typeof(NT)}(NT)
+    return SemiLagrange{typeof(NT)}(NT)
 end
