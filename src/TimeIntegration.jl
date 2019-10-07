@@ -1,4 +1,10 @@
-function time_integration(u,v,η,sst)
+#function TimeIntegration(u,v,η,sst)
+function TimeIntegration!(  ::Type{T},
+                            P::Parameter,
+                            G::Grid,
+                            C::Constants,
+                            Prog::PrognosticVars,
+                            Diag::DiagnosticVars) where {T<:AbstractFloat}
 
     # FORCING
     Fx = windx()
@@ -25,6 +31,12 @@ function time_integration(u,v,η,sst)
     Lu,Lv,dLudx,dLudy,dLvdx,dLvdy = preallocate_Laplace()
     DT,DS,DS_q,νSmag,νSmag_q,S11,S12,S21,S22,LLu1,LLu2,LLv1,LLv2 = preallocate_Smagorinsky()
     xd,yd,um,vm,u_T,um_T,v_T,vm_T,uinterp,vinterp,ssti = preallocate_semiLagrange()
+
+    # if dynamics == "linear"
+    #     # layer thickness
+    #     Ix!(h_u,H)
+    #     Iy!(h_v,H)
+    # end
 
     # propagate initial conditions
     u0 .= u

@@ -3,13 +3,12 @@
 
 Struct containing the prognostic variables u,v,η and sst.
 """
-struct ProgVars{T<:AbstractFloat}
+struct PrognosticVars{T<:AbstractFloat}
     u::Array{T,2}           # u-velocity
     v::Array{T,2}           # v-velocity
     η::Array{T,2}           # sea surface height / interface displacement
     sst::Array{T,2}         # tracer / sea surface temperature
 end
-
 
 function InitialConditions(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
@@ -26,7 +25,7 @@ function InitialConditions(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFlo
     sst = (SSTmin+SSTmax)/2 .+ tanh.(2π*(Ly/(4*SSTw))*(yy_T/Ly .- SSTϕ))*(SSTmin-SSTmax)/2
     sst = T.(sst)
 
-    return ProgVars{T}(u,v,η,sst)
+    return PrognosticVars{T}(u,v,η,sst)
 end
 
 # """Start from rest or load initial conditions from netCDF file."""

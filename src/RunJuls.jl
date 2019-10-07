@@ -22,14 +22,12 @@ function RunJuls(;P::Parameter)
     return RunJuls(T,P)
 end
 
-function RunJuls(::Type{T}=Float32,P::Parameter) where {T<:AbstractFloat}
+function RunJuls(::Type{T},P::Parameter) where {T<:AbstractFloat}
 
     G = Grid{T}(P)
     C = Constants{T}(P,G)
     Prog = InitialConditions(T,P,G)
-    # Diag = PreallocateDiagnosticVars()
-    # S = State(P,G,C,Prog,Diag)
-    # time_integration(S)
-
-    return P,G,C,Prog
+    Diag = Preallocate(T,G)
+    #TimeIntegration!(P,G,C,Prog,Diag)
+    return Diag
 end
