@@ -4,7 +4,6 @@ function ∂x!(dudx::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
     m,n = size(dudx)
     @boundscheck (m+1,n) == size(u) || throw(BoundsError())
 
-    #TODO @simd?
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             dudx[i,j] = u[i+1,j] - u[i,j]
@@ -18,7 +17,6 @@ function ∂y!(dudy::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
     m,n = size(dudy)
     @boundscheck (m,n+1) == size(u) || throw(BoundsError())
 
-    #TODO @simd?
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             dudy[i,j] = u[i,j+1] - u[i,j]
@@ -31,6 +29,8 @@ The 1/Δ²-factor is omitted and moved into the viscosity coefficient."""
 function ∇²!(du::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
     m, n = size(du)
     @boundscheck (m+2,n+2) == size(u) || throw(BoundsError())
+
+    minus_4 = T(-4.0)
 
     #TODO @simd?
     @inbounds for i ∈ 1:n

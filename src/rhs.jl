@@ -182,6 +182,10 @@ function Uflux!(U,u,h_u)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
+    #     dη = zeros(Numtype,nx+2*haloη,ny+2*haloη)
+    #     η0 = zero(dη)
+    #     η1 = zero(dη)
+    #     h = zero(dη)
             U[i,j] = u[1+ep+i,1+j]*h_u[i,j]
         end
     end
@@ -233,6 +237,32 @@ function Bernoulli!(p,KEu,KEv,η)
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             p[i,j] = one_half*(KEu[i+ep,j+1] + KEv[i+1,j]) + g*η[i,j]
+        end
+    end
+end
+
+"""Coriolis term f*v. """
+function fv!(qhv,f_u,v_u)
+    m,n = size(qhv)
+    @boundscheck (m,n) == size(f_u) || throw(BoundsError())
+    @boundscheck (m+4-ep,n+2) == size(v_u) || throw(BoundsError())
+
+    for j ∈ 1:n
+        for i ∈ 1:m
+            qhv[i,j] = f_u[i,j]*v_u[i+2-ep,j+1]
+        end
+    end
+end
+
+"""Coriolis term f*u. """
+function fu!(qhu,f_v,u_v)
+    m,n = size(qhu)
+    @boundscheck (m,n) == size(f_v) || throw(BoundsError())
+    @boundscheck (m+2+ep,n+4) == size(u_v) || throw(BoundsError())
+
+    for j ∈ 1:n
+        for i ∈ 1:m
+            qhu[i,j] = f_v[i,j]*u_v[i+1+ep,j+2]
         end
     end
 end
