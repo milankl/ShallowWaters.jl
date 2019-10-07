@@ -61,7 +61,7 @@
 
     # DIFFUSION OPTIONS
     diffusion::String="Smagorinsky"     # "Smagorinsky" or "Constant", biharmonic in both cases
-    νB::Real=500.0                       # [m^2/s] scaling constant for Constant biharmonic diffusion
+    νB::Real=500.0                      # [m^2/s] scaling constant for Constant biharmonic diffusion
     cSmag::Real=0.15                    # Smagorinsky coefficient [dimensionless]
 
     # TRACER ADVECTION

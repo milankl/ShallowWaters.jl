@@ -7,14 +7,16 @@ function TimeIntegration!(  ::Type{T},
                             Diag::DiagnosticVars) where {T<:AbstractFloat}
 
     # FORCING
-    Fx = windx()
-    Fy = windy()
-    f_u,f_v,f_q = coriolis_parameter()
-    H = topography()
-    η_ref = interface_relaxation()
-    Fη = kelvin_pump(x_T,y_T)
-    sst_ref = sst_inj_region()
-    SSTγ = sst_γ(x_T,y_T)
+    # Fx = windx()
+    # Fy = windy()
+    # f_u,f_v,f_q = coriolis_parameter()
+    # H = topography()
+    # η_ref = interface_relaxation()
+    # Fη = kelvin_pump(x_T,y_T)
+    # sst_ref = sst_inj_region()
+    # SSTγ = sst_γ(x_T,y_T)
+
+    F = Forcing{T}(P,G)
 
     # add halo with ghost point copy
     u,v,η,sst = add_halo(u,v,η,sst)
@@ -154,7 +156,7 @@ function TimeIntegration!(  ::Type{T},
 end
 
 """Add to a x multiplied with b. a += x*b """
-function axb!(a::AbstractMatrix,x::Real,b::AbstractMatrix)
+function axb!(a::Array{T,2},x::T,b::Array{T,2}) where {T<:AbstractFloat}
     m,n = size(a)
     @boundscheck (m,n) == size(b) || throw(BoundsError())
 
@@ -167,7 +169,7 @@ function axb!(a::AbstractMatrix,x::Real,b::AbstractMatrix)
 end
 
 """c equals add a to x multiplied with b. c = a + x*b """
-function caxb!(c::AbstractMatrix,a::AbstractMatrix,x::Real,b::AbstractMatrix)
+function caxb!(c::Array{T,2},a::Array{T,2},x::T,b::Array{T,2}) where {T<:AbstractFloat}
     m,n = size(a)
     @boundscheck (m,n) == size(b) || throw(BoundsError())
     @boundscheck (m,n) == size(c) || throw(BoundsError())

@@ -13,14 +13,13 @@ include("Preallocate.jl")
 
 # OPERATORS and everything that is needed for the RHS
 include("Gradients.jl")
-include("interpolations.jl")
+include("Interpolations.jl")
+
 include("PV_adv.jl")
 include("bottom_friction.jl")
 include("diffusion.jl")
 include("TracerAdvection.jl")
-include("coriolis.jl")
-include("forcing.jl")
-include("bottom_topography.jl")
+include("Forcing.jl")
 include("rhs.jl")
 include("continuity.jl")
 include("time_integration.jl")

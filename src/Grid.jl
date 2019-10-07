@@ -71,6 +71,13 @@ mutable struct Grid{T<:AbstractFloat}
     nout_total::Int                     # total number of output time steps
     t_vec::AbstractVector               # time vector
 
+    # CORIOLIS
+    f₀::Float64                         # Coriolis parameter
+    β::Float64                          # Derivate of Coriolis parameter wrt latitude
+    f_u::Array{T,2}                     # f = f₀ + βy on the u-grid
+    f_v::Array{T,2}                     # same on the v-grid
+    f_q::Array{T,2}                     # same on the q-grid
+
     # INITIALISE WITH ARBITRARY VALUES FROM MEMORY
     Grid{T}() where T = new{T}()
 end
@@ -168,12 +175,45 @@ function Grid{T}(P::Parameter) where {T<:AbstractFloat}
     G.dtadvu = T(dtadvint*nx/Lx)
     G.dtadvv = T(dtadvint*ny/Ly)
 
+    # CORIOLIS
+    @unpack ω,ϕ,R = P
+    f₀ = coriolis_at_lat(ω,ϕ)
+    β = β_at_lat(ω,R,ϕ)
+
+    xx_u,yy_u = meshgrid(G.x_u,G.y_u)
+    xx_v,yy_v = meshgrid(G.x_v,G.y_v)
+
+    if bc == "periodic"
+        # points on the right edge needed too
+        xx_q,yy_q = meshgrid(G.x_q_halo[3:end-1],G.y_q_halo[3:end-2])
+    else
+        xx_q,yy_q = meshgrid(G.x_q,G.y_q)
+    end
+
+    G.f_u = T.(Δ*(f₀ .+ β*(yy_u .- Ly/2)))
+    G.f_v = T.(Δ*(f₀ .+ β*(yy_v .- Ly/2)))
+    G.f_q = T.(Δ*(f₀ .+ β*(yy_q .- Ly/2)))
+
+    G.f₀ = f₀
+    G.β = β
+
     return G
 end
 
 """Meter per 1 degree of latitude (or longitude at the equator)."""
 function m_per_lat(R::Real)
     return 2π*R/360.
+end
+
+"""Coriolis parameter f [1/s] at latitude ϕ [°] given Earth's rotation ω [1/s]."""
+function coriolis_at_lat(ω::Real,ϕ::Real)
+    return 2*ω*sind(ϕ)
+end
+
+"""Coriolis parameter's derivative β wrt latitude [(ms)^-1] at latitude ϕ, given
+Earth's rotation ω [1/s] and radius R [m]."""
+function β_at_lat(ω::Real,R::Real,ϕ::Real)
+    return 2*ω/R*cosd(ϕ)
 end
 
 """Similar to the numpy meshgrid function:
