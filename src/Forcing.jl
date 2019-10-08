@@ -3,12 +3,13 @@ struct Forcing{T<:AbstractFloat}
     Fy::Array{T,2}
     H::Array{T,2}
     η_ref::Array{T,2}
-    Fη::Array{T,2}
-    sst_ref::Array{T,2}
-    sst_γ::Array{T,2}
+    #sst_ref::Array{T,2}
+    #sst_γ::Array{T,2}
 end
 
-function Forcing{T}(P::Parameter,G::Grid)
+function Forcing{T}(P::Parameter,G::Grid) where {T<:AbstractFloat}
+
+    @unpack wind_forcing_x,wind_forcing_y,topography_feature = P
 
     if wind_forcing_x == "channel"
         Fx,_ = ChannelWind(T,P,G)
@@ -30,7 +31,20 @@ function Forcing{T}(P::Parameter,G::Grid)
         _,Fy = ConstantWind(T,P,G)
     end
 
+    if topography_feature == "ridge"
+        H,_ = Ridge(T,P,G)
+    elseif topography_feature == "ridges"
+        H = Ridges(T,P,G)
+    elseif topography_feature == "seamount"
+        H = Seamount(T,P,G)
+    elseif topography_feature == "flat"
+        H = FlatBottom(T,P,G)
+    end
 
+    η_ref = InterfaceRelaxation(T,P,G)
+
+    return Forcing{T}(Fx,Fy,H,η_ref)
+end
 
 """Returns the constant forcing matrices Fx,Fy that vary only meriodionally/zonally
 as a cosine with strongest forcing in the middle and vanishing forcing at boundaries."""
@@ -80,7 +94,7 @@ end
 """Returns constant in in space forcing matrices Fx,Fy."""
 function ConstantWind(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
-    @unpack Δ,x_u,y_u,Lx,Ly = G
+    @unpack Δ,nux,nuy,nvx,nvy = G
     @unpack Fx0,Fy0,H,ρ = P
 
     # for non-dimensional gradients the wind forcing needs to contain the grid spacing Δ
@@ -93,69 +107,55 @@ end
 
 """Returns a reference state for Newtonian cooling/surface relaxation shaped as a
 hyperbolic tangent to force the continuity equation."""
-function interface_relaxation()
+function InterfaceRelaxation(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
+
+    @unpack x_T,y_T,Ly,Lx = G
+    @unpack η_refh,η_refw = P
+
     # width of a tangent is defined as the distance between 65% of its minimum value and 65% of the max
     xx_T,yy_T = meshgrid(x_T,y_T)
     η_ref = -(η_refh/2)*tanh.(2π*(Ly/(4*η_refw))*(yy_T/Ly .- 1/2))
-    return Numtype.(η_ref)
+    return T.(η_ref)
 end
-
-"""Returns Kelvin wave pumping forcing of the continuity equation at the equator."""
-function kelvin_pump(x::AbstractVector,y::AbstractVector)
-    β = β_at_lat(ϕ)
-    c = wave_speed(gravity,water_depth)
-    xx,yy = meshgrid(x,y)
-
-
-    # y-coordinate of the Equator
-    mϕ = m_per_lat()
-    y_eq = Ly/2 - ϕ*mϕ
-    y_15S = Ly/2 - (ϕ+15)*mϕ
-    y_15N = Ly/2 - (ϕ-15)*mϕ
-
-    w_win = 300e3
-    Lx_win = 0.8
-
-    Fη = A₀*Δ*exp.(-β*(yy.-y_eq).^2/(2c))#.*
-        #(1/2 .+ 1/2*tanh.(2π*(Lx/(4*w_win))*(xx/Lx .- (1-Lx_win)/2))).*
-        #(1/2 .- 1/2*tanh.(2π*(Lx/(4*w_win))*(xx/Lx .- (1-(1-Lx_win)/2))))
-
-    Fη[yy .< y_15S] .= 0.0
-    Fη[yy .> y_15N] .= 0.0
-
-    return Numtype.(Fη)
-end
-
-function Fηt(t::Real)
-    return -1*Numtype(sin(2*π*ωyr*t/3600/24/365))
-end
-
 
 """Returns a matrix of water depth for the whole domain that contains a
 Gaussian seamount in the middle. Water depth, heigth and width of the
-seamount are adjusted with the constants water_depth, topofeat_height and topofeat_width."""
-function seamount()
+seamount are adjusted with the constants H, topofeat_height and topofeat_width."""
+function Seamount(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
+
+    @unpack x_T_halo,y_T_halo,Lx,Ly = G
+    @unpack topofeat_width,topofeat_height,H = P
+
     xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
     bumpx = exp.(-((xx_T .- Lx/2).^2)/(2*topofeat_width^2))
     bumpy = exp.(-((yy_T .- Ly/2).^2)/(2*topofeat_width^2))
 
-    H = water_depth .- topofeat_height*bumpx.*bumpy
-    return Numtype.(H)
+    return T.(H .- topofeat_height*bumpx.*bumpy)
 end
 
 """Returns a matrix of water depth for the whole domain that contains a
 meridional Gaussian ridge in the middle. Water depth, heigth and width of the
 ridge are adjusted with the constants water_depth, topofeat_height and topofeat_width."""
-function ridge()
+function Ridge(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
+
+    @unpack x_T_halo,y_T_halo,Lx,Ly = G
+    @unpack topofeat_width,topofeat_height,H = P
+
     xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
     bumpx = exp.(-((xx_T .- Lx/2).^2)/(2*topofeat_width^2))
+    bumpy = exp.(-((yy_T .- Ly/2).^2)/(2*topofeat_width^2))
 
-    H = water_depth .- topofeat_height*bumpx
-    return Numtype.(H)
+    Hx = H .- topofeat_height*bumpx
+    Hy = H .- topofeat_height*bumpy
+    return T.(Hx),T.(Hy)
 end
 
-"""Same as ridge() but for 3 ridges at 1/4,1/2,3/4 of the domain."""
-function ridges()
+"""Same as Ridge() but for 3 ridges at 1/4,1/2,3/4 of the domain."""
+function Ridges(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
+
+    @unpack x_T_halo,y_T_halo,Lx,Ly = G
+    @unpack topofeat_width,topofeat_height,H = P
+
     xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
 
     # bumps in x direction
@@ -167,41 +167,11 @@ function ridges()
     b4x = exp.(-((xx_T .- Lx).^2)/(2*topofeat_width^2))
 
     th = topofeat_height    # for convenience
-    H = water_depth .- th*b0x .- th*b1x .- th*b2x .- th*b3x .- th*b4x
-    return Numtype.(H)
+    return T.(H .- th*b0x .- th*b1x .- th*b2x .- th*b3x .- th*b4x)
 end
 
-"""Bathtub"""
-function bathtub()
-
-    x = range(-2.0,stop=1.1,length=length(x_T_halo))
-    y = range(-1.1,stop=1.1,length=length(y_T_halo))
-    xx,yy = meshgrid(x,y)
-
-    B = xx.^10 + yy.^10
-    B[B .> 1.0] .= 1.0
-
-    H = water_depth .- topofeat_height*B
-    return Numtype.(H)
-end
-
-"""Returns a matrix of constant water depth specified by the constant water_depth."""
-function flat_bottom()
-    H = fill(water_depth,(nx+2*haloη,ny+2*haloη))
-    return Numtype.(H)
-end
-
-# rename for convenience
-if topography_feature == "ridge"
-    topography = ridge
-elseif topography_feature == "ridges"
-    topography = ridges
-elseif topography_feature == "seamount"
-    topography = seamount
-elseif topography_feature == "flat"
-    topography = flat_bottom
-elseif topography_feature == "bathtub"
-    topography = bathtub
-else
-    throw(error("Topography feature not correctly declared."))
+"""Returns a matrix of constant water depth H."""
+function FlatBottom(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
+    @unpack nx,ny,haloη = G
+    return fill(T(H),(nx+2*haloη,ny+2*haloη))
 end

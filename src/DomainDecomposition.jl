@@ -124,3 +124,50 @@ end
 # for testing
 #nbours,M = neighbours(0,1)
 #sub_dom = subdomain_grid(M,nbours,0,1)
+
+
+""" Copy ghost points for u with MPI communication. Boundary conditions are contained within the neighbours array. """
+function ghost_points_u_MPI!(u)
+
+    # north
+    if nbours[1] != -1 # if north neighbour does exist
+        #TODO MPI send/receive
+        @views @inbounds u[:,end-1] .= one_minus_α*u[:,end-2]
+        @views @inbounds u[:,end] .= one_minus_α*u[:,end-3]
+    else
+        @views @inbounds u[:,end-1] .= one_minus_α*u[:,end-2]
+        @views @inbounds u[:,end] .= one_minus_α*u[:,end-3]
+    end
+
+    # east
+    if nbours[2] != -1  # if east neighbour does exist
+        #TODO MPI send/receive
+        @views @inbounds u[end-1,:] .= u[3,:]
+        @views @inbounds u[end,:] .= u[4,:]
+    else
+        # Redundant?
+        # u[end-1,:] = zeero
+        # u[end,:] = zeero
+    end
+
+    # south
+    if nbours[3] != -1 # if south neighbour does exist
+        #TODO MPI send/receive
+        @views @inbounds u[:,end-1] .= one_minus_α*u[:,end-2]
+        @views @inbounds u[:,end] .= one_minus_α*u[:,end-3]
+    else
+        @views @inbounds u[:,end-1] .= one_minus_α*u[:,end-2]
+        @views @inbounds u[:,end] .= one_minus_α*u[:,end-3]
+    end
+
+    # west
+    if nbours[4] != -1  # if west neighbour does exist
+        #TODO MPI send/receive
+        @views @inbounds u[1,:] .= u[end-3,:]
+        @views @inbounds u[2,:] .= u[end-2,:]
+    else
+        # potentially redundant lines
+        # u[1,:] = zeero
+        # u[2,:] = zeero
+    end
+end

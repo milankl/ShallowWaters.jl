@@ -1,8 +1,8 @@
 mutable struct Constants{T<:AbstractFloat}
 
     # RUNGE-KUTTA COEFFICIENTS 3rd/4th order
-    RKa::Array{T,1}
-    RKb::Array{T,1}
+    RKaΔt::Array{T,1}
+    RKbΔt::Array{T,1}
 
     # BOUNDARY CONDITIONS
     one_minus_α::T      # tangential boundary condition for the ghost-point copy
@@ -46,13 +46,13 @@ function Constants{T}(P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     C = Constants{T}()
 
-    # Runge-Kutta 3rd/4th order coefficients
+    # Runge-Kutta 3rd/4th order coefficients including time step Δt (which includes the grid spacing Δ too)
     if P.RKo == 3     # version 2
-        C.RKa = T.([1/4,0.,3/4])
-        C.RKb = T.([1/3,2/3])
+        C.RKa = T.([1/4,0.,3/4]*G.Δt)
+        C.RKb = T.([1/3,2/3]*G.Δt)
     elseif P.RKo == 4
-        C.RKa = T.([1/6,1/3,1/3,1/6])
-        C.RKb = T.([.5,.5,1.])
+        C.RKa = T.([1/6,1/3,1/3,1/6]*G.Δt)
+        C.RKb = T.([.5,.5,1.]*G.Δt)
     end
 
     # for the ghost point copy/tangential boundary conditions
