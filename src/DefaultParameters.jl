@@ -17,7 +17,7 @@
 
     # WIND FORCING OPTIONS
     wind_forcing_x::String="channel"    # "channel", "double_gyre", "shear","constant" or "none"
-    wind_forcing_y::String="none"       # "channel", "double_gyre", "shear","constant" or "none"
+    wind_forcing_y::String="constant"   # "channel", "double_gyre", "shear","constant" or "none"
     Fx0::Real=0.12                      # wind stress strength [Pa] in x-direction
     Fy0::Real=0.0                       # wind stress strength [Pa] in y-direction
 

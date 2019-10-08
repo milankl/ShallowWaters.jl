@@ -6,33 +6,11 @@ function TimeIntegration!(  ::Type{T},
                             Prog::PrognosticVars,
                             Diag::DiagnosticVars) where {T<:AbstractFloat}
 
-    # FORCING
-    # Fx = windx()
-    # Fy = windy()
-    # f_u,f_v,f_q = coriolis_parameter()
-    # H = topography()
-    # η_ref = interface_relaxation()
-    # Fη = kelvin_pump(x_T,y_T)
-    # sst_ref = sst_inj_region()
-    # SSTγ = sst_γ(x_T,y_T)
-
     F = Forcing{T}(P,G)
 
     # add halo with ghost point copy
     u,v,η,sst = add_halo(u,v,η,sst)
 
-    # PREALLOCATE
-    du,u0,u1,dudx,dudy,u_v = preallocate_u_vars()
-    dv,v0,v1,dvdx,dvdy,v_u = preallocate_v_vars()
-    dη,η0,η1,h = preallocate_η_vars()
-    h_u,U,h_v,V,dUdx,dVdy = preallocate_continuity(H)
-    h_q,q,q_v,qhu,U_v,q_u,qhv,V_u = preallocate_Sadourny()
-    qα,qβ,qγ,qδ = preallocate_ArakawaHsu()
-    u²,v²,KEu,KEv,p,dpdx,dpdy = preallocate_Bernoulli()
-    sqrtKE,sqrtKE_u,sqrtKE_v,Bu,Bv = preallocate_bottomdrag()
-    Lu,Lv,dLudx,dLudy,dLvdx,dLvdy = preallocate_Laplace()
-    DT,DS,DS_q,νSmag,νSmag_q,S11,S12,S21,S22,LLu1,LLu2,LLv1,LLv2 = preallocate_Smagorinsky()
-    xd,yd,um,vm,u_T,um_T,v_T,vm_T,uinterp,vinterp,ssti = preallocate_semiLagrange()
 
     # if dynamics == "linear"
     #     # layer thickness
