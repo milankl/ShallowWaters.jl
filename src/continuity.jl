@@ -32,8 +32,11 @@ function continuity_forcing!(dη,dUdx,dVdy,η,η_ref,Fη,t)
 end
 
 """Continuity equation's right-hand side -∂x(uh) - ∂y(vh) without forcing."""
-function continuity_itself!(dη,dUdx,dVdy,η,η_ref,Fη,t)
-    m,n = size(dη) .- (2*haloη,2*haloη)
+function continuity!(   dη::AbstractMatrix,
+                        dUdx::AbstractMatrix,
+                        dVdy::AbstractMatrix)
+
+    m,n = size(dη) .- (2,2)     # cut off halo
     @boundscheck (m,n+2) == size(dUdx) || throw(BoundsError())
     @boundscheck (m+2,n) == size(dVdy) || throw(BoundsError())
 
@@ -44,10 +47,10 @@ function continuity_itself!(dη,dUdx,dVdy,η,η_ref,Fη,t)
     end
 end
 
-if surface_relax
-    continuity! = continuity_surf_forc!
-elseif surface_forcing
-    continuity! = continuity_forcing!
-else
-    continuity! = continuity_itself!
-end
+# if surface_relax
+#     continuity! = continuity_surf_forc!
+# elseif surface_forcing
+#     continuity! = continuity_forcing!
+# else
+#     continuity! = continuity_itself!
+# end

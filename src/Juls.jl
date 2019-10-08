@@ -15,7 +15,7 @@ include("Preallocate.jl")
 include("Gradients.jl")
 include("Interpolations.jl")
 
-include("PV_adv.jl")
+include("PVadvection.jl")
 include("bottom_friction.jl")
 include("diffusion.jl")
 include("TracerAdvection.jl")

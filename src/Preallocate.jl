@@ -1,5 +1,6 @@
 abstract type NamedTupleInStruct end
 
+""" Create structs for different sets of diagnostic variables, each containing a NamedTuple with all matrices."""
 for XVars in (  :RungeKutta,
                 :Tendencies,
                 :VolumeFluxes,
@@ -18,6 +19,7 @@ for XVars in (  :RungeKutta,
     end
 end
 
+"""Propagate the struct.field notation for NamedTupleInStruct."""
 Base.getproperty(S::NamedTupleInStruct,field::Symbol) = getfield(getfield(S,:data), field)
 
 struct DiagnosticVars
@@ -33,7 +35,8 @@ struct DiagnosticVars
     SemiLagrange::NamedTupleInStruct
 end
 
-function Preallocate(::Type{T},G::Grid) where {T<:AbstractFloat}
+"""Preallocate the diagnostic variables and return them as matrices in structs.""" 
+function preallocate(::Type{T},G::Grid) where {T<:AbstractFloat}
     RK = RungeKutta{T}(G)
     TD = Tendencies{T}(G)
     VF = VolumeFluxes{T}(G)

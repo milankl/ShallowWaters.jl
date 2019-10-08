@@ -1,10 +1,18 @@
 """Potential vorticity calculated as q = (f + ∂v/∂x - ∂u/∂y)/h."""
-function PV!(q,f_q,dvdx,dudy,h_q)
+function PV!(   q::AbstractMatrix,
+                f_q::AbstractMatrix,
+                dvdx::AbstractMatrix,
+                dudy::AbstractMatrix,
+                h_q::AbstractMatrix)
+
     m,n = size(q)
+    mu,_ = size(dudy)
+    ep = mu-m-2         # edgepoint: 1 for periodic 0 for nonperiodic
     @boundscheck (m,n) == size(f_q) || throw(BoundsError())
     @boundscheck (m+2,n+2) == size(dvdx) || throw(BoundsError())
     @boundscheck (m+2+ep,n+2) == size(dudy) || throw(BoundsError())
     @boundscheck (m,n) == size(h_q) || throw(BoundsError())
+    @boundscheck ep == 1 || ep == 0 || throw(BoundsError())
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
@@ -15,7 +23,12 @@ end
 
 """Advection of potential vorticity qhv,qhu as in Sadourny, 1975
 enstrophy conserving scheme."""
-function PV_adv_Sadourny!(qhv,qhu,q,qα,qβ,qγ,qδ,q_u,q_v,U,V,V_u,U_v)
+function PV_Sadourny!(Diag::DiagnosticVars,G::Grid)
+
+    @unpack U,V,V_u,U_v = Diag.VolumeFluxes
+    @unpack q_u,q_v,qhv,qhu = Diag.Vorticity
+    @unpack ep = G
+
     Ixy!(V_u,V)
     Ixy!(U_v,U)
 
@@ -42,7 +55,12 @@ end
 
 """Advection of potential vorticity qhv,qhu as in Arakawa and Hsu, 1990
 Energy and enstrophy conserving (in the limit of non-divergent mass flux) scheme with τ = 0."""
-function PV_adv_ArakawaHsu!(qhv,qhu,q,qα,qβ,qγ,qδ,q_u,q_v,U,V,V_u,U_v)
+function PV_ArakawaHsu!(Diag::DiagnosticVars,G::Grid)
+
+    @unpack U,V = Diag.VolumeFluxes
+    @unpack qhv,qhu = Diag.Vorticity
+    @unpack qα,qβ,qγ,qδ = Diag.ArakawaHsu
+    @unpack ep = G
 
     # Linear combinations of q and V=hv to yield qhv
     m,n = size(qhv)
@@ -63,9 +81,11 @@ end
 
 """ Linear combination α of potential voriticity q according
 to the energy and enstrophy conserving scheme of Arakawa and Hsu, 1990"""
-function AHα!(α::AbstractMatrix,q::AbstractMatrix)
+function AHα!(α::Array{T,2},q::Array{T,2}) where {T<:AbstractFloat}
     m,n = size(α)
     @boundscheck (m+1,n+1) == size(q) || throw(BoundsError())
+
+    one_twelve = T(1/12)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
@@ -76,9 +96,11 @@ end
 
 """ Linear combination δ of potential voriticity q according
 to the energy and enstrophy conserving scheme of Arakawa and Hsu, 1990 """
-function AHβ!(β::AbstractMatrix,q::AbstractMatrix)
+function AHβ!(β::Array{T,2},q::Array{T,2}) where {T<:AbstractFloat}
     m,n = size(β)
     @boundscheck (m,n+1) == size(q) || throw(BoundsError())
+
+    one_twelve = T(1/12)
 
     @inbounds for j ∈ 1:n
         β[1,j] = one_twelve*(q[1,j] + q[1,j+1] + q[end,j+1])
@@ -90,9 +112,11 @@ end
 
 """ Linear combination γ of potential voriticity q according
 to the energy and enstrophy conserving scheme of Arakawa and Hsu, 1990 """
-function AHγ!(γ::AbstractMatrix,q::AbstractMatrix)
+function AHγ!(γ::Array{T,2},q::Array{T,2}) where {T<:AbstractFloat}
     m,n = size(γ)
     @boundscheck (m,n+1) == size(q) || throw(BoundsError())
+
+    one_twelve = T(1/12)
 
     @inbounds for j ∈ 1:n
         γ[1,j] = one_twelve*(q[1,j] + q[1,j+1] + q[end,j])
@@ -104,21 +128,15 @@ end
 
 """ Linear combination β of potential voriticity q according
 to the energy and enstrophy conserving scheme of Arakawa and Hsu, 1990 """
-function AHδ!(δ::AbstractMatrix,q::AbstractMatrix)
+function AHδ!(δ::Array{T,2},q::Array{T,2}) where {T<:AbstractFloat}
     m,n = size(δ)
     @boundscheck (m+1,n+1) == size(q) || throw(BoundsError())
+
+    one_twelve = T(1/12)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             δ[i,j] = one_twelve*(q[i,j] + q[i,j+1] + q[i+1,j])
         end
     end
-end
-
-if adv_scheme == "Sadourny"
-    PV_adv! = PV_adv_Sadourny!
-elseif adv_scheme == "ArakawaHsu"
-    PV_adv! = PV_adv_ArakawaHsu!
-else
-    throw(error("Advection scheme incorrectly specified. Only Sadourny or ArakawaHsu allowed."))
 end

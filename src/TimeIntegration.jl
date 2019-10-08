@@ -1,22 +1,36 @@
-#function TimeIntegration(u,v,η,sst)
-function TimeIntegration!(  ::Type{T},
+"""Integrates Juls forward in time."""
+function time_integration!( ::Type{T},
                             P::Parameter,
                             G::Grid,
                             C::Constants,
                             Prog::PrognosticVars,
                             Diag::DiagnosticVars) where {T<:AbstractFloat}
 
-    F = Forcing{T}(P,G)
+    @unpack u,v,η,sst = Prog
+    @unpack u0,v0,η0 = Diag.RungeKutta
+    @unpack u1,v1,η1 = Diag.RungeKutta
+    @unpack du,dv,dη = Diag.Tendencies
 
-    # add halo with ghost point copy
-    u,v,η,sst = add_halo(u,v,η,sst)
+    @unpack dynamics,RKo,tracer_advection = P
+    @unpack RKaΔt,RKnΔt = C
 
+    @unpack nstep_advcor,nstep_diff,nadvstep,nadvstep_half = G
 
-    # if dynamics == "linear"
-    #     # layer thickness
-    #     Ix!(h_u,H)
-    #     Iy!(h_v,H)
-    # end
+    Forc = Forcing{T}(P,G)
+
+    if dynamics == "linear"
+        Ix!(Diag.VolumeFluxes.h_u,Forc.H)
+        Iy!(Diag.VolumeFluxes.h_v,Forc.H)
+        rhs! = rhs_linear!
+    else
+        rhs! = rhs_nonlinear!
+    end
+
+    if P.adv_scheme == "Sadourny"
+        PVadvection! = PV_Sadourny!
+    elseif P.adv_scheme == "ArakawaHsu"
+        PVadvection! = PV_ArakawaHsu!
+    end
 
     # propagate initial conditions
     u0 .= u
@@ -24,16 +38,17 @@ function TimeIntegration!(  ::Type{T},
     η0 .= η
 
     # feedback and output
-    t0,progrtxt = feedback_ini()
-    ncs_progn,ncs_tend,ncs_diagn,iout = output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2,
-                                                    q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
+    #t0,progrtxt = feedback_ini()
+    #ncs_progn,ncs_tend,ncs_diagn,iout = output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2,
+    #                                                q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
+
     nans_detected = false
 
     t = 0           # model time
     for i = 1:nt
 
         # ghost point copy for boundary conditions
-        ghost_points!(u,v,η)
+        ghost_points!(P,C,u,v,η)
         u1 .= u
         v1 .= v
         η1 .= η
@@ -41,29 +56,31 @@ function TimeIntegration!(  ::Type{T},
         # Runge-Kutta 4th order / 3rd order
         for rki = 1:RKo
             if rki > 1
-                ghost_points!(u1,v1,η1)
+                ghost_points!(P,C,u1,v1,η1)
             end
 
-            rhs!(du,dv,dη,u1,v1,η1,Fx,Fy,f_u,f_v,f_q,H,η_ref,Fη,t,
-                dvdx,dudy,dpdx,dpdy,
-                p,u²,v²,KEu,KEv,dUdx,dVdy,
-                h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
-                qhv,qhu,q,q_u,q_v,
-                qα,qβ,qγ,qδ)
+            # rhs!(du,dv,dη,u1,v1,η1,Fx,Fy,f_u,f_v,f_q,H,η_ref,Fη,t,
+            #     dvdx,dudy,dpdx,dpdy,
+            #     p,u²,v²,KEu,KEv,dUdx,dVdy,
+            #     h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
+            #     qhv,qhu,q,q_u,q_v,
+            #     qα,qβ,qγ,qδ)
+
+            rhs!(u1,v1,η1,G,Diag,Forc)
 
             if rki < RKo
-                caxb!(u1,u,RKb[rki]*Δt,du)  #u1 .= u .+ RKb[rki]*Δt*du
-                caxb!(v1,v,RKb[rki]*Δt,dv)  #v1 .= v .+ RKb[rki]*Δt*dv
-                caxb!(η1,η,RKb[rki]*Δt,dη)  #η1 .= η .+ RKb[rki]*Δt*dη
+                caxb!(u1,u,RKbΔt[rki],du)  #u1 .= u .+ RKb[rki]*Δt*du
+                caxb!(v1,v,RKbΔt[rki],dv)  #v1 .= v .+ RKb[rki]*Δt*dv
+                caxb!(η1,η,RKbΔt[rki],dη)  #η1 .= η .+ RKb[rki]*Δt*dη
             end
 
             # sum RK-substeps on the go
-            axb!(u0,RKa[rki]*Δt,du)  #u0 .+= RKa[rki]*Δt*du
-            axb!(v0,RKa[rki]*Δt,dv)  #v0 .+= RKa[rki]*Δt*dv
-            axb!(η0,RKa[rki]*Δt,dη)  #η0 .+= RKa[rki]*Δt*dη
+            axb!(u0,RKaΔt[rki],du)  #u0 .+= RKa[rki]*Δt*du
+            axb!(v0,RKaΔt[rki],dv)  #v0 .+= RKa[rki]*Δt*dv
+            axb!(η0,RKaΔt[rki],dη)  #η0 .+= RKa[rki]*Δt*dη
         end
 
-        ghost_points!(u0,v0,η0)
+        ghost_points!(P,C,u0,v0,η0)
 
         # ADVECTION and CORIOLIS TERMS
         # although included in the tendency of every RK substep,
@@ -114,23 +131,20 @@ function TimeIntegration!(  ::Type{T},
         end
 
         # feedback and output
-        t0,nans_detected = feedback(u,v,η,sst,i,t0,nt,nans_detected,progrtxt)
+        #t0,nans_detected = feedback(u,v,η,sst,i,t0,nt,nans_detected,progrtxt)
 
-        ncs_diagn = output_diagn_nc(ncs_diagn,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
-        ncs_tend = output_tend_nc(ncs_tend,i,iout,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
-        ncs_progn,iout = output_progn_nc(ncs_progn,i,iout,u,v,η,sst)
+        #ncs_diagn = output_diagn_nc(ncs_diagn,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
+        #ncs_tend = output_tend_nc(ncs_tend,i,iout,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
+        #ncs_progn,iout = output_progn_nc(ncs_progn,i,iout,u,v,η,sst)
 
         if nans_detected
             break
-            #TODO break all MPI processes
         end
     end
 
     # finalise feeback and output
-    feedback_end(progrtxt,t0)
-    output_close(ncs_progn,ncs_tend,ncs_diagn,progrtxt)
-
-    return u,v,η,sst
+    #feedback_end(progrtxt,t0)
+    #output_close(ncs_progn,ncs_tend,ncs_diagn,progrtxt)
 end
 
 """Add to a x multiplied with b. a += x*b """
