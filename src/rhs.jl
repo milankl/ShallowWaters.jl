@@ -18,6 +18,8 @@ function rhs_nonlinear!(u::AbstractMatrix,
 
     @unpack h,h_u,h_v,U,V,dUdx,dVdy = Diag.VolumeFluxes
     @unpack H = Forc
+    @unpack g = C
+    @unpack ep = G
 
     # layer thickness
     thickness!(h,η,H)
@@ -25,7 +27,7 @@ function rhs_nonlinear!(u::AbstractMatrix,
     Iy!(h_v,h)
 
     # mass or volume flux U,V = uh,vh
-    Uflux!(U,u,h_u)
+    Uflux!(U,u,h_u,ep)
     Vflux!(V,v,h_v)
 
     # divergence of mass flux
@@ -38,7 +40,7 @@ function rhs_nonlinear!(u::AbstractMatrix,
 
     # Bernoulli potential - recalculate for new η, KEu,KEv are only updated outside
     @unpack p,KEu,KEv,dpdx,dpdy = Diag.Bernoulli
-    bernoulli!(p,KEu,KEv,η,C.g)
+    bernoulli!(p,KEu,KEv,η,g,ep)
     ∂x!(dpdx,p)
     ∂y!(dpdy,p)
 
@@ -50,7 +52,7 @@ function rhs_nonlinear!(u::AbstractMatrix,
     @unpack qhv,qhu = Diag.Vorticity
     @unpack Fx,Fy = Forc
 
-    momentum_u!(du,qhv,dpdx,Fx)
+    momentum_u!(du,qhv,dpdx,Fx,ep)
     momentum_v!(dv,qhu,dpdy,Fy)
     continuity!(dη,dUdx,dVdy)
 end
@@ -106,6 +108,7 @@ function advection_coriolis!(   u::AbstractMatrix,
     @unpack H,f_q = Forc
     @unpack q,h_q,dvdx,dudy = Diag.Vorticity
     @unpack u²,v²,KEu,KEv = Diag.Bernoulli
+    @unpack ep = G
 
     if G.nstep_advcor > 0
         thickness!(h,η,H)
@@ -123,7 +126,7 @@ function advection_coriolis!(   u::AbstractMatrix,
     Iy!(KEv,v²)
 
     # Potential vorticity update
-    PV!(q,f_q,dvdx,dudy,h_q)
+    PV!(q,f_q,dvdx,dudy,h_q,ep)
 
     # Linear combinations of the potential vorticity q
     if P.adv_scheme == "Sadourny"
@@ -155,13 +158,13 @@ end
 """Zonal mass flux U = uh."""
 function Uflux!(U::AbstractMatrix,
                 u::AbstractMatrix,
-                h_u::AbstractMatrix)
+                h_u::AbstractMatrix
+                ep::Int)
+
+
     m,n = size(U)
-    mu,_ = size(u)
-    ep = mu-m-2         # edgepoint: 1 for periodic 0 for nonperiodic
     @boundscheck (m,n) == size(h_u) || throw(BoundsError())
     @boundscheck (m+2+ep,n+2) == size(u) || throw(BoundsError())
-    @boundscheck ep == 1 || ep == 0 || throw(BoundsError())
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
@@ -212,14 +215,12 @@ function bernoulli!(p::Array{T,2},
                     KEu::Array{T,2},
                     KEv::Array{T,2},
                     η::Array{T,2},
-                    g::T) where {T<:AbstractFloat}
+                    g::T,
+                    ep::Int) where {T<:AbstractFloat}
     m,n = size(p)
-    mk,_ = size(KEu)
-    ep = mk-m       # edgepoint: 1 for periodic 0 for nonperiodic
     @boundscheck (m+ep,n+2) == size(KEu) || throw(BoundsError())
     @boundscheck (m+2,n) == size(KEv) || throw(BoundsError())
     @boundscheck (m,n) == size(η) || throw(BoundsError())
-    @boundscheck ep == 1 || ep == 0 || throw(BoundsError())
 
     one_half = T(0.5)
 
@@ -233,11 +234,10 @@ end
 """Coriolis term f*v. """
 function fv!(   qhv::AbstractMatrix,
                 f_u::AbstractMatrix,
-                v_u::AbstractMatrix)
+                v_u::AbstractMatrix,
+                ep::Int)
 
     m,n = size(qhv)
-    mv,_ = size(v_u)
-    ep = m-mv+4         # edgepoint: 1 for periodic 0 for nonperiodic
     @boundscheck (m,n) == size(f_u) || throw(BoundsError())
     @boundscheck (m+4-ep,n+2) == size(v_u) || throw(BoundsError())
     @boundscheck ep == 1 || ep == 0 || throw(BoundsError())
@@ -252,13 +252,12 @@ end
 """Coriolis term f*u. """
 function fu!(   qhu::AbstractMatrix,
                 f_v::AbstractMatrix,
-                u_v::AbstractMatrix)
+                u_v::AbstractMatrix,
+                ep::Int)
+
     m,n = size(qhu)
-    mu,_ = size(u_v)
-    ep = mu -m-2        # edgepoint: 1 for periodic 0 for nonperiodic
     @boundscheck (m,n) == size(f_v) || throw(BoundsError())
     @boundscheck (m+2+ep,n+4) == size(u_v) || throw(BoundsError())
-    @boundscheck ep == 1 || ep == 0 || throw(BoundsError())
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
@@ -271,14 +270,13 @@ end
 function momentum_u!(   du::AbstractMatrix,
                         qhv::AbstractMatrix,
                         dpdx::AbstractMatrix,
-                        Fx::AbstractMatrix)
+                        Fx::AbstractMatrix,
+                        ep::Int)
+
     m,n = size(du) .- (4,4)     # cut off the halo
-    mp,_ = size(dpdx)
-    ep = m-mp+2                 # edgepoint: 1 for periodic 0 for nonperiodic
     @boundscheck (m,n) == size(qhv) || throw(BoundsError())
     @boundscheck (m+2-ep,n+2) == size(dpdx) || throw(BoundsError())
     @boundscheck (m,n) == size(Fx) || throw(BoundsError())
-    @boundscheck ep == 1 || ep == 0 || throw(BoundsError())
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
@@ -292,6 +290,7 @@ function momentum_v!(   dv::AbstractMatrix,
                         qhu::AbstractMatrix,
                         dpdy::AbstractMatrix,
                         Fy::AbstractMatrix)
+
     m,n = size(dv) .- (4,4)     # cut off the halo
     @boundscheck (m,n) == size(qhu) || throw(BoundsError())
     @boundscheck (m+2,n+2) == size(dpdy) || throw(BoundsError())
@@ -302,47 +301,3 @@ function momentum_v!(   dv::AbstractMatrix,
         end
     end
 end
-
-
-# """Tendencies du,dv,dη of
-#
-#         ∂u/∂t = gv - g∂η/∂x + Fx
-#         ∂v/∂t = -fu - g∂η/∂y
-#         ∂η/∂t =  -∂(uh)/∂x - ∂(vh)/∂y + γ(η_ref-η) + Fηt*Fη,
-#
-# the shallow water equations which are linear in momentum but non-linear in continuity."""
-# function rhs_linmom!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,Fη,t,
-#             dvdx,dudy,dpdx,dpdy,
-#             p,KEu,KEv,dUdx,dVdy,
-#             h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
-#             qhv,qhu,q,q_u,q_v,
-#             qα,qβ,qγ,qδ)
-#
-#     # layer thickness
-#     thickness!(h,η,H)
-#     Ix!(h_u,h)
-#     Iy!(h_v,h)
-#
-#     # mass or volume flux U,V = uh,vh; - the continuity eq. is non-linear.
-#     Uflux!(U,u,h_u)
-#     Vflux!(V,v,h_v)
-#
-#     # divergence of mass flux
-#     ∂x!(dUdx,U)
-#     ∂y!(dVdy,V)
-#
-#     # Pressure gradient
-#     ∂x!(dpdx,g*η)
-#     ∂y!(dpdy,g*η)
-#
-#     # Coriolis force
-#     Ixy!(v_u,v)
-#     Ixy!(u_v,u)
-#     fv!(qhv,f_u,v_u)
-#     fu!(qhu,f_v,u_v)
-#
-#     # adding the terms
-#     momentum_u!(du,qhv,dpdx,Fx)
-#     momentum_v!(dv,qhu,dpdy,Fy)
-#     continuity!(dη,dUdx,dVdy,η,η_ref,Fη,t)
-# end

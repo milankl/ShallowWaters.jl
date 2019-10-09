@@ -3,17 +3,15 @@ function PV!(   q::AbstractMatrix,
                 f_q::AbstractMatrix,
                 dvdx::AbstractMatrix,
                 dudy::AbstractMatrix,
-                h_q::AbstractMatrix)
+                h_q::AbstractMatrix,
+                ep::Int)
 
     m,n = size(q)
-    mu,_ = size(dudy)
-    ep = mu-m-2         # edgepoint: 1 for periodic 0 for nonperiodic
     @boundscheck (m,n) == size(f_q) || throw(BoundsError())
     @boundscheck (m+2,n+2) == size(dvdx) || throw(BoundsError())
     @boundscheck (m+2+ep,n+2) == size(dudy) || throw(BoundsError())
     @boundscheck (m,n) == size(h_q) || throw(BoundsError())
-    @boundscheck ep == 1 || ep == 0 || throw(BoundsError())
-
+    
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             q[i,j] = (f_q[i,j] + dvdx[i+1,j+1] - dudy[i+1+ep,j+1]) / h_q[i,j]
