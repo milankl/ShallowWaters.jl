@@ -4,11 +4,7 @@
         ∂v/∂t = -qhu - ∂(1/2*(u²+v²) + gη)/∂y + Fy
         ∂η/∂t =  -∂(uh)/∂x - ∂(vh)/∂y + γ(η_ref-η) + Fηt*Fη
 
-where non-linear terms
-
-        q, (u²+v²)
-
-of the mom eq. are only updated outside the function (slowly varying terms)."""
+the nonlinear shallow water equations."""
 function rhs_nonlinear!(u::AbstractMatrix,
                         v::AbstractMatrix,
                         η::AbstractMatrix,
@@ -64,15 +60,19 @@ end
         ∂η/∂t =  -∂(uH)/∂x - ∂(vH)/∂y + γ(η_ref-η) + Fηt*Fη,
 
 the linear shallow water equations."""
-function rhs_linear!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,Fη,t,
-            dvdx,dudy,dpdx,dpdy,
-            p,u²,v²,KEu,KEv,dUdx,dVdy,
-            h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
-            qhv,qhu,q,q_u,q_v,
-            qα,qβ,qγ,qδ)
+function rhs_linear!(   u::AbstractMatrix,
+                        v::AbstractMatrix,
+                        η::AbstractMatrix,
+                        G::Grid,
+                        Diag::DiagnosticVars,
+                        Forc::Forcing)
+
+    @unpack h,h_u,h_v,U,V,dUdx,dVdy = Diag.VolumeFluxes
+    @unpack g = C
+    @unpack ep = G
 
     # mass or volume flux U,V = uH,vH; h_u, h_v are actually H_u, H_v
-    Uflux!(U,u,h_u)
+    Uflux!(U,u,h_u,ep)
     Vflux!(V,v,h_v)
 
     # divergence of mass flux
@@ -80,19 +80,24 @@ function rhs_linear!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,Fη,t,
     ∂y!(dVdy,V)
 
     # Pressure gradient
+    @unpack dpdx,dpdy = Diag.Bernoulli
     ∂x!(dpdx,g*η)
     ∂y!(dpdy,g*η)
 
     # Coriolis force
+    @unpack qhv,qhu,v_u,u_v = Diag.Vorticity
+    @unpack f_u,f_v = G
     Ixy!(v_u,v)
     Ixy!(u_v,u)
     fv!(qhv,f_u,v_u)
     fu!(qhu,f_v,u_v)
 
     # adding the terms
+    @unpack du,dv,dη = Diag.Tendencies
+    @unpack Fx,Fy = Forc
     momentum_u!(du,qhv,dpdx,Fx)
     momentum_v!(dv,qhu,dpdy,Fy)
-    continuity!(dη,dUdx,dVdy,η,η_ref,Fη,t)
+    continuity!(dη,dUdx,dVdy)
 end
 
 """ Update advective and Coriolis tendencies."""
@@ -105,10 +110,9 @@ function advection_coriolis!(   u::AbstractMatrix,
                                 Forc::Forcing)
 
     @unpack h = Diag.VolumeFluxes
-    @unpack H,f_q = Forc
-    @unpack q,h_q,dvdx,dudy = Diag.Vorticity
+    @unpack H = Forc
+    @unpack h_q,dvdx,dudy = Diag.Vorticity
     @unpack u²,v²,KEu,KEv = Diag.Bernoulli
-    @unpack ep = G
 
     if G.nstep_advcor > 0
         thickness!(h,η,H)
@@ -126,8 +130,9 @@ function advection_coriolis!(   u::AbstractMatrix,
     Iy!(KEv,v²)
 
     # Potential vorticity update
-    PV!(q,f_q,dvdx,dudy,h_q,ep)
+    PV!(G,Diag)
 
+    @unpack q = Diag.Vorticity
     # Linear combinations of the potential vorticity q
     if P.adv_scheme == "Sadourny"
         @unpack q_u,q_v = Diag.Vorticity
@@ -158,9 +163,8 @@ end
 """Zonal mass flux U = uh."""
 function Uflux!(U::AbstractMatrix,
                 u::AbstractMatrix,
-                h_u::AbstractMatrix
+                h_u::AbstractMatrix,
                 ep::Int)
-
 
     m,n = size(U)
     @boundscheck (m,n) == size(h_u) || throw(BoundsError())

@@ -2,7 +2,8 @@ module Juls
 
 export RunJuls, Parameter
 
-using Dates, NetCDF, FileIO, Printf, Parameters
+#using NetCDF
+using Dates, FileIO, Printf, Parameters
 
 include("DefaultParameters.jl")
 include("Grid.jl")
@@ -20,10 +21,10 @@ include("PVadvection.jl")
 include("Continuity.jl")
 include("Bottomdrag.jl")
 include("Diffusion.jl")
-include("TracerAdvection.jl")
+#include("TracerAdvection.jl")
 
-include("Feedback.jl")
-include("Output.jl")
+#include("Feedback.jl")
+#include("Output.jl")
 include("RunJuls.jl")
 
 end

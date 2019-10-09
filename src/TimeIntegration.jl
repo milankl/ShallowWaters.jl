@@ -1,10 +1,9 @@
 """Integrates Juls forward in time."""
-function time_integration!( ::Type{T},
-                            P::Parameter,
+function time_integration!( P::Parameter,
                             G::Grid,
                             C::Constants,
                             Prog::PrognosticVars,
-                            Diag::DiagnosticVars) where {T<:AbstractFloat}
+                            Diag::DiagnosticVars)
 
     @unpack u,v,η,sst = Prog
     @unpack u0,v0,η0 = Diag.RungeKutta
@@ -13,7 +12,7 @@ function time_integration!( ::Type{T},
     @unpack um,vm = Diag.SemiLagrange
 
     @unpack dynamics,RKo,tracer_advection = P
-    @unpack RKaΔt,RKnΔt = C
+    @unpack RKaΔt,RKbΔt = C
 
     @unpack nt,dtint = G
     @unpack nstep_advcor,nstep_diff,nadvstep,nadvstep_half = G

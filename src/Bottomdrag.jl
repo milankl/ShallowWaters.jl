@@ -98,6 +98,6 @@ function no_bottom_drag!(   u::AbstractMatrix,
                             Diag::DiagnosticVars)
 
     @unpack Bu,Bv = Diag.Bottomdrag
-    Bu .= C.zeero
-    Bv .= C.zeero
+    Bu .= zero(eltype(Bu))
+    Bv .= zero(eltype(Bu))
 end

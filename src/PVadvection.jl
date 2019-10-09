@@ -1,17 +1,15 @@
 """Potential vorticity calculated as q = (f + ∂v/∂x - ∂u/∂y)/h."""
-function PV!(   q::AbstractMatrix,
-                f_q::AbstractMatrix,
-                dvdx::AbstractMatrix,
-                dudy::AbstractMatrix,
-                h_q::AbstractMatrix,
-                ep::Int)
+function PV!(G::Grid,Diag::DiagnosticVars)
+
+    @unpack q,dvdx,dudy,h_q = Diag.Vorticity
+    @unpack f_q,ep = Grid
 
     m,n = size(q)
     @boundscheck (m,n) == size(f_q) || throw(BoundsError())
     @boundscheck (m+2,n+2) == size(dvdx) || throw(BoundsError())
     @boundscheck (m+2+ep,n+2) == size(dudy) || throw(BoundsError())
     @boundscheck (m,n) == size(h_q) || throw(BoundsError())
-    
+
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             q[i,j] = (f_q[i,j] + dvdx[i+1,j+1] - dudy[i+1+ep,j+1]) / h_q[i,j]
@@ -21,7 +19,7 @@ end
 
 """Advection of potential vorticity qhv,qhu as in Sadourny, 1975
 enstrophy conserving scheme."""
-function PV_Sadourny!(Diag::DiagnosticVars,G::Grid)
+function PV_Sadourny!(G::Grid,Diag::DiagnosticVars)
 
     @unpack U,V,V_u,U_v = Diag.VolumeFluxes
     @unpack q_u,q_v,qhv,qhu = Diag.Vorticity
@@ -53,7 +51,7 @@ end
 
 """Advection of potential vorticity qhv,qhu as in Arakawa and Hsu, 1990
 Energy and enstrophy conserving (in the limit of non-divergent mass flux) scheme with τ = 0."""
-function PV_ArakawaHsu!(Diag::DiagnosticVars,G::Grid)
+function PV_ArakawaHsu!(G::Grid,Diag::DiagnosticVars)
 
     @unpack U,V = Diag.VolumeFluxes
     @unpack qhv,qhu = Diag.Vorticity
