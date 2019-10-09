@@ -1,6 +1,5 @@
 abstract type NamedTupleInStruct end
 
-""" Create structs for different sets of diagnostic variables, each containing a NamedTuple with all matrices."""
 for XVars in (  :RungeKutta,
                 :Tendencies,
                 :VolumeFluxes,
@@ -35,7 +34,7 @@ struct DiagnosticVars
     SemiLagrange::NamedTupleInStruct
 end
 
-"""Preallocate the diagnostic variables and return them as matrices in structs.""" 
+"""Preallocate the diagnostic variables and return them as matrices in structs."""
 function preallocate(::Type{T},G::Grid) where {T<:AbstractFloat}
     RK = RungeKutta{T}(G)
     TD = Tendencies{T}(G)

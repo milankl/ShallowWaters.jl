@@ -9,14 +9,7 @@ where non-linear terms
         q, (u²+v²)
 
 of the mom eq. are only updated outside the function (slowly varying terms)."""
-# function rhs_nonlin!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,Fη,t,
-#             dvdx,dudy,dpdx,dpdy,
-#             p,u²,v²,KEu,KEv,dUdx,dVdy,
-#             h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
-#             qhv,qhu,q,q_u,q_v,
-#             qα,qβ,qγ,qδ)
-
-function rhs_nonlinear!(   u::AbstractMatrix,
+function rhs_nonlinear!(u::AbstractMatrix,
                         v::AbstractMatrix,
                         η::AbstractMatrix,
                         G::Grid,
@@ -39,22 +32,17 @@ function rhs_nonlinear!(   u::AbstractMatrix,
     ∂x!(dUdx,U)
     ∂y!(dVdy,V)
 
-    @unpack h_q,
-
     if G.nstep_advcor == 0    # evaluate every RK substep
-        rhs_advcor!(u,v,η,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
-                        q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v)
+        advection_coriolis!(u,v,η,P,G,Diag,Forc)
     end
 
     # Bernoulli potential - recalculate for new η, KEu,KEv are only updated outside
     @unpack p,KEu,KEv,dpdx,dpdy = Diag.Bernoulli
-    Bernoulli!(p,KEu,KEv,η,C.g)
+    bernoulli!(p,KEu,KEv,η,C.g)
     ∂x!(dpdx,p)
     ∂y!(dpdy,p)
 
     # Potential vorticity and advection thereof
-
-    PVadvection!(qhv,qhu,q,qα,qβ,qγ,qδ,q_u,q_v,U,V,V_u,U_v)
     PVadvection!(Diag)
 
     # adding the terms
@@ -106,10 +94,23 @@ function rhs_linear!(du,dv,dη,u,v,η,Fx,Fy,f_u,f_v,f_q,H,η_ref,Fη,t,
 end
 
 """ Update advective and Coriolis tendencies."""
-function rhs_advcor!(u,v,η,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
-                    q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v)
+function advection_coriolis!(   u::AbstractMatrix,
+                                v::AbstractMatrix,
+                                η::AbstractMatrix,
+                                P::Parameter,
+                                G::Grid,
+                                Diag::DiagnosticVars,
+                                Forc::Forcing)
 
-    thickness!(h,η,H)
+    @unpack h = Diag.VolumeFluxes
+    @unpack H,f_q = Forc
+    @unpack q,h_q,dvdx,dudy = Diag.Vorticity
+    @unpack u²,v²,KEu,KEv = Diag.Bernoulli
+
+    if G.nstep_advcor > 0
+        thickness!(h,η,H)
+    end
+
     Ixy!(h_q,h)
 
     # off-diagonals of stress tensor ∇(u,v)
@@ -124,11 +125,13 @@ function rhs_advcor!(u,v,η,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
     # Potential vorticity update
     PV!(q,f_q,dvdx,dudy,h_q)
 
-    # Linear combinations of the PV q
-    if adv_scheme == "Sadourny"
+    # Linear combinations of the potential vorticity q
+    if P.adv_scheme == "Sadourny"
+        @unpack q_u,q_v = Diag.Vorticity
         Iy!(q_u,q)
         Ix!(q_v,q)
-    elseif adv_scheme == "ArakawaHsu"
+    elseif P.adv_scheme == "ArakawaHsu"
+        @unpack qα,qβ,qγ,qδ = Diag.ArakawaHsu
         AHα!(qα,q)
         AHβ!(qβ,q)
         AHγ!(qγ,q)
@@ -151,7 +154,7 @@ end
 
 """Zonal mass flux U = uh."""
 function Uflux!(U::AbstractMatrix,
-                u::AabstractMatrix,
+                u::AbstractMatrix,
                 h_u::AbstractMatrix)
     m,n = size(U)
     mu,_ = size(u)
@@ -205,7 +208,7 @@ function speed!(u²::AbstractMatrix,
 end
 
 """Bernoulli potential p = 1/2*(u² + v²) + gη."""
-function Bernoulli!(p::Array{T,2},
+function bernoulli!(p::Array{T,2},
                     KEu::Array{T,2},
                     KEv::Array{T,2},
                     η::Array{T,2},
@@ -230,7 +233,7 @@ end
 """Coriolis term f*v. """
 function fv!(   qhv::AbstractMatrix,
                 f_u::AbstractMatrix,
-                v_u::AbsrtactMatrix)
+                v_u::AbstractMatrix)
 
     m,n = size(qhv)
     mv,_ = size(v_u)

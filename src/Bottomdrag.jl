@@ -1,5 +1,16 @@
-function bottom_drag_quad!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,η,H,h,u²,v²,h_u,h_v)
-    # quadratic bottom drag Bu,Bv = c_D/h * | u⃗ | * u⃗
+"""Quadratic bottom drag Bu,Bv = cD/h * | u⃗ | * u⃗"""
+function bottom_drag_quadratic!(u::AbstractMatrix,
+                                v::AbstractMatrix,
+                                η::AbstractMatrix,
+                                C::Constants,
+                                G::Grid,
+                                Diag::DiagnosticVars)
+
+    @unpack h,h_u,h_v = Diag.VolumeFluxes
+    @unpack u²,v²,KEu,KEv = Diag.Bernoulli
+    @unpack Bu,Bv,sqrtKE,sqrtKE_u,sqrtKE_v = Diag.Bottomdrag
+    @unpack ep = G
+    @unpack cD = C
 
     thickness!(h,η,H)
     Ix!(h_u,h)
@@ -30,7 +41,7 @@ function bottom_drag_quad!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,η,H,h,u²
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            Bu[i,j] = c_D*sqrtKE_u[i,j] * u[i+1+ep,j+1] / h_u[i,j]
+            Bu[i,j] = cD*sqrtKE_u[i,j] * u[i+1+ep,j+1] / h_u[i,j]
         end
     end
 
@@ -41,20 +52,30 @@ function bottom_drag_quad!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,η,H,h,u²
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            Bv[i,j] = c_D*sqrtKE_v[i,j] * v[i+1,j+1] / h_v[i,j]
+            Bv[i,j] = cD*sqrtKE_v[i,j] * v[i+1,j+1] / h_v[i,j]
         end
     end
 end
 
 """Linear bottom drag computed as r_B*(u,v). r_B is negative and contains the
 grid spacing Δ as gradient operators are dimensionless."""
-function bottom_drag_lin!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,η,H,h,u²,v²,h_u,h_v)
+function bottom_drag_linear!(   u::AbstractMatrix,
+                                v::AbstractMatrix,
+                                η::AbstractMatrix,
+                                C::Constants,
+                                G::Grid,
+                                Diag::DiagnosticVars)
+
+    @unpack Bu,Bv = Diag.Bottomdrag
+    @unpack ep = G
+    @unpack rD = C
+
     m,n = size(Bu)
     @boundscheck (m+2+ep,n+2) == size(u) || throw(BoundsError())
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            Bu[i,j] = r_B * u[i+1+ep,j+1]
+            Bu[i,j] = rD * u[i+1+ep,j+1]
         end
     end
 
@@ -63,22 +84,20 @@ function bottom_drag_lin!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,η,H,h,u²,
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            Bv[i,j] = r_B * v[i+1,j+1]
+            Bv[i,j] = rD * v[i+1,j+1]
         end
     end
 end
 
-function no_bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u,v,η,H,h,u²,v²,h_u,h_v)
-    Bu .= zeero
-    Bv .= zeero
-end
+"""No bottom drag."""
+function no_bottom_drag!(   u::AbstractMatrix,
+                            v::AbstractMatrix,
+                            η::AbstractMatrix,
+                            C::Constants,
+                            G::Grid,
+                            Diag::DiagnosticVars)
 
-if bottom_friction == "linear"
-    bottom_drag! = bottom_drag_lin!
-elseif bottom_friction == "quadratic"
-    bottom_drag! = bottom_drag_quad!
-elseif bottom_friction == "none"
-    bottom_drag! = no_bottom_drag!
-else
-    throw(error("Bottom friction not correctly specified. Only linear, quadratic or none allowed."))
+    @unpack Bu,Bv = Diag.Bottomdrag
+    Bu .= C.zeero
+    Bv .= C.zeero
 end
