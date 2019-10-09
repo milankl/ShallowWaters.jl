@@ -10,10 +10,12 @@ function time_integration!( ::Type{T},
     @unpack u0,v0,η0 = Diag.RungeKutta
     @unpack u1,v1,η1 = Diag.RungeKutta
     @unpack du,dv,dη = Diag.Tendencies
+    @unpack um,vm = Diag.SemiLagrange
 
     @unpack dynamics,RKo,tracer_advection = P
     @unpack RKaΔt,RKnΔt = C
 
+    @unpack nt,dtint = G
     @unpack nstep_advcor,nstep_diff,nadvstep,nadvstep_half = G
 
     Forc = Forcing{T}(P,G)
@@ -30,6 +32,20 @@ function time_integration!( ::Type{T},
         PVadvection! = PV_Sadourny!
     elseif P.adv_scheme == "ArakawaHsu"
         PVadvection! = PV_ArakawaHsu!
+    end
+
+    if bottom_friction == "linear"
+        bottom_drag! = bottom_drag_lin!
+    elseif bottom_friction == "quadratic"
+        bottom_drag! = bottom_drag_quad!
+    elseif bottom_friction == "none"
+        bottom_drag! = no_bottom_drag!
+    end
+
+    if diffusion == "Constant"
+        diffusion! = diffusion_constant!
+    elseif diffusion == "Smagorinsky"
+        diffusion! = diffusion_smagorinsky!
     end
 
     # propagate initial conditions
@@ -59,14 +75,7 @@ function time_integration!( ::Type{T},
                 ghost_points!(P,C,u1,v1,η1)
             end
 
-            # rhs!(du,dv,dη,u1,v1,η1,Fx,Fy,f_u,f_v,f_q,H,η_ref,Fη,t,
-            #     dvdx,dudy,dpdx,dpdy,
-            #     p,u²,v²,KEu,KEv,dUdx,dVdy,
-            #     h,h_u,h_v,h_q,U,V,U_v,V_u,u_v,v_u,
-            #     qhv,qhu,q,q_u,q_v,
-            #     qα,qβ,qγ,qδ)
-
-            rhs!(u1,v1,η1,G,Diag,Forc)
+            rhs!(u1,v1,η1,G,P,Diag,Forc)
 
             if rki < RKo
                 caxb!(u1,u,RKbΔt[rki],du)  #u1 .= u .+ RKb[rki]*Δt*du
@@ -84,21 +93,18 @@ function time_integration!( ::Type{T},
 
         # ADVECTION and CORIOLIS TERMS
         # although included in the tendency of every RK substep,
-        # only update every nstep_advcor steps!
+        # only update every nstep_advcor steps if nstep_advcor > 0
         if dynamics == "nonlinear" && nstep_advcor > 0 && (i % nstep_advcor) == 0
-            rhs_advcor!(u0,v0,η0,H,h,h_q,dvdx,dudy,u²,v²,KEu,KEv,
-                                q,f_q,qhv,qhu,qα,qβ,qγ,qδ,q_u,q_v)
+            advection_coriolis!(u0,v0,η0,P,G,Diag,Forc)
         end
 
         # DIFFUSIVE TERMS - SEMI-IMPLICIT EULER
         # use u0 = u^(n+1) to evaluate tendencies, add to u0 = u^n + rhs
-        if (i % nstep_diff) == 0    # evaluate only every nstep_diff time steps
-            bottom_drag!(Bu,Bv,KEu,KEv,sqrtKE,sqrtKE_u,sqrtKE_v,u0,v0,η0,
-                H,h,u²,v²,h_u,h_v)
-            diffusive!(dudx,dudy,dvdx,dvdy,DS,DS_q,DT,νSmag,νSmag_q,Lu,Lv,
-                dLudx,dLudy,dLvdx,dLvdy,S11,S12,S21,S22,
-                LLu1,LLu2,LLv1,LLv2,u0,v0)
-            add_drag_diff_tendencies!(u0,v0,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
+        # evaluate only every nstep_diff time steps
+        if (i % nstep_diff) == 0
+            bottom_drag!(u0,v0,η0,C,G,Diag)
+            diffusion!(u0,v0,C,G,Diag)
+            add_drag_diff_tendencies!(u0,v0,G,Diag)
         end
 
         # RK3/4 copy back from substeps
