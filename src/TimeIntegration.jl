@@ -1,10 +1,9 @@
 """Integrates Juls forward in time."""
-function time_integration!( ::Type{T},
-                            P::Parameter,
+function time_integration!( P::Parameter,
                             G::Grid,
                             C::Constants,
                             Prog::PrognosticVars,
-                            Diag::DiagnosticVars) where {T<:AbstractFloat}
+                            Diag::DiagnosticVars)
 
     @unpack u,v,η,sst = Prog
     @unpack u0,v0,η0 = Diag.RungeKutta
@@ -13,39 +12,18 @@ function time_integration!( ::Type{T},
     @unpack um,vm = Diag.SemiLagrange
 
     @unpack dynamics,RKo,tracer_advection = P
-    @unpack RKaΔt,RKnΔt = C
+    @unpack RKaΔt,RKbΔt = C
 
     @unpack nt,dtint = G
     @unpack nstep_advcor,nstep_diff,nadvstep,nadvstep_half = G
+
+    @unpack T = P
 
     Forc = Forcing{T}(P,G)
 
     if dynamics == "linear"
         Ix!(Diag.VolumeFluxes.h_u,Forc.H)
         Iy!(Diag.VolumeFluxes.h_v,Forc.H)
-        rhs! = rhs_linear!
-    else
-        rhs! = rhs_nonlinear!
-    end
-
-    if P.adv_scheme == "Sadourny"
-        PVadvection! = PV_Sadourny!
-    elseif P.adv_scheme == "ArakawaHsu"
-        PVadvection! = PV_ArakawaHsu!
-    end
-
-    if bottom_friction == "linear"
-        bottom_drag! = bottom_drag_lin!
-    elseif bottom_friction == "quadratic"
-        bottom_drag! = bottom_drag_quad!
-    elseif bottom_friction == "none"
-        bottom_drag! = no_bottom_drag!
-    end
-
-    if diffusion == "Constant"
-        diffusion! = diffusion_constant!
-    elseif diffusion == "Smagorinsky"
-        diffusion! = diffusion_smagorinsky!
     end
 
     # propagate initial conditions
@@ -75,7 +53,7 @@ function time_integration!( ::Type{T},
                 ghost_points!(P,C,u1,v1,η1)
             end
 
-            rhs!(u1,v1,η1,G,P,Diag,Forc)
+            rhs!(u1,v1,η1,P,C,G,Diag,Forc)
 
             if rki < RKo
                 caxb!(u1,u,RKbΔt[rki],du)  #u1 .= u .+ RKb[rki]*Δt*du
@@ -102,8 +80,8 @@ function time_integration!( ::Type{T},
         # use u0 = u^(n+1) to evaluate tendencies, add to u0 = u^n + rhs
         # evaluate only every nstep_diff time steps
         if (i % nstep_diff) == 0
-            bottom_drag!(u0,v0,η0,C,G,Diag)
-            diffusion!(u0,v0,C,G,Diag)
+            bottom_drag!(u0,v0,η0,P,C,G,Diag,Forc)
+            diffusion!(u0,v0,P,C,G,Diag)
             add_drag_diff_tendencies!(u0,v0,G,Diag)
         end
 
@@ -115,26 +93,26 @@ function time_integration!( ::Type{T},
 
         # TRACER ADVECTION
         # mid point (in time) velocity for the advective time step
-        if tracer_advection && ((i+nadvstep_half) % nadvstep) == 0
-            um .= u
-            vm .= v
-        end
-
-        if tracer_advection && (i % nadvstep) == 0
-            departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
-            adv_sst!(ssti,sst,xd,yd)
-            if tracer_relaxation
-                tracer_relax!(ssti,sst_ref,SSTγ)
-            end
-            if tracer_consumption
-                tracer_consumption!(ssti)
-            end
-            ghost_points_sst!(ssti)
-            sst .= ssti
-
-            # conserved?
-            #println(mean(sst[halosstx+1:end-halosstx,halossty+1:end-halossty].*h[haloη+1:end-haloη,haloη+1:end-haloη]))
-        end
+        # if tracer_advection && ((i+nadvstep_half) % nadvstep) == 0
+        #     um .= u
+        #     vm .= v
+        # end
+        #
+        # if tracer_advection && (i % nadvstep) == 0
+        #     departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
+        #     adv_sst!(ssti,sst,xd,yd)
+        #     if tracer_relaxation
+        #         tracer_relax!(ssti,sst_ref,SSTγ)
+        #     end
+        #     if tracer_consumption
+        #         tracer_consumption!(ssti)
+        #     end
+        #     ghost_points_sst!(ssti)
+        #     sst .= ssti
+        #
+        #     # conserved?
+        #     #println(mean(sst[halosstx+1:end-halosstx,halossty+1:end-halossty].*h[haloη+1:end-haloη,haloη+1:end-haloη]))
+        # end
 
         # feedback and output
         #t0,nans_detected = feedback(u,v,η,sst,i,t0,nt,nans_detected,progrtxt)

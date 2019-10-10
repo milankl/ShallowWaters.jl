@@ -55,7 +55,7 @@
     dynamics::String="nonlinear"        # "linear" or "nonlinear"
 
     # BOTTOM FRICTION OPTIONS
-    bottom_friction::String="quadratic" # "linear", "quadratic" or "none"
+    bottom_drag::String="quadratic"     # "linear", "quadratic" or "none"
     cD::Real=1e-5                       # bottom drag coefficient [dimensionless] for quadratic
     τD::Real=300.                       # bottom drag coefficient [days] for linear
 
@@ -65,7 +65,7 @@
     cSmag::Real=0.15                    # Smagorinsky coefficient [dimensionless]
 
     # TRACER ADVECTION
-    tracer_advection::Bool=true         # yes?
+    tracer_advection::Bool=false        # yes?
     tracer_relaxation::Bool=false       # yes?
     tracer_consumption::Bool=false      # yes?
     tracer_pumping::Bool=false          # yes?

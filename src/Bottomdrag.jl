@@ -1,16 +1,37 @@
+"""Transit function to call the specified bottom drag function."""
+function bottom_drag!(  u::AbstractMatrix,
+                        v::AbstractMatrix,
+                        η::AbstractMatrix,
+                        P::Parameter,
+                        C::Constants,
+                        G::Grid,
+                        Diag::DiagnosticVars,
+                        Forc::Forcing)
+
+    if P.bottom_drag == "linear"
+        bottom_drag_linear!(u,v,η,C,G,Diag,Forc)
+    elseif P.bottom_drag == "quadratic"
+        bottom_drag_quadratic!(u,v,η,C,G,Diag,Forc)
+    elseif P.bottom_drag == "none"
+        no_bottom_drag!(u,v,η,C,G,Diag,Forc)
+    end
+end
+
 """Quadratic bottom drag Bu,Bv = cD/h * | u⃗ | * u⃗"""
 function bottom_drag_quadratic!(u::AbstractMatrix,
                                 v::AbstractMatrix,
                                 η::AbstractMatrix,
                                 C::Constants,
                                 G::Grid,
-                                Diag::DiagnosticVars)
+                                Diag::DiagnosticVars,
+                                Forc::Forcing)
 
     @unpack h,h_u,h_v = Diag.VolumeFluxes
     @unpack u²,v²,KEu,KEv = Diag.Bernoulli
     @unpack Bu,Bv,sqrtKE,sqrtKE_u,sqrtKE_v = Diag.Bottomdrag
     @unpack ep = G
     @unpack cD = C
+    @unpack H = Forc
 
     thickness!(h,η,H)
     Ix!(h_u,h)
@@ -64,7 +85,8 @@ function bottom_drag_linear!(   u::AbstractMatrix,
                                 η::AbstractMatrix,
                                 C::Constants,
                                 G::Grid,
-                                Diag::DiagnosticVars)
+                                Diag::DiagnosticVars,
+                                Forc::Forcing)
 
     @unpack Bu,Bv = Diag.Bottomdrag
     @unpack ep = G
@@ -95,9 +117,10 @@ function no_bottom_drag!(   u::AbstractMatrix,
                             η::AbstractMatrix,
                             C::Constants,
                             G::Grid,
-                            Diag::DiagnosticVars)
+                            Diag::DiagnosticVars,
+                            Forc::Forcing)
 
     @unpack Bu,Bv = Diag.Bottomdrag
-    Bu .= C.zeero
-    Bv .= C.zeero
+    Bu .= zero(eltype(Bu))
+    Bv .= zero(eltype(Bu))
 end
