@@ -1,3 +1,20 @@
+"""Transit function to call either the linear or the nonlinear rhs."""
+function rhs!(  u::AbstractMatrix,
+                v::AbstractMatrix,
+                η::AbstractMatrix,
+                P::Parameter,
+                C::Constants,
+                G::Grid,
+                Diag::DiagnosticVars,
+                Forc::Forcing)
+
+    if P.dynamics == "linear"
+        rhs_linear!(u,v,η,P,C,G,Diag,Forc)
+    else
+        rhs_nonlinear!(u,v,η,P,C,G,Diag,Forc)
+    end
+end
+
 """Tendencies du,dv,dη of
 
         ∂u/∂t = qhv - ∂(1/2*(u²+v²) + gη)/∂x + Fx
@@ -8,6 +25,8 @@ the nonlinear shallow water equations."""
 function rhs_nonlinear!(u::AbstractMatrix,
                         v::AbstractMatrix,
                         η::AbstractMatrix,
+                        P::Parameter,
+                        C::Constants,
                         G::Grid,
                         Diag::DiagnosticVars,
                         Forc::Forcing)
@@ -41,7 +60,7 @@ function rhs_nonlinear!(u::AbstractMatrix,
     ∂y!(dpdy,p)
 
     # Potential vorticity and advection thereof
-    PVadvection!(Diag)
+    PVadvection!(P,G,Diag)
 
     # adding the terms
     @unpack du,dv,dη = Diag.Tendencies
@@ -111,8 +130,9 @@ function advection_coriolis!(   u::AbstractMatrix,
 
     @unpack h = Diag.VolumeFluxes
     @unpack H = Forc
-    @unpack h_q,dvdx,dudy = Diag.Vorticity
+    @unpack q,h_q,dvdx,dudy = Diag.Vorticity
     @unpack u²,v²,KEu,KEv = Diag.Bernoulli
+    @unpack ep,f_q = G
 
     if G.nstep_advcor > 0
         thickness!(h,η,H)
@@ -130,7 +150,8 @@ function advection_coriolis!(   u::AbstractMatrix,
     Iy!(KEv,v²)
 
     # Potential vorticity update
-    PV!(G,Diag)
+    #PV!(G,Diag)
+    PV!(q,dvdx,dudy,h_q,f_q,ep)
 
     @unpack q = Diag.Vorticity
     # Linear combinations of the potential vorticity q

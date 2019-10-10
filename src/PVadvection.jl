@@ -1,8 +1,39 @@
-"""Potential vorticity calculated as q = (f + ∂v/∂x - ∂u/∂y)/h."""
-function PV!(G::Grid,Diag::DiagnosticVars)
+"""Transit function to call the specified advection scheme."""
+function PVadvection!(P::Parameter,G::Grid,Diag::DiagnosticVars)
+    if P.adv_scheme == "Sadourny"
+        PV_Sadourny!(G,Diag)
+    elseif P.adv_scheme == "ArakawaHsu"
+        PV_ArakawaHsu!(G,Diag)
+    end
+end
 
-    @unpack q,dvdx,dudy,h_q = Diag.Vorticity
-    @unpack f_q,ep = Grid
+
+# """Potential vorticity calculated as q = (f + ∂v/∂x - ∂u/∂y)/h."""
+# function PV!(G::Grid,Diag::DiagnosticVars)
+#
+#     @unpack q,dvdx,dudy,h_q = Diag.Vorticity
+#     @unpack f_q,ep = G
+#
+#     m,n = size(q)
+#     @boundscheck (m,n) == size(f_q) || throw(BoundsError())
+#     @boundscheck (m+2,n+2) == size(dvdx) || throw(BoundsError())
+#     @boundscheck (m+2+ep,n+2) == size(dudy) || throw(BoundsError())
+#     @boundscheck (m,n) == size(h_q) || throw(BoundsError())
+#
+#     @inbounds for j ∈ 1:n
+#         for i ∈ 1:m
+#             q[i,j] = (f_q[i,j] + dvdx[i+1,j+1] - dudy[i+1+ep,j+1]) / h_q[i,j]
+#         end
+#     end
+# end
+
+"""Potential vorticity calculated as q = (f + ∂v/∂x - ∂u/∂y)/h."""
+function PV!(   q::AbstractMatrix,
+                dvdx::AbstractMatrix,
+                dudy::AbstractMatrix,
+                h_q::AbstractMatrix,
+                f_q::AbstractMatrix,
+                ep::Int)
 
     m,n = size(q)
     @boundscheck (m,n) == size(f_q) || throw(BoundsError())

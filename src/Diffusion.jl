@@ -1,3 +1,19 @@
+"""Transit function to call the specified diffusion scheme."""
+function diffusion!(    u::AbstractMatrix,
+                        v::AbstractMatrix,
+                        P::Parameter,
+                        C::Constants,
+                        G::Grid,
+                        Diag::DiagnosticVars)
+
+    if P.diffusion == "constant"
+        diffusion_constant!(u,v,C,G,Diag)
+    elseif P.diffusion == "Smagorinsky"
+        diffusion_smagorinsky!(u,v,C,G,Diag)
+    end
+end
+
+
 """Biharmonic diffusion operator with constant viscosity coefficient
 Viscosity = ν∇⁴ ⃗u. Although constant, the coefficient is actually inside
 Viscosity = ∇⋅ν∇∇² ⃗u."""
@@ -7,7 +23,7 @@ function diffusion_constant!(   u::AbstractMatrix,
                                 G::Grid,
                                 Diag::DiagnosticVars)
 
-    stress_tensor!(Diag)
+    stress_tensor!(u,v,Diag)
     viscous_tensor_constant!(C,G,Diag)
 
     @unpack LLu1,LLu2,LLv1,LLv2 = Diag.Smagorinsky
@@ -36,8 +52,8 @@ function diffusion_smagorinsky!(u::AbstractMatrix,
     ∂y!(dudy,u)
 
     # biharmonic diffusion
-    stress_tensor!(Diag)
-    smagorinsky_coeff!(G,Diag)
+    stress_tensor!(u,v,Diag)
+    smagorinsky_coeff!(C,G,Diag)
     viscous_tensor_smagorinsky!(G,Diag)
 
     @unpack LLu1,LLu2,LLv1,LLv2 = Diag.Smagorinsky
@@ -51,11 +67,12 @@ end
 
 """νSmag = cSmag * |D|, where deformation rate |D| = √((∂u/∂x - ∂v/∂y)^2 + (∂u/∂y + ∂v/∂x)^2).
 The grid spacing Δ is omitted here as the operators are dimensionless."""
-function smagorinsky_coeff!(G::Grid,Diag::DiagnosticVars)
+function smagorinsky_coeff!(C::Constants,G::Grid,Diag::DiagnosticVars)
 
     @unpack dudx,dudy,dvdx,dvdy = Diag.Vorticity
     @unpack DS,DS_q,DT,νSmag,νSmag_q = Diag.Smagorinsky
     @unpack ep = G
+    @unpack cSmag = C
 
     # horizontal shearing strain squared
     m,n = size(DS_q)
@@ -96,7 +113,7 @@ function smagorinsky_coeff!(G::Grid,Diag::DiagnosticVars)
 end
 
 """Biharmonic stress tensor ∇∇²(u,v) = (∂/∂x(∇²u), ∂/∂y(∇²u); ∂/∂x(∇²v), ∂/∂y(∇²v))"""
-function stress_tensor!(Diag::DiagnosticVars)
+function stress_tensor!(u::AbstractMatrix,v::AbstractMatrix,Diag::DiagnosticVars)
     @unpack Lu,Lv,dLudx,dLudy,dLvdx,dLvdy = Diag.Laplace
     ∇²!(Lu,u)
     ∇²!(Lv,v)
@@ -209,7 +226,7 @@ function add_drag_diff_tendencies!( u::AbstractMatrix,
                                     G::Grid,
                                     Diag::DiagnosticVars)
 
-    @unpack halo,ep,nΔt_diff = G
+    @unpack halo,ep,Δt_diff = G
     @unpack Bu,Bv = Diag.Bottomdrag
     @unpack LLu1,LLu2,LLv1,LLv2 = Diag.Smagorinsky
 
@@ -220,7 +237,7 @@ function add_drag_diff_tendencies!( u::AbstractMatrix,
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            u[i+2,j+2] += nΔt_diff*(Bu[i+1-ep,j+1] + LLu1[i,j+1] + LLu2[i+1-ep,j])
+            u[i+2,j+2] += Δt_diff*(Bu[i+1-ep,j+1] + LLu1[i,j+1] + LLu2[i+1-ep,j])
         end
     end
 
@@ -231,7 +248,7 @@ function add_drag_diff_tendencies!( u::AbstractMatrix,
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-             v[i+2,j+2] += nΔt_diff*(Bv[i+1,j+1] + LLv1[i,j+1] + LLv2[i+1,j])
+             v[i+2,j+2] += Δt_diff*(Bv[i+1,j+1] + LLv1[i,j+1] + LLv2[i+1,j])
         end
     end
 end

@@ -59,6 +59,10 @@ mutable struct Grid{T<:AbstractFloat}
     dtint::Int                          # dt converted to Int
     nt::Int                             # number of time steps to integrate
 
+    # TIME STEPS FOR NONLINEAR TERMS AND DIFFUSION
+    nstep_diff::Int                     # diffusive terms every nstep_diff time steps.
+    nstep_advcor::Int                   # advection and coriolis update every nstep_advcor time steps
+
     # TIME STEPS FOR ADVECTION
     dtadvu::T                           # Rescaled advection time step for u [s/m]
     dtadvv::T                           # Rescaled advection time step for v [s/m]
@@ -163,7 +167,10 @@ function Grid{T}(P::Parameter) where {T<:AbstractFloat}
     G.nout_total = (G.nt ÷ G.nout)+1            # total number of output time steps
     G.t_vec = Array(0:G.nout_total-1)*dtint     # time vector for output
 
-    # ADVECTION TIME STEPS
+    G.nstep_diff = P.nstep_diff
+    G.nstep_advcor = P.nstep_advcor
+
+    # TRACER ADVECTION TIME STEPS
     # round down to make sure nadvstep is integer, at least 1
     nadvstep = max(1,Int(floor(Δ/Uadv/dtint)))  # advection every n time steps
     G.nadvstep_half = nadvstep ÷ 2              # for mid-point calculation

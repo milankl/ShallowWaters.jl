@@ -151,7 +151,7 @@ function ghost_points!( P::Parameter,
     else
         ghost_points_u_nonperiodic!(C,u)
         ghost_points_v_nonperiodic!(C,v)
-        ghost_points_η_nonperiodic!(C,η)
+        ghost_points_η_nonperiodic!(η)
     end
 end
 
