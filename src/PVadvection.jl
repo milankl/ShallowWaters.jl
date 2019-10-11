@@ -7,7 +7,6 @@ function PVadvection!(P::Parameter,G::Grid,Diag::DiagnosticVars)
     end
 end
 
-
 # """Potential vorticity calculated as q = (f + ∂v/∂x - ∂u/∂y)/h."""
 # function PV!(G::Grid,Diag::DiagnosticVars)
 #
