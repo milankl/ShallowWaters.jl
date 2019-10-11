@@ -12,8 +12,8 @@ include("Constants.jl")
 include("InitialConditions.jl")
 include("Preallocate.jl")
 
-include("TimeIntegration.jl")
 include("Forcing.jl")
+include("TimeIntegration.jl")
 include("GhostPoints.jl")
 include("rhs.jl")
 include("Gradients.jl")
@@ -29,15 +29,3 @@ include("Diffusion.jl")
 include("RunJuls.jl")
 
 end
-
-using BenchmarkTools
-T = Float32
-P = Parameter()
-G = Grid{T}(P)
-C = Constants{T}(P,G)
-Prog = initial_conditions(T,P,C,G)
-Diag = preallocate(T,G)
-Forc = Forcing{T}(P,G)
-
-@unpack u,v,η = Prog
-@btime rhs!($u,$v,$η,$P,$C,$G,$Diag,$Forc)

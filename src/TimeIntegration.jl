@@ -18,8 +18,6 @@ function time_integration!( P::Parameter,
     @unpack nt,dtint = G
     @unpack nstep_advcor,nstep_diff,nadvstep,nadvstep_half = G
 
-    @unpack T = P
-
     if dynamics == "linear"
         Ix!(Diag.VolumeFluxes.h_u,Forc.H)
         Iy!(Diag.VolumeFluxes.h_v,Forc.H)
@@ -39,6 +37,7 @@ function time_integration!( P::Parameter,
     t = 0           # model time
     t0 = time()
     println("$nt time steps.")
+    println("$dtint s time step.")
     for i = 1:nt
 
         # ghost point copy for boundary conditions
