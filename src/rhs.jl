@@ -150,9 +150,8 @@ function advection_coriolis!(   u::AbstractMatrix,
     Iy!(KEv,v²)
 
     # Potential vorticity update
-    #PV!(G,Diag)
-    PV!(q,dvdx,dudy,h_q,f_q,ep)
-
+    PV!(G,Diag)
+    
     @unpack q = Diag.Vorticity
     # Linear combinations of the potential vorticity q
     if P.adv_scheme == "Sadourny"

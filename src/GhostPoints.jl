@@ -55,6 +55,18 @@ function ghost_points_u_periodic!(C::Constants,u::AbstractMatrix)
     @views @inbounds u[:,2] .= one_minus_α*u[:,3]
     @views @inbounds u[:,end-1] .= one_minus_α*u[:,end-2]
     @views @inbounds u[:,end] .= one_minus_α*u[:,end-3]
+
+    # # periodic bc
+    # @views copyto!(u[1,:],u[end-3,:])
+    # @views copyto!(u[2,:],u[end-2,:])
+    # @views copyto!(u[end-1,:],u[3,:])
+    # @views copyto!(u[end,:],u[4,:])
+    #
+    # # tangential bc
+    # @views copyto!(u[:,1],one_minus_α.*u[:,4])
+    # @views copyto!(u[:,2],one_minus_α.*u[:,3])
+    # @views copyto!(u[:,end-1],one_minus_α.*u[:,end-2])
+    # @views copyto!(u[:,end],one_minus_α.*u[:,end-3])
 end
 
 """ Copy ghost points for v from inside to the halo in the nonperiodic case. """

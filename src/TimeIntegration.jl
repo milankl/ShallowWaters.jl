@@ -3,7 +3,8 @@ function time_integration!( P::Parameter,
                             G::Grid,
                             C::Constants,
                             Prog::PrognosticVars,
-                            Diag::DiagnosticVars)
+                            Diag::DiagnosticVars,
+                            Forc::Forcing)
 
     @unpack u,v,η,sst = Prog
     @unpack u0,v0,η0 = Diag.RungeKutta
@@ -17,19 +18,15 @@ function time_integration!( P::Parameter,
     @unpack nt,dtint = G
     @unpack nstep_advcor,nstep_diff,nadvstep,nadvstep_half = G
 
-    @unpack T = P
-
-    Forc = Forcing{T}(P,G)
-
     if dynamics == "linear"
         Ix!(Diag.VolumeFluxes.h_u,Forc.H)
         Iy!(Diag.VolumeFluxes.h_v,Forc.H)
     end
 
     # propagate initial conditions
-    u0 .= u
-    v0 .= v
-    η0 .= η
+    copyto!(u0,u)
+    copyto!(v0,v)
+    copyto!(η0,η)
 
     # feedback and output
     #t0,progrtxt = feedback_ini()
@@ -37,15 +34,17 @@ function time_integration!( P::Parameter,
     #                                                q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
 
     nans_detected = false
-
     t = 0           # model time
+    t0 = time()
+    println("$nt time steps.")
+    println("$dtint s time step.")
     for i = 1:nt
 
         # ghost point copy for boundary conditions
         ghost_points!(P,C,u,v,η)
-        u1 .= u
-        v1 .= v
-        η1 .= η
+        copyto!(u1,u)
+        copyto!(v1,v)
+        copyto!(η1,η)
 
         # Runge-Kutta 4th order / 3rd order
         for rki = 1:RKo
@@ -86,10 +85,11 @@ function time_integration!( P::Parameter,
         end
 
         # RK3/4 copy back from substeps
-        u .= u0
-        v .= v0
-        η .= η0
+        copyto!(u,u0)
+        copyto!(v,v0)
+        copyto!(η,η0)
         t += dtint
+
 
         # TRACER ADVECTION
         # mid point (in time) velocity for the advective time step
@@ -125,6 +125,8 @@ function time_integration!( P::Parameter,
             break
         end
     end
+    tend = time()-t0
+    println("$(tend)s.")
 
     # finalise feeback and output
     #feedback_end(progrtxt,t0)
