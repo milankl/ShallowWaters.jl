@@ -1,36 +1,5 @@
-abstract type VarCollection end
-
-struct DiagnosticVars
-    RungeKutta::VarCollection
-    Tendencies::VarCollection
-    VolumeFluxes::VarCollection
-    Vorticity::VarCollection
-    Bernoulli::VarCollection
-    Bottomdrag::VarCollection
-    ArakawaHsu::VarCollection
-    Laplace::VarCollection
-    Smagorinsky::VarCollection
-    SemiLagrange::VarCollection
-end
-
-"""Preallocate the diagnostic variables and return them as matrices in structs."""
-function preallocate(::Type{T},G::Grid) where {T<:AbstractFloat}
-    RK = RungeKutta{T}(G)
-    TD = Tendencies{T}(G)
-    VF = VolumeFluxes{T}(G)
-    VT = Vorticity{T}(G)
-    BN = Bernoulli{T}(G)
-    BD = Bottomdrag{T}(G)
-    AH = ArakawaHsu{T}(G)
-    LP = Laplace{T}(G)
-    SM = Smagorinsky{T}(G)
-    SL = SemiLagrange{T}(G)
-
-    return DiagnosticVars(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL)
-end
-
 """Runge Kutta time stepping scheme diagnostic cariables collected in a struct."""
-@with_kw struct RungeKutta{T<:AbstractFloat} <: VarCollection
+@with_kw struct RungeKuttaVars{T<:AbstractFloat}
 
     # to be specified
     nx::Int
@@ -42,7 +11,7 @@ end
     nux::Int = if (bc == "periodic") nx else nx-1 end   # u-grid in x-direction
     nuy::Int = ny                                       # u-grid in y-direction
     nvx::Int = nx                                       # v-grid in x-direction
-    nvy::Int = nx-1                                     # v-grid in y-direction
+    nvy::Int = ny-1                                     # v-grid in y-direction
     nqx::Int = if (bc == "periodic") nx else nx+1 end   # q-grid in x-direction
     nqy::Int = ny+1                                     # q-grid in y-direction
 
@@ -58,18 +27,18 @@ end
 end
 
 """Generator function for RungeKutta VarCollection."""
-function RungeKutta{T}(G::Grid) where {T<:AbstractFloat}
+function RungeKuttaVars{T}(G::Grid) where {T<:AbstractFloat}
 
     @unpack nx,ny,bc = G
     @unpack halo,haloη = G
 
-    return RungeKutta{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
+    return RungeKuttaVars{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
 end
 
 ###################################################
 
 """Tendencies collected in a struct."""
-@with_kw struct Tendencies{T<:AbstractFloat} <: VarCollection
+@with_kw struct TendencyVars{T<:AbstractFloat}
 
     # to be specified
     nx::Int
@@ -81,7 +50,7 @@ end
     nux::Int = if (bc == "periodic") nx else nx-1 end   # u-grid in x-direction
     nuy::Int = ny                                       # u-grid in y-direction
     nvx::Int = nx                                       # v-grid in x-direction
-    nvy::Int = nx-1                                     # v-grid in y-direction
+    nvy::Int = ny-1                                     # v-grid in y-direction
     nqx::Int = if (bc == "periodic") nx else nx+1 end   # q-grid in x-direction
     nqy::Int = ny+1                                     # q-grid in y-direction
 
@@ -94,18 +63,18 @@ end
 end
 
 """Generator function for Tendencies VarCollection."""
-function Tendencies{T}(G::Grid) where {T<:AbstractFloat}
+function TendencyVars{T}(G::Grid) where {T<:AbstractFloat}
 
     @unpack nx,ny,bc = G
     @unpack halo,haloη = G
 
-    return Tendencies{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
+    return TendencyVars{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
 end
 
 ###########################################################
 
 """VolumeFluxes collected in a struct."""
-@with_kw struct VolumeFluxes{T<:AbstractFloat} <: VarCollection
+@with_kw struct VolumeFluxVars{T<:AbstractFloat}
 
     # to be specified
     nx::Int
@@ -117,7 +86,7 @@ end
     nux::Int = if (bc == "periodic") nx else nx-1 end   # u-grid in x-direction
     nuy::Int = ny                                       # u-grid in y-direction
     nvx::Int = nx                                       # v-grid in x-direction
-    nvy::Int = nx-1                                     # v-grid in y-direction
+    nvy::Int = ny-1                                     # v-grid in y-direction
     nqx::Int = if (bc == "periodic") nx else nx+1 end   # q-grid in x-direction
     nqy::Int = ny+1                                     # q-grid in y-direction
 
@@ -136,18 +105,18 @@ end
 end
 
 """Generator function for VolumeFluxes VarCollection."""
-function VolumeFluxes{T}(G::Grid) where {T<:AbstractFloat}
+function VolumeFluxVars{T}(G::Grid) where {T<:AbstractFloat}
 
     @unpack nx,ny,bc = G
     @unpack halo,haloη = G
 
-    return VolumeFluxes{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
+    return VolumeFluxVars{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
 end
 
 ###############################################################
 
 """Vorticity variables collected in a struct."""
-@with_kw struct Vorticity{T<:AbstractFloat} <: VarCollection
+@with_kw struct VorticityVars{T<:AbstractFloat}
 
     # to be specified
     nx::Int
@@ -159,7 +128,7 @@ end
     nux::Int = if (bc == "periodic") nx else nx-1 end   # u-grid in x-direction
     nuy::Int = ny                                       # u-grid in y-direction
     nvx::Int = nx                                       # v-grid in x-direction
-    nvy::Int = nx-1                                     # v-grid in y-direction
+    nvy::Int = ny-1                                     # v-grid in y-direction
     nqx::Int = if (bc == "periodic") nx else nx+1 end   # q-grid in x-direction
     nqy::Int = ny+1                                     # q-grid in y-direction
 
@@ -189,18 +158,18 @@ end
 end
 
 """Generator function for Vorticity VarCollection."""
-function Vorticity{T}(G::Grid) where {T<:AbstractFloat}
+function VorticityVars{T}(G::Grid) where {T<:AbstractFloat}
 
     @unpack nx,ny,bc = G
     @unpack halo,haloη = G
 
-    return Vorticity{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
+    return VorticityVars{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
 end
 
 ####################################################################
 
 """Bernoulli variables collected in a struct."""
-@with_kw struct Bernoulli{T<:AbstractFloat} <: VarCollection
+@with_kw struct BernoulliVars{T<:AbstractFloat}
 
     # to be specified
     nx::Int
@@ -212,7 +181,7 @@ end
     nux::Int = if (bc == "periodic") nx else nx-1 end   # u-grid in x-direction
     nuy::Int = ny                                       # u-grid in y-direction
     nvx::Int = nx                                       # v-grid in x-direction
-    nvy::Int = nx-1                                     # v-grid in y-direction
+    nvy::Int = ny-1                                     # v-grid in y-direction
     nqx::Int = if (bc == "periodic") nx else nx+1 end   # q-grid in x-direction
     nqy::Int = ny+1                                     # q-grid in y-direction
 
@@ -231,18 +200,18 @@ end
 end
 
 """Generator function for Bernoulli VarCollection."""
-function Bernoulli{T}(G::Grid) where {T<:AbstractFloat}
+function BernoulliVars{T}(G::Grid) where {T<:AbstractFloat}
 
     @unpack nx,ny,bc = G
     @unpack halo,haloη = G
 
-    return Bernoulli{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
+    return BernoulliVars{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
 end
 
 ####################################################################
 
 """Bottomdrag variables collected in a struct."""
-@with_kw struct Bottomdrag{T<:AbstractFloat} <: VarCollection
+@with_kw struct BottomdragVars{T<:AbstractFloat}
 
     # to be specified
     nx::Int
@@ -254,7 +223,7 @@ end
     nux::Int = if (bc == "periodic") nx else nx-1 end   # u-grid in x-direction
     nuy::Int = ny                                       # u-grid in y-direction
     nvx::Int = nx                                       # v-grid in x-direction
-    nvy::Int = nx-1                                     # v-grid in y-direction
+    nvy::Int = ny-1                                     # v-grid in y-direction
     nqx::Int = if (bc == "periodic") nx else nx+1 end   # q-grid in x-direction
     nqy::Int = ny+1                                     # q-grid in y-direction
 
@@ -270,18 +239,18 @@ end
 end
 
 """Generator function for Bottomdrag VarCollection."""
-function Bottomdrag{T}(G::Grid) where {T<:AbstractFloat}
+function BottomdragVars{T}(G::Grid) where {T<:AbstractFloat}
 
     @unpack nx,ny,bc = G
     @unpack halo,haloη = G
 
-    return Bottomdrag{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
+    return BottomdragVars{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
 end
 
 ####################################################################
 
 """ArakawaHsu variables collected in a struct."""
-@with_kw struct ArakawaHsu{T<:AbstractFloat} <: VarCollection
+@with_kw struct ArakawaHsuVars{T<:AbstractFloat}
 
     # to be specified
     nx::Int
@@ -293,7 +262,7 @@ end
     nux::Int = if (bc == "periodic") nx else nx-1 end   # u-grid in x-direction
     nuy::Int = ny                                       # u-grid in y-direction
     nvx::Int = nx                                       # v-grid in x-direction
-    nvy::Int = nx-1                                     # v-grid in y-direction
+    nvy::Int = ny-1                                     # v-grid in y-direction
     nqx::Int = if (bc == "periodic") nx else nx+1 end   # q-grid in x-direction
     nqy::Int = ny+1                                     # q-grid in y-direction
 
@@ -308,18 +277,18 @@ end
 end
 
 """Generator function for ArakawaHsu VarCollection."""
-function ArakawaHsu{T}(G::Grid) where {T<:AbstractFloat}
+function ArakawaHsuVars{T}(G::Grid) where {T<:AbstractFloat}
 
     @unpack nx,ny,bc = G
     @unpack halo,haloη = G
 
-    return ArakawaHsu{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
+    return ArakawaHsuVars{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
 end
 
 ####################################################################
 
 """Laplace variables collected in a struct."""
-@with_kw struct Laplace{T<:AbstractFloat} <: VarCollection
+@with_kw struct LaplaceVars{T<:AbstractFloat}
 
     # to be specified
     nx::Int
@@ -331,36 +300,36 @@ end
     nux::Int = if (bc == "periodic") nx else nx-1 end   # u-grid in x-direction
     nuy::Int = ny                                       # u-grid in y-direction
     nvx::Int = nx                                       # v-grid in x-direction
-    nvy::Int = nx-1                                     # v-grid in y-direction
+    nvy::Int = ny-1                                     # v-grid in y-direction
     nqx::Int = if (bc == "periodic") nx else nx+1 end   # q-grid in x-direction
     nqy::Int = ny+1                                     # q-grid in y-direction
 
     # EDGE POINT (1 = yes, 0 = no)
     ep::Int = if bc == "periodic" 1 else 0 end      # is there a u-point on the left edge?
 
-    Lu = zeros(T,nux+2*halo-2,nuy+2*halo-2)         # ∇²u
-    Lv = zeros(T,nvx+2*halo-2,nvy+2*halo-2)         # ∇²v
+    Lu::Array{T,2} = zeros(T,nux+2*halo-2,nuy+2*halo-2)         # ∇²u
+    Lv::Array{T,2} = zeros(T,nvx+2*halo-2,nvy+2*halo-2)         # ∇²v
 
     # Derivatives of Lu,Lv
-    dLudx = zeros(T,nux+2*halo-3,nuy+2*halo-2)
-    dLudy = zeros(T,nux+2*halo-2,nuy+2*halo-3)
-    dLvdx = zeros(T,nvx+2*halo-3,nvy+2*halo-2)
-    dLvdy = zeros(T,nvx+2*halo-2,nvy+2*halo-3)
+    dLudx::Array{T,2} = zeros(T,nux+2*halo-3,nuy+2*halo-2)
+    dLudy::Array{T,2} = zeros(T,nux+2*halo-2,nuy+2*halo-3)
+    dLvdx::Array{T,2} = zeros(T,nvx+2*halo-3,nvy+2*halo-2)
+    dLvdy::Array{T,2} = zeros(T,nvx+2*halo-2,nvy+2*halo-3)
 end
 
 """Generator function for Laplace VarCollection."""
-function Laplace{T}(G::Grid) where {T<:AbstractFloat}
+function LaplaceVars{T}(G::Grid) where {T<:AbstractFloat}
 
     @unpack nx,ny,bc = G
     @unpack halo,haloη = G
 
-    return Laplace{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
+    return LaplaceVars{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
 end
 
 ####################################################################
 
 """Smagorinsky variables collected in a struct."""
-@with_kw struct Smagorinsky{T<:AbstractFloat} <: VarCollection
+@with_kw struct SmagorinskyVars{T<:AbstractFloat}
 
     # to be specified
     nx::Int
@@ -372,7 +341,7 @@ end
     nux::Int = if (bc == "periodic") nx else nx-1 end   # u-grid in x-direction
     nuy::Int = ny                                       # u-grid in y-direction
     nvx::Int = nx                                       # v-grid in x-direction
-    nvy::Int = nx-1                                     # v-grid in y-direction
+    nvy::Int = ny-1                                     # v-grid in y-direction
     nqx::Int = if (bc == "periodic") nx else nx+1 end   # q-grid in x-direction
     nqy::Int = ny+1                                     # q-grid in y-direction
 
@@ -405,18 +374,18 @@ end
 end
 
 """Generator function for Smagorinsky VarCollection."""
-function Smagorinsky{T}(G::Grid) where {T<:AbstractFloat}
+function SmagorinskyVars{T}(G::Grid) where {T<:AbstractFloat}
 
     @unpack nx,ny,bc = G
     @unpack halo,haloη = G
 
-    return Smagorinsky{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
+    return SmagorinskyVars{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη)
 end
 
 ####################################################################
 
 """SemiLagrange variables collected in a struct."""
-@with_kw struct SemiLagrange{T<:AbstractFloat} <: VarCollection
+@with_kw struct SemiLagrangeVars{T<:AbstractFloat}
 
     # to be specified
     nx::Int
@@ -430,7 +399,7 @@ end
     nux::Int = if (bc == "periodic") nx else nx-1 end   # u-grid in x-direction
     nuy::Int = ny                                       # u-grid in y-direction
     nvx::Int = nx                                       # v-grid in x-direction
-    nvy::Int = nx-1                                     # v-grid in y-direction
+    nvy::Int = ny-1                                     # v-grid in y-direction
     nqx::Int = if (bc == "periodic") nx else nx+1 end   # q-grid in x-direction
     nqy::Int = ny+1                                     # q-grid in y-direction
 
@@ -455,12 +424,43 @@ end
 end
 
 """Generator function for SemiLagrange VarCollection."""
-function SemiLagrange{T}(G::Grid) where {T<:AbstractFloat}
+function SemiLagrangeVars{T}(G::Grid) where {T<:AbstractFloat}
 
     @unpack nx,ny,bc = G
     @unpack halo,haloη = G
     @unpack halosstx,halossty = G
 
-    return SemiLagrange{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη,
+    return SemiLagrangeVars{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη,
                             halosstx=halosstx,halossty=halossty)
+end
+
+###################################################################
+
+struct DiagnosticVars{T}
+    RungeKutta::RungeKuttaVars{T}
+    Tendencies::TendencyVars{T}
+    VolumeFluxes::VolumeFluxVars{T}
+    Vorticity::VorticityVars{T}
+    Bernoulli::BernoulliVars{T}
+    Bottomdrag::BottomdragVars{T}
+    ArakawaHsu::ArakawaHsuVars{T}
+    Laplace::LaplaceVars{T}
+    Smagorinsky::SmagorinskyVars{T}
+    SemiLagrange::SemiLagrangeVars{T}
+end
+
+"""Preallocate the diagnostic variables and return them as matrices in structs."""
+function preallocate(::Type{T},G::Grid) where {T<:AbstractFloat}
+    RK = RungeKuttaVars{T}(G)
+    TD = TendencyVars{T}(G)
+    VF = VolumeFluxVars{T}(G)
+    VT = VorticityVars{T}(G)
+    BN = BernoulliVars{T}(G)
+    BD = BottomdragVars{T}(G)
+    AH = ArakawaHsuVars{T}(G)
+    LP = LaplaceVars{T}(G)
+    SM = SmagorinskyVars{T}(G)
+    SL = SemiLagrangeVars{T}(G)
+
+    return DiagnosticVars{T}(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL)
 end

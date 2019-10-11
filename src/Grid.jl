@@ -26,7 +26,7 @@
     nux::Int = if (bc == "periodic") nx else nx-1 end   # u-grid in x-direction
     nuy::Int = ny                                       # u-grid in y-direction
     nvx::Int = nx                                       # v-grid in x-direction
-    nvy::Int = nx-1                                     # v-grid in y-direction
+    nvy::Int = ny-1                                     # v-grid in y-direction
     nqx::Int = if (bc == "periodic") nx else nx+1 end   # q-grid in x-direction
     nqy::Int = ny+1                                     # q-grid in y-direction
 

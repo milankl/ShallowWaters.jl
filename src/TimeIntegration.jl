@@ -3,7 +3,8 @@ function time_integration!( P::Parameter,
                             G::Grid,
                             C::Constants,
                             Prog::PrognosticVars,
-                            Diag::DiagnosticVars)
+                            Diag::DiagnosticVars,
+                            Forc::Forcing)
 
     @unpack u,v,η,sst = Prog
     @unpack u0,v0,η0 = Diag.RungeKutta
@@ -19,17 +20,15 @@ function time_integration!( P::Parameter,
 
     @unpack T = P
 
-    Forc = Forcing{T}(P,G)
-
     if dynamics == "linear"
         Ix!(Diag.VolumeFluxes.h_u,Forc.H)
         Iy!(Diag.VolumeFluxes.h_v,Forc.H)
     end
 
     # propagate initial conditions
-    u0 .= u
-    v0 .= v
-    η0 .= η
+    copyto!(u0,u)
+    copyto!(v0,v)
+    copyto!(η0,η)
 
     # feedback and output
     #t0,progrtxt = feedback_ini()
@@ -37,20 +36,19 @@ function time_integration!( P::Parameter,
     #                                                q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
 
     nans_detected = false
-
     t = 0           # model time
     for i = 1:nt
 
         # ghost point copy for boundary conditions
-        ghost_points!(P,C,u,v,η)
-        u1 .= u
-        v1 .= v
-        η1 .= η
+        #ghost_points!(P,C,u,v,η)
+        copyto!(u1,u)
+        copyto!(v1,v)
+        copyto!(η1,η)
 
         # Runge-Kutta 4th order / 3rd order
         for rki = 1:RKo
             if rki > 1
-                ghost_points!(P,C,u1,v1,η1)
+                #ghost_points!(P,C,u1,v1,η1)
             end
 
             rhs!(u1,v1,η1,P,C,G,Diag,Forc)
@@ -67,7 +65,7 @@ function time_integration!( P::Parameter,
             axb!(η0,RKaΔt[rki],dη)  #η0 .+= RKa[rki]*Δt*dη
         end
 
-        ghost_points!(P,C,u0,v0,η0)
+        #ghost_points!(P,C,u0,v0,η0)
 
         # ADVECTION and CORIOLIS TERMS
         # although included in the tendency of every RK substep,
@@ -86,10 +84,11 @@ function time_integration!( P::Parameter,
         end
 
         # RK3/4 copy back from substeps
-        u .= u0
-        v .= v0
-        η .= η0
+        copyto!(u,u0)
+        copyto!(v,v0)
+        copyto!(η,η0)
         t += dtint
+
 
         # TRACER ADVECTION
         # mid point (in time) velocity for the advective time step

@@ -28,6 +28,7 @@ function RunJuls(::Type{T},P::Parameter) where {T<:AbstractFloat}
     C = Constants{T}(P,G)
     Prog = initial_conditions(T,P,C,G)
     Diag = preallocate(T,G)
-    time_integration!(P,G,C,Prog,Diag)
+    Forc = Forcing{T}(P,G)
+    time_integration!(P,G,C,Prog,Diag,Forc)
     return Prog
 end
