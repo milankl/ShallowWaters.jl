@@ -4,7 +4,7 @@
 
     # DOMAIN RESOLUTION AND RATIO
     nx::Int=100                         # number of grid cells in x-direction
-    Lx::Real=1000e3                     # length of the domain in x-direction [m]
+    Lx::Real=2000e3                     # length of the domain in x-direction [m]
     L_ratio::Real=2                     # Domain aspect ratio of Lx/Ly
 
     # PHYSICAL CONSTANTS
