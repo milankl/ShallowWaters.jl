@@ -29,15 +29,12 @@ function time_integration!( P::Parameter,
     copyto!(η0,η)
 
     # feedback and output
-    #t0,progrtxt = feedback_ini()
+    t0,progrtxt = feedback_ini(P)
     #ncs_progn,ncs_tend,ncs_diagn,iout = output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2,
     #                                                q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
 
     nans_detected = false
     t = 0           # model time
-    t0 = time()
-    println("$nt time steps.")
-    println("$dtint s time step.")
     for i = 1:nt
 
         # ghost point copy for boundary conditions
@@ -115,7 +112,7 @@ function time_integration!( P::Parameter,
         # end
 
         # feedback and output
-        #t0,nans_detected = feedback(u,v,η,sst,i,t0,nt,nans_detected,progrtxt)
+        t0,nans_detected = feedback(u,v,η,sst,i,t0,nt,nans_detected,progrtxt,P)
 
         #ncs_diagn = output_diagn_nc(ncs_diagn,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
         #ncs_tend = output_tend_nc(ncs_tend,i,iout,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
@@ -125,11 +122,9 @@ function time_integration!( P::Parameter,
             break
         end
     end
-    tend = time()-t0
-    println("$(tend)s.")
 
     # finalise feeback and output
-    #feedback_end(progrtxt,t0)
+    feedback_end(progrtxt,t0,P)
     #output_close(ncs_progn,ncs_tend,ncs_diagn,progrtxt)
 end
 
