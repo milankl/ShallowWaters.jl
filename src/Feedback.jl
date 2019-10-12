@@ -4,6 +4,8 @@ function readable_secs(secs::Real)
     hours = Int(floor((secs/3600) % 24))
     minutes = Int(floor((secs/60) % 60))
     seconds = Int(floor(secs%3600%60))
+    secs1f = @sprintf "%.1fs" secs%3600%60
+    secs2f = @sprintf "%.2fs" secs%3600%60
 
     if days > 0
         return "$(days)d, $(hours)h"
@@ -11,13 +13,15 @@ function readable_secs(secs::Real)
         return "$(hours)h, $(minutes)min"
     elseif minutes > 0
         return "$(minutes)min, $(seconds)s"
+    elseif seconds > 10
+        return secs1f
     else
-        return "$(seconds)s"
+        return secs2f
     end
 end
 
 """Estimates the total time the model integration will take."""
-function duration_estimate(i,t,nt,progrtxt)
+function duration_estimate(i,t,nt,progrtxt,P::Parameter)
     time_per_step = (time()-t) / (i-nadvstep)
     time_total = Int(round(time_per_step*nt))
     time_to_go = Int(round(time_per_step*(nt-i)))
@@ -48,10 +52,12 @@ function nan_detection(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix,ss
 end
 
 """Initialises the progress txt file."""
-function feedback_ini()
+function feedback_ini(P::Parameter)
+    @unpack output = P
+
     if output
         progrtxt = open(runpath*"progress.txt","w")
-        s = "Starting juls run $run_id on "*Dates.format(now(),Dates.RFC1123Format)
+        s = "Starting Juls run $run_id on "*Dates.format(now(),Dates.RFC1123Format)
         println(s)
         write(progrtxt,s*"\n")
         write(progrtxt,"Juls will integrate $(Ndays)days at a resolution of $(nx)x$(ny) with Δ=$(Δ/1e3)km\n")
@@ -67,7 +73,7 @@ function feedback_ini()
         write(progrtxt,"$dtint, $(dtint*nstep_diff), $(dtint*nstep_advcor), $dtadvint, $(output_dt*3600)\n")
         write(progrtxt,"\nAll data will be stored in $runpath\n")
     else
-        println("Starting juls on "*Dates.format(now(),Dates.RFC1123Format)*" without output.")
+        println("Starting Juls on "*Dates.format(now(),Dates.RFC1123Format)*" without output.")
         progrtxt = nothing
     end
 
@@ -75,36 +81,38 @@ function feedback_ini()
 end
 
 """Feedback function that calls duration estimate, nan_detection and progress."""
-function feedback(u,v,η,sst,i,t,nt,nans_detected,progrtxt)
-    if i == nadvstep # measure time after tracer advection executed once
-        t = time()
-    elseif i == min(2*nadvstep,nadvstep+50)
-        # after the tracer advection executed twice or at least 50 steps
-        duration_estimate(i,t,nt,progrtxt)
-    end
-
-    if !nans_detected
-        if i % nout == 0    # only check for nans when output is produced
-            nans_detected = nan_detection(u,v,η,sst)
-            if nans_detected
-                println(" NaNs detected at time step $i")
-                if output == 1
-                    write(progrtxt," NaNs detected at time step $i")
-                    flush(progrtxt)
-                end
-            end
-        end
-    end
+function feedback(u,v,η,sst,i,t,nt,nans_detected,progrtxt,P::Parameter)
+    # if i == nadvstep # measure time after tracer advection executed once
+    #     t = time()
+    # elseif i == min(2*nadvstep,nadvstep+50)
+    #     # after the tracer advection executed twice or at least 50 steps
+    #     duration_estimate(i,t,nt,progrtxt)
+    # end
+    #
+    # if !nans_detected
+    #     if i % nout == 0    # only check for nans when output is produced
+    #         nans_detected = nan_detection(u,v,η,sst)
+    #         if nans_detected
+    #             println(" NaNs detected at time step $i")
+    #             if output == 1
+    #                 write(progrtxt," NaNs detected at time step $i")
+    #                 flush(progrtxt)
+    #             end
+    #         end
+    #     end
+    # end
 
     if i > 100      # show percentage only after duration is estimated
-        progress(i,nt,progrtxt)
+        progress(i,nt,progrtxt,P)
     end
 
     return t,nans_detected
 end
 
 """Finalises the progress txt file."""
-function feedback_end(progrtxt,t::Real)
+function feedback_end(progrtxt,t::Real,P::Parameter)
+    @unpack output = P
+
     s = " Integration done in "*readable_secs(time()-t)*"."
     println(s)
     if output
@@ -114,7 +122,9 @@ function feedback_end(progrtxt,t::Real)
 end
 
 """Converts time step into percent for feedback."""
-function progress(i,nt,progrtxt)
+function progress(i,nt,progrtxt,P::Parameter)
+    @unpack output = P
+
     if ((i+1)/nt*100 % 1) < (i/nt*100 % 1)  # update every 1 percent steps.
         percent = Int(round((i+1)/nt*100))
         print("\r\u1b[K")
