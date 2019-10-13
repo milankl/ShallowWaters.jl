@@ -1,3 +1,13 @@
+@with_kw mutable struct Feedback
+    t0::Float64=time()
+    nans_detected::Book=false
+    progress_txt::IOStream
+    output::Bool
+    i::Int=0
+    nt::Int
+end
+
+
 """Returns a human readable string representing seconds in terms of days, hours, minutes or seconds."""
 function readable_secs(secs::Real)
     days = Int(floor(secs/3600/24))
@@ -39,49 +49,52 @@ function duration_estimate(i,t,nt,progrtxt,P::Parameter)
 end
 
 """Returns a boolean whether the prognostic variables contains a NaN."""
-function nan_detection(u::AbstractMatrix,v::AbstractMatrix,η::AbstractMatrix,sst::AbstractMatrix)
+function nan_detection!(Prog::PrognosticVars,feedback::Feedback)
+
     #TODO include a check for Posits, are posits <: AbstractFloat?
     #TODO include check for tracer by other means than nan? (semi-Lagrange is unconditionally stable...)
 
+    @unpack u,v,η,sst = Prog
+
     n_nan = sum(isnan.(u)) + sum(isnan.(v)) + sum(isnan.(η)) + sum(isnan.(sst))
     if n_nan > 0
-        return true
-    else
-        return false
+        feeback.nans_detected = true
     end
 end
 
 """Initialises the progress txt file."""
-function feedback_ini(P::Parameter)
+function feedback_init(S::ModelSetup)
     @unpack output = P
+    @unpack nt = G
 
     if output
-        progrtxt = open(runpath*"progress.txt","w")
+        txt = open(runpath*"progress.txt","w")
         s = "Starting Juls run $run_id on "*Dates.format(now(),Dates.RFC1123Format)
         println(s)
-        write(progrtxt,s*"\n")
-        write(progrtxt,"Juls will integrate $(Ndays)days at a resolution of $(nx)x$(ny) with Δ=$(Δ/1e3)km\n")
-        write(progrtxt,"Initial conditions are ")
+        write(txt,s*"\n")
+        write(txt,"Juls will integrate $(Ndays)days at a resolution of $(nx)x$(ny) with Δ=$(Δ/1e3)km\n")
+        write(txt,"Initial conditions are ")
         if initial_cond == "rest"
-            write(progrtxt,"rest.\n")
+            write(txt,"rest.\n")
         else
-            write(progrtxt,"last time step of run $init_run_id.\n")
+            write(txt,"last time step of run $init_run_id.\n")
         end
-        write(progrtxt,"Boundary conditions are $bc_x with lbc=$lbc.\n")
-        write(progrtxt,"Numtype is "*string(Numtype)*".\n")
-        write(progrtxt,"Time steps are (Lin,Diff,Advcor,Lagr,Output)\n")
-        write(progrtxt,"$dtint, $(dtint*nstep_diff), $(dtint*nstep_advcor), $dtadvint, $(output_dt*3600)\n")
-        write(progrtxt,"\nAll data will be stored in $runpath\n")
+        write(txt,"Boundary conditions are $bc_x with lbc=$lbc.\n")
+        write(txt,"Numtype is "*string(Numtype)*".\n")
+        write(txt,"Time steps are (Lin,Diff,Advcor,Lagr,Output)\n")
+        write(txt,"$dtint, $(dtint*nstep_diff), $(dtint*nstep_advcor), $dtadvint, $(output_dt*3600)\n")
+        write(txt,"\nAll data will be stored in $runpath\n")
     else
         println("Starting Juls on "*Dates.format(now(),Dates.RFC1123Format)*" without output.")
-        progrtxt = nothing
+        txt = nothing
     end
 
-    return time(),progrtxt
+    return Feedback(progress_txt=txt,output=output,nt=nt)
 end
 
 """Feedback function that calls duration estimate, nan_detection and progress."""
-function feedback(u,v,η,sst,i,t,nt,nans_detected,progrtxt,P::Parameter)
+#function feedback(u,v,η,sst,i,t,nt,nans_detected,progrtxt,P::Parameter)
+function feedback(Prog::PrognosticVars,feedback::Feedback)
     # if i == nadvstep # measure time after tracer advection executed once
     #     t = time()
     # elseif i == min(2*nadvstep,nadvstep+50)
@@ -110,10 +123,10 @@ function feedback(u,v,η,sst,i,t,nt,nans_detected,progrtxt,P::Parameter)
 end
 
 """Finalises the progress txt file."""
-function feedback_end(progrtxt,t::Real,P::Parameter)
-    @unpack output = P
+function feedback_end(feedback::Feedback)
+    @unpack output,t0,progress_txt = feedback
 
-    s = " Integration done in "*readable_secs(time()-t)*"."
+    s = " Integration done in "*readable_secs(time()-t0)*"."
     println(s)
     if output
         write(progrtxt,"\n"*s[2:end]*"\n")  # close txt file with last output
@@ -122,8 +135,9 @@ function feedback_end(progrtxt,t::Real,P::Parameter)
 end
 
 """Converts time step into percent for feedback."""
-function progress(i,nt,progrtxt,P::Parameter)
-    @unpack output = P
+function progress(feedback::Feedback)
+
+    @unpack i,nt,progress_txt,output = feedback
 
     if ((i+1)/nt*100 % 1) < (i/nt*100 % 1)  # update every 1 percent steps.
         percent = Int(round((i+1)/nt*100))

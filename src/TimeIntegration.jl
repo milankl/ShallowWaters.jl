@@ -1,10 +1,7 @@
 """Integrates Juls forward in time."""
-function time_integration!( P::Parameter,
-                            G::Grid,
-                            C::Constants,
-                            Prog::PrognosticVars,
+function time_integration!( Prog::PrognosticVars,
                             Diag::DiagnosticVars,
-                            Forc::Forcing)
+                            S::ModelSetup)
 
     @unpack u,v,η,sst = Prog
     @unpack u0,v0,η0 = Diag.RungeKutta
@@ -12,15 +9,15 @@ function time_integration!( P::Parameter,
     @unpack du,dv,dη = Diag.Tendencies
     @unpack um,vm = Diag.SemiLagrange
 
-    @unpack dynamics,RKo,tracer_advection = P
-    @unpack RKaΔt,RKbΔt = C
+    @unpack dynamics,RKo,tracer_advection = S.parameter
+    @unpack RKaΔt,RKbΔt = S.constants
 
-    @unpack nt,dtint = G
-    @unpack nstep_advcor,nstep_diff,nadvstep,nadvstep_half = G
+    @unpack nt,dtint = S.grid
+    @unpack nstep_advcor,nstep_diff,nadvstep,nadvstep_half = S.grid
 
     if dynamics == "linear"
-        Ix!(Diag.VolumeFluxes.h_u,Forc.H)
-        Iy!(Diag.VolumeFluxes.h_v,Forc.H)
+        Ix!(Diag.VolumeFluxes.h_u,S.forcing.H)
+        Iy!(Diag.VolumeFluxes.h_v,S.forcing.H)
     end
 
     # propagate initial conditions
@@ -29,7 +26,7 @@ function time_integration!( P::Parameter,
     copyto!(η0,η)
 
     # feedback and output
-    t0,progrtxt = feedback_ini(P)
+    feedback = feedback_init(S)
     #ncs_progn,ncs_tend,ncs_diagn,iout = output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2,
     #                                                q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
 
@@ -113,18 +110,19 @@ function time_integration!( P::Parameter,
 
         # feedback and output
         t0,nans_detected = feedback(u,v,η,sst,i,t0,nt,nans_detected,progrtxt,P)
+        feedback!(Prog,feedback)
 
         #ncs_diagn = output_diagn_nc(ncs_diagn,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
         #ncs_tend = output_tend_nc(ncs_tend,i,iout,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
         #ncs_progn,iout = output_progn_nc(ncs_progn,i,iout,u,v,η,sst)
 
-        if nans_detected
+        if feedback.nans_detected
             break
         end
     end
 
-    # finalise feeback and output
-    feedback_end(progrtxt,t0,P)
+    # finalise feedback and output
+    feedback_end!(feedback)
     #output_close(ncs_progn,ncs_tend,ncs_diagn,progrtxt)
 end
 
