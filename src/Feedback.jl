@@ -1,10 +1,11 @@
 @with_kw mutable struct Feedback
-    t0::Float64=time()
-    nans_detected::Book=false
-    progress_txt::IOStream
-    output::Bool
-    i::Int=0
-    nt::Int
+    t0::Float64=time()                      # start time
+    nans_detected::Bool=false               # did NaNs occur in the simulation?
+    progress_txt::Union{IOStream,Nothing}   # txt is a Nothing in case of no output
+    output::Bool                            # output to netCDF?
+    i::Int=0                                # time step increment
+    nt::Int                                 # number of time steps
+    nout::Int                               # number of time steps with output
 end
 
 
@@ -51,21 +52,21 @@ end
 """Returns a boolean whether the prognostic variables contains a NaN."""
 function nan_detection!(Prog::PrognosticVars,feedback::Feedback)
 
-    #TODO include a check for Posits, are posits <: AbstractFloat?
-    #TODO include check for tracer by other means than nan? (semi-Lagrange is unconditionally stable...)
+    #TODO include a check for Posits
+    #TODO include check for sst
 
     @unpack u,v,η,sst = Prog
 
     n_nan = sum(isnan.(u)) + sum(isnan.(v)) + sum(isnan.(η)) + sum(isnan.(sst))
     if n_nan > 0
-        feeback.nans_detected = true
+        feedback.nans_detected = true
     end
 end
 
 """Initialises the progress txt file."""
 function feedback_init(S::ModelSetup)
-    @unpack output = P
-    @unpack nt = G
+    @unpack output = S.parameters
+    @unpack nt,nout = S.grid
 
     if output
         txt = open(runpath*"progress.txt","w")
@@ -89,12 +90,12 @@ function feedback_init(S::ModelSetup)
         txt = nothing
     end
 
-    return Feedback(progress_txt=txt,output=output,nt=nt)
+    return Feedback(progress_txt=txt,output=output,nt=nt,nout=nout)
 end
 
 """Feedback function that calls duration estimate, nan_detection and progress."""
-#function feedback(u,v,η,sst,i,t,nt,nans_detected,progrtxt,P::Parameter)
-function feedback(Prog::PrognosticVars,feedback::Feedback)
+function feedback!(Prog::PrognosticVars,feedback::Feedback)
+
     # if i == nadvstep # measure time after tracer advection executed once
     #     t = time()
     # elseif i == min(2*nadvstep,nadvstep+50)
@@ -102,28 +103,29 @@ function feedback(Prog::PrognosticVars,feedback::Feedback)
     #     duration_estimate(i,t,nt,progrtxt)
     # end
     #
-    # if !nans_detected
-    #     if i % nout == 0    # only check for nans when output is produced
-    #         nans_detected = nan_detection(u,v,η,sst)
-    #         if nans_detected
-    #             println(" NaNs detected at time step $i")
-    #             if output == 1
-    #                 write(progrtxt," NaNs detected at time step $i")
-    #                 flush(progrtxt)
-    #             end
-    #         end
-    #     end
-    # end
 
-    if i > 100      # show percentage only after duration is estimated
-        progress(i,nt,progrtxt,P)
+    @unpack i, nans_detected, nout, output = feedback
+
+    if !nans_detected
+        if i % nout == 0    # only check for nans when output is produced
+            nan_detection!(Prog,feedback)
+            if feedback.nans_detected
+                println(" NaNs detected at time step $i")
+                if output
+                    write(progress_txt," NaNs detected at time step $i")
+                    flush(progress_txt)
+                end
+            end
+        end
     end
 
-    return t,nans_detected
+    if feedback.i > 100      # show percentage only after duration is estimated
+        progress!(feedback)
+    end
 end
 
 """Finalises the progress txt file."""
-function feedback_end(feedback::Feedback)
+function feedback_end!(feedback::Feedback)
     @unpack output,t0,progress_txt = feedback
 
     s = " Integration done in "*readable_secs(time()-t0)*"."
@@ -135,7 +137,7 @@ function feedback_end(feedback::Feedback)
 end
 
 """Converts time step into percent for feedback."""
-function progress(feedback::Feedback)
+function progress!(feedback::Feedback)
 
     @unpack i,nt,progress_txt,output = feedback
 
@@ -144,8 +146,8 @@ function progress(feedback::Feedback)
         print("\r\u1b[K")
         print("$percent%")
         if output && (percent % 5 == 0) # write out only every 5 percent step.
-            write(progrtxt,"\n$percent%")
-            flush(progrtxt)
+            write(progress_txt,"\n$percent%")
+            flush(progress_txt)
         end
     end
 end
