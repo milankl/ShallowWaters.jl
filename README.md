@@ -7,19 +7,27 @@
 # Juls.jl - A type-flexible 16bit shallow water model
 ![sst](figs/sst_posit16.png?raw=true "SST")
 
-A shallow water model written in Julia, which allows arithmetic operations with various number types: 16/32/64bit floats; Arbitrary precision floats (Julia's BigFloat environment); Arbitrary precision posits via the SigmoidNumber package.
+A shallow water model with a focus on type-flexibility and 16bit number formats. Juls allows for Float64/32/16, BigFloat/[ArbFloat](https://github.com/JeffreySarnoff/ArbNumerics.jl), [Posit32/16](https://github.com/milankl/SoftPosit.jl), [BFloat16](https://github.com/JuliaComputing/BFloat16s.jl), [Sonum16](https://github.com/milankl/Sonums.jl) and in general every number format with arithmetics and conversions implemented.
 
-Juls is fully-explicit with a Smagorinsky-like biharmonic diffusion operator, the advective terms are written in the vector-invariant form and discretized with either the energy and enstrophy conserving scheme by Arakawa and Hsu, 1990 or the simpler Sadourny 1975 enstrophy conserving scheme. Tracer advection (sofar only passive) is implemented with a semi-Lagrangian advection scheme, that allows for really large time steps, similar to Diamantakis, 2014. Runge Kutte 4th order is used for pressure, advective and coriolis terms and the continuity equation. Semi-implicit time stepping for the diffusive terms (biharmonic diffusion and bottom friction).
+Juls is fully-explicit with an energy and enstrophy conserving advection scheme and a Smagorinsky-like biharmonic diffusion operator. Tracer advection is implemented with a semi-Lagrangian advection scheme. Runge-Kutta 4th-order is used for pressure, advective and Coriolis terms and the continuity equation. Semi-implicit time stepping for diffusion and bottom friction. Boundary conditions are either periodic (only in x direction) or non-periodic super-slip, free-slip, partial-slip, or no-slip. Output via NetCDF.
 
-Forcing is either with a wind-stress applied to the momentum equations, or surface/interface relaxation or forcing of the contuinity equation is possible. Boundary conditions are either periodic (only in x direction) or super-slip/free-slip/partial-slip/no-slip for non-periodic BCs. Output of all prognositc and various diagnostic variables & tendencies is done via NetCDF.
+# How to use
 
-Requires Julia v1.x and NetCDF.
-
-# HOW TO USE
-
-Change the parameters of your model run in ```parameters.jl``` and then do
+You find the default parameters in `src/DefaultParameters.jl`. They can be changed with keyword arguments
+```julia
+julia> Prog = RunJuls(Float32,Ndays=10,g=10,H=500,Fx0=0.12);
+Starting Juls on Sun, 20 Oct 2019 19:58:25 without output.
+100% Integration done in 4.65s.
 ```
-julia run_juls.jl
+or by creating a Parameter struct
+```julia
+julia> P = Parameter(bc="nonperiodic",wind_forcing_x="double_gyre",L_ratio=1,nx=128);
+julia> Prog = RunJuls(P);
+```
+
+# Installation
+```julia
+julia> ] add https://github.com/milankl/Juls.jl
 ```
 
 # THE EQUATIONS
