@@ -1,13 +1,12 @@
 """ Extends the matrices u,v,η,sst with a halo of ghost points for boundary conditions."""
-function add_halo(  P::Parameter,
-                    C::Constants,
-                    G::Grid,
-                    u::Array{T,2},
+function add_halo(  u::Array{T,2},
                     v::Array{T,2},
                     η::Array{T,2},
-                    sst::Array{T,2}) where {T<:AbstractFloat}
+                    sst::Array{T,2},
+                    S::ModelSetup) where {T<:AbstractFloat}
 
-    @unpack nx,ny,nux,nuy,nvx,nvy,halo,haloη,halosstx,halossty = G
+    @unpack nx,ny,nux,nuy,nvx,nvy = S.grid
+    @unpack halo,haloη,halosstx,halossty = S.grid
 
     # Add zeros to satisfy kinematic boundary conditions
     u = cat(zeros(T,halo,nuy),u,zeros(T,halo,nuy),dims=1)
@@ -22,8 +21,8 @@ function add_halo(  P::Parameter,
     sst = cat(zeros(T,halosstx,ny),sst,zeros(T,halosstx,ny),dims=1)
     sst = cat(zeros(T,nx+2*halosstx,halossty),sst,zeros(T,nx+2*halosstx,halossty),dims=2)
 
-    ghost_points!(P,C,u,v,η)
-    ghost_points_sst!(P,G,sst)
+    ghost_points!(u,v,η,S)
+    ghost_points_sst!(sst,S)
     return u,v,η,sst
 end
 
@@ -150,13 +149,15 @@ function ghost_points_sst_periodic!(G::Grid,sst::AbstractMatrix)
 end
 
 """Decide on boundary condition P.bc which ghost point function to execute."""
-function ghost_points!( P::Parameter,
-                        C::Constants,
-                        u::AbstractMatrix,
+function ghost_points!( u::AbstractMatrix,
                         v::AbstractMatrix,
-                        η::AbstractMatrix)
+                        η::AbstractMatrix,
+                        S::ModelSetup)
 
-    if P.bc == "periodic"
+    @unpack bc = S.parameters
+    C = S.constants
+
+    if bc == "periodic"
         ghost_points_u_periodic!(C,u)
         ghost_points_v_periodic!(v)
         ghost_points_η_periodic!(η)
@@ -168,11 +169,12 @@ function ghost_points!( P::Parameter,
 end
 
 """Decide on boundary condition P.bc which ghost point function to execute."""
-function ghost_points_sst!( P::Parameter,
-                            G::Grid,
-                            sst::AbstractMatrix)
+function ghost_points_sst!(sst::AbstractMatrix,S::ModelSetup)
 
-    if P.bc == "periodic"
+    @unpack bc = S.parameters
+    G = S.grid
+
+    if bc == "periodic"
         ghost_points_sst_periodic!(G,sst)
     else
         ghost_points_sst_nonperiodic!(G,sst)

@@ -1,5 +1,5 @@
 struct ModelSetup{T<:AbstractFloat}
-    parameter::Parameter
+    parameters::Parameter
     grid::Grid{T}
     constants::Constants{T}
     forcing::Forcing{T}

@@ -1,15 +1,13 @@
 """Transit function to call the specified diffusion scheme."""
 function diffusion!(    u::AbstractMatrix,
                         v::AbstractMatrix,
-                        P::Parameter,
-                        C::Constants,
-                        G::Grid,
-                        Diag::DiagnosticVars)
+                        Diag::DiagnosticVars,
+                        S::ModelSetup)
 
-    if P.diffusion == "constant"
-        diffusion_constant!(u,v,C,G,Diag)
-    elseif P.diffusion == "Smagorinsky"
-        diffusion_smagorinsky!(u,v,C,G,Diag)
+    if S.parameters.diffusion == "constant"
+        diffusion_constant!(u,v,Diag,S)
+    elseif S.parameters.diffusion == "Smagorinsky"
+        diffusion_smagorinsky!(u,v,Diag,S)
     end
 end
 
@@ -19,12 +17,11 @@ Viscosity = ν∇⁴ ⃗u. Although constant, the coefficient is actually inside
 Viscosity = ∇⋅ν∇∇² ⃗u."""
 function diffusion_constant!(   u::AbstractMatrix,
                                 v::AbstractMatrix,
-                                C::Constants,
-                                G::Grid,
-                                Diag::DiagnosticVars)
+                                Diag::DiagnosticVars,
+                                S::ModelSetup)
 
     stress_tensor!(u,v,Diag)
-    viscous_tensor_constant!(C,G,Diag)
+    viscous_tensor_constant!(Diag,S)
 
     @unpack LLu1,LLu2,LLv1,LLv2 = Diag.Smagorinsky
     @unpack S11,S12,S21,S22 = Diag.Smagorinsky
@@ -40,9 +37,8 @@ Viscosity = ∇ ⋅ (cSmag Δ⁴ |D| ∇∇² ⃗u)
 The Δ⁴-scaling is omitted as gradient operators are dimensionless."""
 function diffusion_smagorinsky!(u::AbstractMatrix,
                                 v::AbstractMatrix,
-                                C::Constants,
-                                G::Grid,
-                                Diag::DiagnosticVars)
+                                Diag::DiagnosticVars,
+                                S::ModelSetup)
 
     @unpack dudx,dvdy,dvdx,dudy = Diag.Vorticity
 
@@ -53,7 +49,7 @@ function diffusion_smagorinsky!(u::AbstractMatrix,
 
     # biharmonic diffusion
     stress_tensor!(u,v,Diag)
-    smagorinsky_coeff!(C,G,Diag)
+    smagorinsky_coeff!(Diag,S)
     viscous_tensor_smagorinsky!(Diag)
 
     @unpack LLu1,LLu2,LLv1,LLv2 = Diag.Smagorinsky
@@ -67,12 +63,12 @@ end
 
 """νSmag = cSmag * |D|, where deformation rate |D| = √((∂u/∂x - ∂v/∂y)^2 + (∂u/∂y + ∂v/∂x)^2).
 The grid spacing Δ is omitted here as the operators are dimensionless."""
-function smagorinsky_coeff!(C::Constants,G::Grid,Diag::DiagnosticVars)
+function smagorinsky_coeff!(Diag::DiagnosticVars,S::ModelSetup)
 
     @unpack dudx,dudy,dvdx,dvdy = Diag.Vorticity
     @unpack DS,DS_q,DT,νSmag,νSmag_q = Diag.Smagorinsky
-    @unpack ep = G
-    @unpack cSmag = C
+    @unpack ep = S.grid
+    @unpack cSmag = S.constants
 
     # horizontal shearing strain squared
     m,n = size(DS_q)
@@ -174,11 +170,11 @@ end
 
 """Biharmonic stress tensor times Smagorinsky coefficient
 νSmag * ∇∇² ⃗u = (S11, S12; S21, S22)."""
-function viscous_tensor_smagorinsky!(L::LaplaceVars,S::SmagorinskyVars)
+function viscous_tensor_smagorinsky!(Diag::DiagnosticVars)
 
-    @unpack dLudx,dLudy,dLvdx,dLvdy = L
-    @unpack νSmag,νSmag_q,S11,S12,S21,S22 = S
-    @unpack ep = S
+    @unpack dLudx,dLudy,dLvdx,dLvdy = Diag.Laplace
+    @unpack νSmag,νSmag_q,S11,S12,S21,S22 = Diag.Smagorinsky
+    @unpack ep = Diag.Laplace
 
     m,n = size(S11)
     @boundscheck (m+2-ep,n) == size(νSmag) || throw(BoundsError())
@@ -223,14 +219,13 @@ end
 
 """Biharmonic stress tensor times constant viscosity coefficient
 νB * ∇∇² ⃗u = (S11, S12; S21, S22)"""
-function viscous_tensor_constant!(  C::Constants,
-                                    G::Grid,
-                                    Diag::DiagnosticVars)
+function viscous_tensor_constant!(  Diag::DiagnosticVars,
+                                    S::ModelSetup)
 
     @unpack dLudx,dLudy,dLvdx,dLvdy = Diag.Laplace
     @unpack S11,S12,S21,S22 = Diag.Smagorinsky
-    @unpack ep = G
-    @unpack vB = C
+    @unpack ep = S.grid
+    @unpack vB = S.constants
 
     m,n = size(S11)
     @boundscheck (m,n) == size(dLudx) || throw(BoundsError())
@@ -272,12 +267,12 @@ end
 """Update u with bottom friction tendency (Bu,Bv) and biharmonic viscosity."""
 function add_drag_diff_tendencies!( u::AbstractMatrix,
                                     v::AbstractMatrix,
-                                    G::Grid,
-                                    Diag::DiagnosticVars)
+                                    Diag::DiagnosticVars,
+                                    S::ModelSetup)
 
-    @unpack halo,ep,Δt_diff = G
     @unpack Bu,Bv = Diag.Bottomdrag
     @unpack LLu1,LLu2,LLv1,LLv2 = Diag.Smagorinsky
+    @unpack halo,ep,Δt_diff = S.grid
 
     m,n = size(u) .- (2*halo,2*halo)
     @boundscheck (m+2-ep,n+2) == size(Bu) || throw(BoundsError())
@@ -290,7 +285,7 @@ function add_drag_diff_tendencies!( u::AbstractMatrix,
         end
     end
 
-    m,n = size(v) .- (2*halo,2*halo) # cut off the halo
+    m,n = size(v) .- (2*halo,2*halo)
     @boundscheck (m+2,n+2) == size(Bv) || throw(BoundsError())
     @boundscheck (m,n+2) == size(LLv1) || throw(BoundsError())
     @boundscheck (m+2,n) == size(LLv2) || throw(BoundsError())

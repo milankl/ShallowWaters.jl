@@ -32,9 +32,10 @@ function continuity_forcing!(dη,dUdx,dVdy,η,η_ref,Fη,t)
 end
 
 """Continuity equation's right-hand side -∂x(uh) - ∂y(vh) without forcing."""
-function continuity!(   dη::AbstractMatrix,
-                        dUdx::AbstractMatrix,
-                        dVdy::AbstractMatrix)
+function continuity!(Diag::DiagnosticVars,S::ModelSetup)
+
+    @unpack dη = Diag.Tendencies
+    @unpack dUdx,dVdy = Diag.VolumeFluxes
 
     m,n = size(dη) .- (2,2)     # cut off halo
     @boundscheck (m,n+2) == size(dUdx) || throw(BoundsError())

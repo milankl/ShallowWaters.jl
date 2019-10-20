@@ -9,7 +9,7 @@ function time_integration!( Prog::PrognosticVars,
     @unpack du,dv,dη = Diag.Tendencies
     @unpack um,vm = Diag.SemiLagrange
 
-    @unpack dynamics,RKo,tracer_advection = S.parameter
+    @unpack dynamics,RKo,tracer_advection = S.parameters
     @unpack RKaΔt,RKbΔt = S.constants
 
     @unpack nt,dtint = S.grid
@@ -35,7 +35,7 @@ function time_integration!( Prog::PrognosticVars,
     for i = 1:nt
 
         # ghost point copy for boundary conditions
-        ghost_points!(P,C,u,v,η)
+        ghost_points!(u,v,η,S)
         copyto!(u1,u)
         copyto!(v1,v)
         copyto!(η1,η)
@@ -43,39 +43,41 @@ function time_integration!( Prog::PrognosticVars,
         # Runge-Kutta 4th order / 3rd order
         for rki = 1:RKo
             if rki > 1
-                ghost_points!(P,C,u1,v1,η1)
+                ghost_points!(u1,v1,η1,S)
             end
 
-            rhs!(u1,v1,η1,P,C,G,Diag,Forc)
+            rhs!(u1,v1,η1,Diag,S)
 
             if rki < RKo
-                caxb!(u1,u,RKbΔt[rki],du)  #u1 .= u .+ RKb[rki]*Δt*du
-                caxb!(v1,v,RKbΔt[rki],dv)  #v1 .= v .+ RKb[rki]*Δt*dv
-                caxb!(η1,η,RKbΔt[rki],dη)  #η1 .= η .+ RKb[rki]*Δt*dη
+                caxb!(u1,u,RKbΔt[rki],du)   #u1 .= u .+ RKb[rki]*Δt*du
+                caxb!(v1,v,RKbΔt[rki],dv)   #v1 .= v .+ RKb[rki]*Δt*dv
+                caxb!(η1,η,RKbΔt[rki],dη)   #η1 .= η .+ RKb[rki]*Δt*dη
             end
 
             # sum RK-substeps on the go
-            axb!(u0,RKaΔt[rki],du)  #u0 .+= RKa[rki]*Δt*du
-            axb!(v0,RKaΔt[rki],dv)  #v0 .+= RKa[rki]*Δt*dv
-            axb!(η0,RKaΔt[rki],dη)  #η0 .+= RKa[rki]*Δt*dη
+            axb!(u0,RKaΔt[rki],du)          #u0 .+= RKa[rki]*Δt*du
+            axb!(v0,RKaΔt[rki],dv)          #v0 .+= RKa[rki]*Δt*dv
+            axb!(η0,RKaΔt[rki],dη)          #η0 .+= RKa[rki]*Δt*dη
         end
 
-        ghost_points!(P,C,u0,v0,η0)
+        ghost_points!(u0,v0,η0,S)
 
         # ADVECTION and CORIOLIS TERMS
         # although included in the tendency of every RK substep,
         # only update every nstep_advcor steps if nstep_advcor > 0
-        if dynamics == "nonlinear" && nstep_advcor > 0 && (i % nstep_advcor) == 0
-            advection_coriolis!(u0,v0,η0,P,G,Diag,Forc)
+        if dynamics == "nonlinear" &&
+            nstep_advcor > 0 &&
+            (i % nstep_advcor) == 0
+            advection_coriolis!(u0,v0,η0,Diag,S)
         end
 
         # DIFFUSIVE TERMS - SEMI-IMPLICIT EULER
         # use u0 = u^(n+1) to evaluate tendencies, add to u0 = u^n + rhs
         # evaluate only every nstep_diff time steps
         if (i % nstep_diff) == 0
-            bottom_drag!(u0,v0,η0,P,C,G,Diag,Forc)
-            diffusion!(u0,v0,P,C,G,Diag)
-            add_drag_diff_tendencies!(u0,v0,G,Diag)
+            bottom_drag!(u0,v0,η0,Diag,S)
+            diffusion!(u0,v0,Diag,S)
+            add_drag_diff_tendencies!(u0,v0,Diag,S)
         end
 
         # RK3/4 copy back from substeps
@@ -109,7 +111,7 @@ function time_integration!( Prog::PrognosticVars,
         # end
 
         # feedback and output
-        t0,nans_detected = feedback(u,v,η,sst,i,t0,nt,nans_detected,progrtxt,P)
+        feedback.i = i
         feedback!(Prog,feedback)
 
         #ncs_diagn = output_diagn_nc(ncs_diagn,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)

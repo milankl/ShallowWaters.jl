@@ -29,9 +29,9 @@ function RunJuls(::Type{T},P::Parameter) where {T<:AbstractFloat}
     F = Forcing{T}(P,G)
     S = ModelSetup{T}(P,G,C,F)
 
-    Prog = initial_conditions(T,P,C,G)
+    Prog = initial_conditions(T,S)
     Diag = preallocate(T,G)
-    
+
     time_integration!(Prog,Diag,S)
     return Prog
 end

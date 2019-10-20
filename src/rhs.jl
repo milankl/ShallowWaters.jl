@@ -1,17 +1,16 @@
-"""Transit function to call either the linear or the nonlinear rhs."""
+"""Transit function to call either the  rhs_linear or the rhs_nonlinear."""
 function rhs!(  u::AbstractMatrix,
                 v::AbstractMatrix,
                 η::AbstractMatrix,
-                P::Parameter,
-                C::Constants,
-                G::Grid,
                 Diag::DiagnosticVars,
-                Forc::Forcing)
+                S::ModelSetup)
 
-    if P.dynamics == "linear"
-        rhs_linear!(u,v,η,P,C,G,Diag,Forc)
+    @unpack dynamics = S.parameters
+
+    if dynamics == "linear"
+        rhs_linear!(u,v,η,Diag,S)
     else
-        rhs_nonlinear!(u,v,η,P,C,G,Diag,Forc)
+        rhs_nonlinear!(u,v,η,Diag,S)
     end
 end
 
@@ -25,16 +24,12 @@ the nonlinear shallow water equations."""
 function rhs_nonlinear!(u::AbstractMatrix,
                         v::AbstractMatrix,
                         η::AbstractMatrix,
-                        P::Parameter,
-                        C::Constants,
-                        G::Grid,
                         Diag::DiagnosticVars,
-                        Forc::Forcing)
+                        S::ModelSetup)
 
     @unpack h,h_u,h_v,U,V,dUdx,dVdy = Diag.VolumeFluxes
-    @unpack H = Forc
-    @unpack g = C
-    @unpack ep = G
+    @unpack H = S.forcing
+    @unpack ep = S.grid
 
     # layer thickness
     thickness!(h,η,H)
@@ -49,27 +44,24 @@ function rhs_nonlinear!(u::AbstractMatrix,
     ∂x!(dUdx,U)
     ∂y!(dVdy,V)
 
-    if G.nstep_advcor == 0    # evaluate every RK substep
-        advection_coriolis!(u,v,η,P,G,Diag,Forc)
+    if S.grid.nstep_advcor == 0    # evaluate every RK substep
+        advection_coriolis!(u,v,η,Diag,S)
     end
 
     # Bernoulli potential - recalculate for new η, KEu,KEv are only updated outside
     @unpack p,KEu,KEv,dpdx,dpdy = Diag.Bernoulli
+    @unpack g = S.constants
     bernoulli!(p,KEu,KEv,η,g,ep)
     ∂x!(dpdx,p)
     ∂y!(dpdy,p)
 
     # Potential vorticity and advection thereof
-    PVadvection!(P,G,Diag)
+    PVadvection!(Diag,S)
 
     # adding the terms
-    @unpack du,dv,dη = Diag.Tendencies
-    @unpack qhv,qhu = Diag.Vorticity
-    @unpack Fx,Fy = Forc
-
-    momentum_u!(du,qhv,dpdx,Fx,ep)
-    momentum_v!(dv,qhu,dpdy,Fy)
-    continuity!(dη,dUdx,dVdy)
+    momentum_u!(Diag,S)
+    momentum_v!(Diag,S)
+    continuity!(Diag,S)
 end
 
 """Tendencies du,dv,dη of
@@ -82,13 +74,12 @@ the linear shallow water equations."""
 function rhs_linear!(   u::AbstractMatrix,
                         v::AbstractMatrix,
                         η::AbstractMatrix,
-                        G::Grid,
                         Diag::DiagnosticVars,
-                        Forc::Forcing)
+                        S::ModelSetup)
 
     @unpack h,h_u,h_v,U,V,dUdx,dVdy = Diag.VolumeFluxes
-    @unpack g = C
-    @unpack ep = G
+    @unpack g = S.constants
+    @unpack ep = S.grid
 
     # mass or volume flux U,V = uH,vH; h_u, h_v are actually H_u, H_v
     Uflux!(U,u,h_u,ep)
@@ -112,29 +103,25 @@ function rhs_linear!(   u::AbstractMatrix,
     fu!(qhu,f_v,u_v)
 
     # adding the terms
-    @unpack du,dv,dη = Diag.Tendencies
-    @unpack Fx,Fy = Forc
-    momentum_u!(du,qhv,dpdx,Fx)
-    momentum_v!(dv,qhu,dpdy,Fy)
-    continuity!(dη,dUdx,dVdy)
+    momentum_u!(Diag,S)
+    momentum_v!(Diag,S)
+    continuity!(Diag,S)
 end
 
 """ Update advective and Coriolis tendencies."""
 function advection_coriolis!(   u::AbstractMatrix,
                                 v::AbstractMatrix,
                                 η::AbstractMatrix,
-                                P::Parameter,
-                                G::Grid,
                                 Diag::DiagnosticVars,
-                                Forc::Forcing)
+                                S::ModelSetup)
 
     @unpack h = Diag.VolumeFluxes
-    @unpack H = Forc
-    @unpack q,h_q,dvdx,dudy = Diag.Vorticity
+    @unpack H = S.forcing
+    @unpack h_q,dvdx,dudy = Diag.Vorticity
     @unpack u²,v²,KEu,KEv = Diag.Bernoulli
-    @unpack ep,f_q = G
+    @unpack ep,f_q = S.grid
 
-    if G.nstep_advcor > 0
+    if S.grid.nstep_advcor > 0
         thickness!(h,η,H)
     end
 
@@ -150,15 +137,15 @@ function advection_coriolis!(   u::AbstractMatrix,
     Iy!(KEv,v²)
 
     # Potential vorticity update
-    PV!(G,Diag)
-    
+    PV!(Diag,S)
+
     @unpack q = Diag.Vorticity
     # Linear combinations of the potential vorticity q
-    if P.adv_scheme == "Sadourny"
+    if S.parameters.adv_scheme == "Sadourny"
         @unpack q_u,q_v = Diag.Vorticity
         Iy!(q_u,q)
         Ix!(q_v,q)
-    elseif P.adv_scheme == "ArakawaHsu"
+    elseif S.parameters.adv_scheme == "ArakawaHsu"
         @unpack qα,qβ,qγ,qδ = Diag.ArakawaHsu
         AHα!(qα,q)
         AHβ!(qβ,q)
@@ -291,13 +278,15 @@ function fu!(   qhu::AbstractMatrix,
 end
 
 """Sum up the tendencies of the non-diffusive right-hand side for the u-component."""
-function momentum_u!(   du::AbstractMatrix,
-                        qhv::AbstractMatrix,
-                        dpdx::AbstractMatrix,
-                        Fx::AbstractMatrix,
-                        ep::Int)
+function momentum_u!(Diag::DiagnosticVars,S::ModelSetup)
 
-    m,n = size(du) .- (4,4)     # cut off the halo
+    @unpack du = Diag.Tendencies
+    @unpack qhv = Diag.Vorticity
+    @unpack dpdx = Diag.Bernoulli
+    @unpack Fx = S.forcing
+    @unpack ep,halo = S.grid
+
+    m,n = size(du) .- (2halo,2halo)     # cut off the halo
     @boundscheck (m,n) == size(qhv) || throw(BoundsError())
     @boundscheck (m+2-ep,n+2) == size(dpdx) || throw(BoundsError())
     @boundscheck (m,n) == size(Fx) || throw(BoundsError())
@@ -310,12 +299,15 @@ function momentum_u!(   du::AbstractMatrix,
 end
 
 """Sum up the tendencies of the non-diffusive right-hand side for the v-component."""
-function momentum_v!(   dv::AbstractMatrix,
-                        qhu::AbstractMatrix,
-                        dpdy::AbstractMatrix,
-                        Fy::AbstractMatrix)
+function momentum_v!(Diag::DiagnosticVars,S::ModelSetup)
 
-    m,n = size(dv) .- (4,4)     # cut off the halo
+    @unpack dv = Diag.Tendencies
+    @unpack qhu = Diag.Vorticity
+    @unpack dpdy = Diag.Bernoulli
+    @unpack Fy = S.forcing
+    @unpack halo = S.grid
+
+    m,n = size(dv) .- (2halo,2halo)     # cut off the halo
     @boundscheck (m,n) == size(qhu) || throw(BoundsError())
     @boundscheck (m+2,n+2) == size(dpdy) || throw(BoundsError())
 

@@ -9,10 +9,10 @@ using Parameters, Printf, Dates
 include("DefaultParameters.jl")
 include("Grid.jl")
 include("Constants.jl")
-include("InitialConditions.jl")
-include("Preallocate.jl")
 include("Forcing.jl")
 include("ModelSetup.jl")
+include("InitialConditions.jl")
+include("Preallocate.jl")
 
 include("TimeIntegration.jl")
 include("GhostPoints.jl")
