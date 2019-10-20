@@ -30,7 +30,8 @@ end
 enstrophy conserving scheme."""
 function PV_Sadourny!(Diag::DiagnosticVars)
 
-    @unpack U,V,V_u,U_v = Diag.VolumeFluxes
+    @unpack U,V = Diag.VolumeFluxes
+    @unpack V_u,U_v = Diag.Vorticity
     @unpack q_u,q_v,qhv,qhu,ep = Diag.Vorticity
 
     Ixy!(V_u,V)

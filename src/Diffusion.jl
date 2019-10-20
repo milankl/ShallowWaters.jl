@@ -225,7 +225,7 @@ function viscous_tensor_constant!(  Diag::DiagnosticVars,
     @unpack dLudx,dLudy,dLvdx,dLvdy = Diag.Laplace
     @unpack S11,S12,S21,S22 = Diag.Smagorinsky
     @unpack ep = S.grid
-    @unpack vB = S.constants
+    @unpack νB = S.constants
 
     m,n = size(S11)
     @boundscheck (m,n) == size(dLudx) || throw(BoundsError())
