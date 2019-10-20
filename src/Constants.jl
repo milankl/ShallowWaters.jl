@@ -1,4 +1,4 @@
-mutable struct Constants{T<:AbstractFloat}
+struct Constants{T<:AbstractFloat}
 
     # RUNGE-KUTTA COEFFICIENTS 3rd/4th order including timestep Δt
     RKaΔt::Array{T,1}
@@ -17,47 +17,41 @@ mutable struct Constants{T<:AbstractFloat}
     rSST::T                 # tracer restoring timescale
     jSST::T                 # tracer consumption timescale
     SSTmin::T               # tracer minimum
-
-    Constants{T}() where T = new{T}()
 end
 
 """Generator function for the mutable struct Constants."""
 function Constants{T}(P::Parameter,G::Grid) where {T<:AbstractFloat}
 
-    C = Constants{T}()
-
     # Runge-Kutta 3rd/4th order coefficients including time step Δt
     # (which includes the grid spacing Δ too)
     if P.RKo == 3     # version 2
-        C.RKaΔt = T.([1/4,0.,3/4]*G.Δt)
-        C.RKbΔt = T.([1/3,2/3]*G.Δt)
+        RKaΔt = T.([1/4,0.,3/4]*G.dtint/G.Δ)
+        RKbΔt = T.([1/3,2/3]*G.dtint/G.Δ)
     elseif P.RKo == 4
-        C.RKaΔt = T.([1/6,1/3,1/3,1/6]*G.Δt)
-        C.RKbΔt = T.([.5,.5,1.]*G.Δt)
+        RKaΔt = T.([1/6,1/3,1/3,1/6]*G.dtint/G.Δ)
+        RKbΔt = T.([.5,.5,1.]*G.dtint/G.Δ)
     end
 
-    # for the ghost point copy/tangential boundary conditions
-    C.one_minus_α = T(1-P.α)
-
-    C.g = T(P.g)                  # gravity - for Bernoulli potential
+    one_minus_α = T(1-P.α)    # for the ghost point copy/tangential boundary conditions
+    g = T(P.g)                # gravity - for Bernoulli potential
 
     # BOTTOM FRICTION COEFFICENTS
     # incl grid spacing Δ for non-dimensional gradients
-    C.cD = T(-G.Δ*P.cD)             # quadratic drag [m]
-    C.rD = T(-G.Δ/(P.τD*24*3600))   # linear drag [m/s]
+    cD = T(-G.Δ*P.cD)             # quadratic drag [m]
+    rD = T(-G.Δ/(P.τD*24*3600))   # linear drag [m/s]
 
     # INTERFACE RELAXATION FREQUENCY
     # incl grid spacing Δ for non-dimensional gradients
-    C.γ = T(G.Δ/(P.t_relax*3600*24))    # [m/s]
+    γ = T(G.Δ/(P.t_relax*3600*24))    # [m/s]
 
     # BIHARMONIC DIFFUSION
-    C.cSmag = T(-P.cSmag)   # Smagorinsky coefficient
-    C.νB = T(-P.νB/30000)   # linear scaling based on 540m^s/s at Δ=30km
+    cSmag = T(-P.cSmag)   # Smagorinsky coefficient
+    νB = T(-P.νB/30000)   # linear scaling based on 540m^s/s at Δ=30km
 
     # TRACER ADVECTION
-    C.rSST = T(G.dtadvint/(P.τSST*3600*24))    # tracer restoring [1]
-    C.jSST = T(G.dtadvint/(P.jSST*3600*24))    # tracer consumption [1]
-    C.SSTmin = T(P.SSTmin)
+    rSST = T(G.dtadvint/(P.τSST*3600*24))    # tracer restoring [1]
+    jSST = T(G.dtadvint/(P.jSST*3600*24))    # tracer consumption [1]
+    SSTmin = T(P.SSTmin)
 
-    return C
+    return Constants{T}(RKaΔt,RKbΔt,one_minus_α,g,cD,rD,γ,cSmag,νB,rSST,jSST,SSTmin)
 end

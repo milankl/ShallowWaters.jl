@@ -9,7 +9,7 @@ end
 
 function Forcing{T}(P::Parameter,G::Grid) where {T<:AbstractFloat}
 
-    @unpack wind_forcing_x,wind_forcing_y,topography_feature = P
+    @unpack wind_forcing_x,wind_forcing_y,topography = P
 
     if wind_forcing_x == "channel"
         Fx,_ = ChannelWind(T,P,G)
@@ -31,13 +31,13 @@ function Forcing{T}(P::Parameter,G::Grid) where {T<:AbstractFloat}
         _,Fy = ConstantWind(T,P,G)
     end
 
-    if topography_feature == "ridge"
+    if topography == "ridge"
         H,_ = Ridge(T,P,G)
-    elseif topography_feature == "ridges"
+    elseif topography == "ridges"
         H = Ridges(T,P,G)
-    elseif topography_feature == "seamount"
+    elseif topography == "seamount"
         H = Seamount(T,P,G)
-    elseif topography_feature == "flat"
+    elseif topography == "flat"
         H = FlatBottom(T,P,G)
     end
 
@@ -124,13 +124,13 @@ seamount are adjusted with the constants H, topofeat_height and topofeat_width."
 function Seamount(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     @unpack x_T_halo,y_T_halo,Lx,Ly = G
-    @unpack topofeat_width,topofeat_height,H = P
+    @unpack topo_width,topo_height,H = P
 
     xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
-    bumpx = exp.(-((xx_T .- Lx/2).^2)/(2*topofeat_width^2))
-    bumpy = exp.(-((yy_T .- Ly/2).^2)/(2*topofeat_width^2))
+    bumpx = exp.(-((xx_T .- Lx/2).^2)/(2*topo_width^2))
+    bumpy = exp.(-((yy_T .- Ly/2).^2)/(2*topo_width^2))
 
-    return T.(H .- topofeat_height*bumpx.*bumpy)
+    return T.(H .- topo_height*bumpx.*bumpy)
 end
 
 """Returns a matrix of water depth for the whole domain that contains a
@@ -139,14 +139,14 @@ ridge are adjusted with the constants water_depth, topofeat_height and topofeat_
 function Ridge(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     @unpack x_T_halo,y_T_halo,Lx,Ly = G
-    @unpack topofeat_width,topofeat_height,H = P
+    @unpack topo_width,topo_height,H = P
 
     xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
-    bumpx = exp.(-((xx_T .- Lx/2).^2)/(2*topofeat_width^2))
-    bumpy = exp.(-((yy_T .- Ly/2).^2)/(2*topofeat_width^2))
+    bumpx = exp.(-((xx_T .- Lx/2).^2)/(2*topo_width^2))
+    bumpy = exp.(-((yy_T .- Ly/2).^2)/(2*topo_width^2))
 
-    Hx = H .- topofeat_height*bumpx
-    Hy = H .- topofeat_height*bumpy
+    Hx = H .- topo_height*bumpx
+    Hy = H .- topo_height*bumpy
     return T.(Hx),T.(Hy)
 end
 
@@ -154,19 +154,19 @@ end
 function Ridges(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     @unpack x_T_halo,y_T_halo,Lx,Ly = G
-    @unpack topofeat_width,topofeat_height,H = P
+    @unpack topo_width,topo_height,H = P
 
     xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
 
     # bumps in x direction
     # shift slightly left/right to avoid a symmetric solution
-    b0x = exp.(-(xx_T.^2)/(2*topofeat_width^2))
-    b1x = exp.(-((xx_T .- 0.99*Lx/4).^2)/(2*topofeat_width^2))
-    b2x = exp.(-((xx_T .- 1.01*Lx/2).^2)/(2*topofeat_width^2))
-    b3x = exp.(-((xx_T .- 0.99*3*Lx/4).^2)/(2*topofeat_width^2))
-    b4x = exp.(-((xx_T .- Lx).^2)/(2*topofeat_width^2))
+    b0x = exp.(-(xx_T.^2)/(2*topo_width^2))
+    b1x = exp.(-((xx_T .- 0.99*Lx/4).^2)/(2*topo_width^2))
+    b2x = exp.(-((xx_T .- 1.01*Lx/2).^2)/(2*topo_width^2))
+    b3x = exp.(-((xx_T .- 0.99*3*Lx/4).^2)/(2*topo_width^2))
+    b4x = exp.(-((xx_T .- Lx).^2)/(2*topo_width^2))
 
-    th = topofeat_height    # for convenience
+    th = topo_height    # for convenience
     return T.(H .- th*b0x .- th*b1x .- th*b2x .- th*b3x .- th*b4x)
 end
 

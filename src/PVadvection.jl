@@ -1,17 +1,8 @@
-"""Transit function to call the specified advection scheme."""
-function PVadvection!(P::Parameter,G::Grid,Diag::DiagnosticVars)
-    if P.adv_scheme == "Sadourny"
-        PV_Sadourny!(G,Diag)
-    elseif P.adv_scheme == "ArakawaHsu"
-        PV_ArakawaHsu!(G,Diag)
-    end
-end
-
 """Potential vorticity calculated as q = (f + ∂v/∂x - ∂u/∂y)/h."""
-function PV!(G::Grid,Diag::DiagnosticVars)
+function PV!(Diag::DiagnosticVars,S::ModelSetup)
 
     @unpack q,dvdx,dudy,h_q = Diag.Vorticity
-    @unpack f_q,ep = G
+    @unpack f_q,ep = S.grid
 
     m,n = size(q)
     @boundscheck (m,n) == size(f_q) || throw(BoundsError())
@@ -26,13 +17,22 @@ function PV!(G::Grid,Diag::DiagnosticVars)
     end
 end
 
+"""Transit function to call the specified advection scheme."""
+function PVadvection!(Diag::DiagnosticVars,S::ModelSetup)
+    if S.parameters.adv_scheme == "Sadourny"
+        PV_Sadourny!(Diag)
+    elseif S.parameters.adv_scheme == "ArakawaHsu"
+        PV_ArakawaHsu!(Diag)
+    end
+end
+
 """Advection of potential vorticity qhv,qhu as in Sadourny, 1975
 enstrophy conserving scheme."""
-function PV_Sadourny!(G::Grid,Diag::DiagnosticVars)
+function PV_Sadourny!(Diag::DiagnosticVars)
 
-    @unpack U,V,V_u,U_v = Diag.VolumeFluxes
-    @unpack q_u,q_v,qhv,qhu = Diag.Vorticity
-    @unpack ep = G
+    @unpack U,V = Diag.VolumeFluxes
+    @unpack V_u,U_v = Diag.Vorticity
+    @unpack q_u,q_v,qhv,qhu,ep = Diag.Vorticity
 
     Ixy!(V_u,V)
     Ixy!(U_v,U)
@@ -60,12 +60,11 @@ end
 
 """Advection of potential vorticity qhv,qhu as in Arakawa and Hsu, 1990
 Energy and enstrophy conserving (in the limit of non-divergent mass flux) scheme with τ = 0."""
-function PV_ArakawaHsu!(G::Grid,Diag::DiagnosticVars)
+function PV_ArakawaHsu!(Diag::DiagnosticVars)
 
     @unpack U,V = Diag.VolumeFluxes
-    @unpack qhv,qhu = Diag.Vorticity
+    @unpack qhv,qhu,ep = Diag.Vorticity
     @unpack qα,qβ,qγ,qδ = Diag.ArakawaHsu
-    @unpack ep = G
 
     # Linear combinations of q and V=hv to yield qhv
     m,n = size(qhv)

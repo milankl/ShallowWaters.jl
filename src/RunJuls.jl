@@ -26,9 +26,12 @@ function RunJuls(::Type{T},P::Parameter) where {T<:AbstractFloat}
 
     G = Grid{T}(P)
     C = Constants{T}(P,G)
-    Prog = initial_conditions(T,P,C,G)
+    F = Forcing{T}(P,G)
+    S = ModelSetup{T}(P,G,C,F)
+
+    Prog = initial_conditions(T,S)
     Diag = preallocate(T,G)
-    Forc = Forcing{T}(P,G)
-    time_integration!(P,G,C,Prog,Diag,Forc)
+
+    time_integration!(Prog,Diag,S)
     return Prog
 end

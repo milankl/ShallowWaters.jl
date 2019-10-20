@@ -10,22 +10,22 @@ struct PrognosticVars{T<:AbstractFloat}
     sst::Array{T,2}         # tracer / sea surface temperature
 end
 
-function initial_conditions(::Type{T},P::Parameter,C::Constants,G::Grid) where {T<:AbstractFloat}
-
+function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
     # if initial_cond == "rest"
 
-    u = zeros(T,G.nux,G.nuy)
-    v = zeros(T,G.nvx,G.nvy)
-    η = zeros(T,G.nx,G.ny)
+    @unpack nux,nuy,nvx,nvy,nx,ny = S.grid
+    @unpack SSTmin, SSTmax, SSTw, SSTϕ = S.parameters
+    @unpack x_T, y_T, Ly = S.grid
 
-    @unpack SSTmin, SSTmax, SSTw, SSTϕ = P
-    @unpack x_T, y_T, Ly = G
+    u = zeros(T,nux,nuy)
+    v = zeros(T,nvx,nvy)
+    η = zeros(T,nx,ny)
 
     xx_T,yy_T = meshgrid(x_T,y_T)
     sst = (SSTmin+SSTmax)/2 .+ tanh.(2π*(Ly/(4*SSTw))*(yy_T/Ly .- SSTϕ))*(SSTmin-SSTmax)/2
     sst = T.(sst)
 
-    u,v,η,sst = add_halo(P,C,G,u,v,η,sst)
+    u,v,η,sst = add_halo(u,v,η,sst,S)
 
     return PrognosticVars{T}(u,v,η,sst)
 end

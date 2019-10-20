@@ -22,9 +22,9 @@
     Fy0::Real=0.0                       # wind stress strength [Pa] in y-direction
 
     # BOTTOM TOPOGRAPHY OPTIONS
-    topography_feature::String="ridge"  # "ridge", "seamount", "flat", "ridges", "bathtub"
-    topofeat_height::Real=10.           # height of seamount [m]
-    topofeat_width::Real=300e3          # horizontal scale [m] of the seamount
+    topography::String="ridge"          # "ridge", "seamount", "flat", "ridges", "bathtub"
+    topo_height::Real=10.               # height of seamount [m]
+    topo_width::Real=300e3              # horizontal scale [m] of the seamount
 
     # SURFACE RELAXATION
     surface_relax::Bool=false           # yes?

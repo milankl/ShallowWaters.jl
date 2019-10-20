@@ -2,18 +2,17 @@
 function bottom_drag!(  u::AbstractMatrix,
                         v::AbstractMatrix,
                         η::AbstractMatrix,
-                        P::Parameter,
-                        C::Constants,
-                        G::Grid,
                         Diag::DiagnosticVars,
-                        Forc::Forcing)
+                        S::ModelSetup)
 
-    if P.bottom_drag == "linear"
-        bottom_drag_linear!(u,v,η,C,G,Diag,Forc)
-    elseif P.bottom_drag == "quadratic"
-        bottom_drag_quadratic!(u,v,η,C,G,Diag,Forc)
-    elseif P.bottom_drag == "none"
-        no_bottom_drag!(u,v,η,C,G,Diag,Forc)
+    @unpack bottom_drag = S.parameters
+
+    if bottom_drag == "quadratic"
+        bottom_drag_quadratic!(u,v,η,Diag,S)
+    elseif bottom_drag == "linear"
+        bottom_drag_linear!(u,v,η,Diag,S)
+    elseif bottom_drag == "none"
+        no_bottom_drag!(u,v,η,Diag,S)
     end
 end
 
@@ -21,17 +20,15 @@ end
 function bottom_drag_quadratic!(u::AbstractMatrix,
                                 v::AbstractMatrix,
                                 η::AbstractMatrix,
-                                C::Constants,
-                                G::Grid,
                                 Diag::DiagnosticVars,
-                                Forc::Forcing)
+                                S::ModelSetup)
 
     @unpack h,h_u,h_v = Diag.VolumeFluxes
     @unpack u²,v²,KEu,KEv = Diag.Bernoulli
     @unpack Bu,Bv,sqrtKE,sqrtKE_u,sqrtKE_v = Diag.Bottomdrag
-    @unpack ep = G
-    @unpack cD = C
-    @unpack H = Forc
+    @unpack ep = S.grid
+    @unpack cD = S.constants
+    @unpack H = S.forcing
 
     thickness!(h,η,H)
     Ix!(h_u,h)
@@ -83,14 +80,12 @@ grid spacing Δ as gradient operators are dimensionless."""
 function bottom_drag_linear!(   u::AbstractMatrix,
                                 v::AbstractMatrix,
                                 η::AbstractMatrix,
-                                C::Constants,
-                                G::Grid,
                                 Diag::DiagnosticVars,
-                                Forc::Forcing)
+                                S::ModelSetup)
 
     @unpack Bu,Bv = Diag.Bottomdrag
-    @unpack ep = G
-    @unpack rD = C
+    @unpack ep = S.grid
+    @unpack rD = S.constants
 
     m,n = size(Bu)
     @boundscheck (m+2+ep,n+2) == size(u) || throw(BoundsError())
@@ -115,10 +110,8 @@ end
 function no_bottom_drag!(   u::AbstractMatrix,
                             v::AbstractMatrix,
                             η::AbstractMatrix,
-                            C::Constants,
-                            G::Grid,
                             Diag::DiagnosticVars,
-                            Forc::Forcing)
+                            S::ModelSetup)
 
     @unpack Bu,Bv = Diag.Bottomdrag
     Bu .= zero(eltype(Bu))

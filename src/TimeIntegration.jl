@@ -1,10 +1,7 @@
 """Integrates Juls forward in time."""
-function time_integration!( P::Parameter,
-                            G::Grid,
-                            C::Constants,
-                            Prog::PrognosticVars,
+function time_integration!( Prog::PrognosticVars,
                             Diag::DiagnosticVars,
-                            Forc::Forcing)
+                            S::ModelSetup)
 
     @unpack u,v,η,sst = Prog
     @unpack u0,v0,η0 = Diag.RungeKutta
@@ -12,15 +9,15 @@ function time_integration!( P::Parameter,
     @unpack du,dv,dη = Diag.Tendencies
     @unpack um,vm = Diag.SemiLagrange
 
-    @unpack dynamics,RKo,tracer_advection = P
-    @unpack RKaΔt,RKbΔt = C
+    @unpack dynamics,RKo,tracer_advection = S.parameters
+    @unpack RKaΔt,RKbΔt = S.constants
 
-    @unpack nt,dtint = G
-    @unpack nstep_advcor,nstep_diff,nadvstep,nadvstep_half = G
+    @unpack nt,dtint = S.grid
+    @unpack nstep_advcor,nstep_diff,nadvstep,nadvstep_half = S.grid
 
     if dynamics == "linear"
-        Ix!(Diag.VolumeFluxes.h_u,Forc.H)
-        Iy!(Diag.VolumeFluxes.h_v,Forc.H)
+        Ix!(Diag.VolumeFluxes.h_u,S.forcing.H)
+        Iy!(Diag.VolumeFluxes.h_v,S.forcing.H)
     end
 
     # propagate initial conditions
@@ -29,7 +26,7 @@ function time_integration!( P::Parameter,
     copyto!(η0,η)
 
     # feedback and output
-    t0,progrtxt = feedback_ini(P)
+    feedback = feedback_init(S)
     #ncs_progn,ncs_tend,ncs_diagn,iout = output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2,
     #                                                q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
 
@@ -38,7 +35,7 @@ function time_integration!( P::Parameter,
     for i = 1:nt
 
         # ghost point copy for boundary conditions
-        ghost_points!(P,C,u,v,η)
+        ghost_points!(u,v,η,S)
         copyto!(u1,u)
         copyto!(v1,v)
         copyto!(η1,η)
@@ -46,39 +43,41 @@ function time_integration!( P::Parameter,
         # Runge-Kutta 4th order / 3rd order
         for rki = 1:RKo
             if rki > 1
-                ghost_points!(P,C,u1,v1,η1)
+                ghost_points!(u1,v1,η1,S)
             end
 
-            rhs!(u1,v1,η1,P,C,G,Diag,Forc)
+            rhs!(u1,v1,η1,Diag,S)
 
             if rki < RKo
-                caxb!(u1,u,RKbΔt[rki],du)  #u1 .= u .+ RKb[rki]*Δt*du
-                caxb!(v1,v,RKbΔt[rki],dv)  #v1 .= v .+ RKb[rki]*Δt*dv
-                caxb!(η1,η,RKbΔt[rki],dη)  #η1 .= η .+ RKb[rki]*Δt*dη
+                caxb!(u1,u,RKbΔt[rki],du)   #u1 .= u .+ RKb[rki]*Δt*du
+                caxb!(v1,v,RKbΔt[rki],dv)   #v1 .= v .+ RKb[rki]*Δt*dv
+                caxb!(η1,η,RKbΔt[rki],dη)   #η1 .= η .+ RKb[rki]*Δt*dη
             end
 
             # sum RK-substeps on the go
-            axb!(u0,RKaΔt[rki],du)  #u0 .+= RKa[rki]*Δt*du
-            axb!(v0,RKaΔt[rki],dv)  #v0 .+= RKa[rki]*Δt*dv
-            axb!(η0,RKaΔt[rki],dη)  #η0 .+= RKa[rki]*Δt*dη
+            axb!(u0,RKaΔt[rki],du)          #u0 .+= RKa[rki]*Δt*du
+            axb!(v0,RKaΔt[rki],dv)          #v0 .+= RKa[rki]*Δt*dv
+            axb!(η0,RKaΔt[rki],dη)          #η0 .+= RKa[rki]*Δt*dη
         end
 
-        ghost_points!(P,C,u0,v0,η0)
+        ghost_points!(u0,v0,η0,S)
 
         # ADVECTION and CORIOLIS TERMS
         # although included in the tendency of every RK substep,
         # only update every nstep_advcor steps if nstep_advcor > 0
-        if dynamics == "nonlinear" && nstep_advcor > 0 && (i % nstep_advcor) == 0
-            advection_coriolis!(u0,v0,η0,P,G,Diag,Forc)
+        if dynamics == "nonlinear" &&
+            nstep_advcor > 0 &&
+            (i % nstep_advcor) == 0
+            advection_coriolis!(u0,v0,η0,Diag,S)
         end
 
         # DIFFUSIVE TERMS - SEMI-IMPLICIT EULER
         # use u0 = u^(n+1) to evaluate tendencies, add to u0 = u^n + rhs
         # evaluate only every nstep_diff time steps
         if (i % nstep_diff) == 0
-            bottom_drag!(u0,v0,η0,P,C,G,Diag,Forc)
-            diffusion!(u0,v0,P,C,G,Diag)
-            add_drag_diff_tendencies!(u0,v0,G,Diag)
+            bottom_drag!(u0,v0,η0,Diag,S)
+            diffusion!(u0,v0,Diag,S)
+            add_drag_diff_tendencies!(u0,v0,Diag,S)
         end
 
         # RK3/4 copy back from substeps
@@ -112,19 +111,20 @@ function time_integration!( P::Parameter,
         # end
 
         # feedback and output
-        t0,nans_detected = feedback(u,v,η,sst,i,t0,nt,nans_detected,progrtxt,P)
+        feedback.i = i
+        feedback!(Prog,feedback)
 
         #ncs_diagn = output_diagn_nc(ncs_diagn,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
         #ncs_tend = output_tend_nc(ncs_tend,i,iout,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
         #ncs_progn,iout = output_progn_nc(ncs_progn,i,iout,u,v,η,sst)
 
-        if nans_detected
+        if feedback.nans_detected
             break
         end
     end
 
-    # finalise feeback and output
-    feedback_end(progrtxt,t0,P)
+    # finalise feedback and output
+    feedback_end!(feedback)
     #output_close(ncs_progn,ncs_tend,ncs_diagn,progrtxt)
 end
 
