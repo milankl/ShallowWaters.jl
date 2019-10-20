@@ -1,11 +1,9 @@
 using Juls
 using Test
 
-@testset "StartFromRest"
-    for T in (Float32,Float64)
-        u,v,η = RunJuls(T,output=false)
-        @test all(u .== zero(T))
-        @test all(v .== zero(T))
-        @test all(η .== zero(T))
-    end
+@testset "NoForcing" begin
+    Prog = RunJuls(Ndays=1,Fx0=0)
+    @test all(Prog.u .== 0.0f0)
+    @test all(Prog.v .== 0.0f0)
+    @test all(Prog.η .== 0.0f0)
 end
