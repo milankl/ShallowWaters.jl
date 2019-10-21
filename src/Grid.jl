@@ -99,7 +99,7 @@ function yy_q(bc::String,x_q_halo::AbstractVector,y_q_halo::AbstractVector)
         # points on the right edge needed too
         xx_q,yy_q = meshgrid(x_q_halo[3:end-1],y_q_halo[3:end-2])
     else
-        xx_q,yy_q = meshgrid(x_q_halo[3:end],y_q_halo[3:end-1])
+        xx_q,yy_q = meshgrid(x_q_halo[3:end-2],y_q_halo[3:end-2])
     end
 
     return yy_q
