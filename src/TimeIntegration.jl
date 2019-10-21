@@ -1,7 +1,8 @@
 """Integrates Juls forward in time."""
-function time_integration!( Prog::PrognosticVars,
+function time_integration(  ::Type{T},
+                            Prog::PrognosticVars,
                             Diag::DiagnosticVars,
-                            S::ModelSetup)
+                            S::ModelSetup) where {T<:AbstractFloat}
 
     @unpack u,v,η,sst = Prog
     @unpack u0,v0,η0 = Diag.RungeKutta
@@ -126,6 +127,9 @@ function time_integration!( Prog::PrognosticVars,
     # finalise feedback and output
     feedback_end!(feedback)
     #output_close(ncs_progn,ncs_tend,ncs_diagn,progrtxt)
+
+
+    return PrognosticVars{T}(remove_halo(u,v,η,sst,S)...)
 end
 
 """Add to a x multiplied with b. a += x*b """

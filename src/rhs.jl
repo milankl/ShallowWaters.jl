@@ -55,6 +55,7 @@ function rhs_nonlinear!(u::AbstractMatrix,
     ∂x!(dpdx,p)
     ∂y!(dpdy,p)
 
+    #TODO check whether the order of PV,PVadvection etc. is correct
     # Potential vorticity and advection thereof
     PVadvection!(Diag,S)
 
