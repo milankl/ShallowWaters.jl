@@ -13,7 +13,7 @@ Juls is fully-explicit with an energy and enstrophy conserving advection scheme 
 
 # How to use
 
-You find the default parameters in `src/DefaultParameters.jl`. They can be changed with keyword arguments. Optionally, the number format is defined as the first argument.
+You find the default parameters in `src/DefaultParameters.jl`. They can be changed with keyword arguments. Optionally, the number format `T` is defined as the first argument of `RunJuls(T,...)`
 ```julia
 julia> Prog = RunJuls(Float32,Ndays=10,g=10,H=500,Fx0=0.12);
 Starting Juls on Sun, 20 Oct 2019 19:58:25 without output.
