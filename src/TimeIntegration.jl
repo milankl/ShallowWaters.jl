@@ -28,6 +28,7 @@ function time_integration(  ::Type{T},
 
     # feedback and output
     feedback = feedback_init(S)
+    netCDFfiles = output_ini(Prog,Diag,S)
     #ncs_progn,ncs_tend,ncs_diagn,iout = output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2,
     #                                                q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
 

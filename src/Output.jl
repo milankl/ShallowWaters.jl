@@ -1,35 +1,33 @@
-"""Initialises netCDF files for data output of the prognostic, tendency and diagnostic variables."""
-function output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2,
-                        q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
-    # only process with rank 0 defines the netCDF file
-    if output #&& prank == 0
+struct NcPrognosticVars
+    u::Union{NcFile,Nothing}
+    v::Union{NcFile,Nothing}
+    η::Union{NcFile,Nothing}
+    sst::Union{NcFile,Nothing}
+end
+
+struct NcDiagnosticVars
+    q::Union{NcFile,Nothing}
+    ζ::Union{NcFile,Nothing}
+end
+
+
+"""Initialises netCDF files for data output of the prognostic, and some diagnostic variables."""
+function output_ini(Prog::PrognosticVars,Diag::DiagnosticVars,S::ModelSetup)
+
+    if S.parameters.output
 
         # PROGNOSTIC VARIABLES OUTPUT STRINGS
         all_output_progn_vars = ["u","v","eta","sst"]
         units_progn = ["m/s","m/s","m","degC"]
-        longnames_progn = ["zonal velocity","meridional velocity","sea surface height","sea surface temperature"]
-
-        # TENDENCY VARIABLES OUTPUT STRINGS
-        all_output_tend_vars = ["du","dv","deta","qhv","qhu","dpdx","dpdy","dUdx","dVdy","Bu","Bv","LLu1","LLu2","LLv1","LLv2"]
-        unit1,unit2 = "m^2/s^2","m^2/s"
-        units_tend = cat(repeat([unit1],7),repeat([unit2],2),repeat([unit1],6),dims=1)
-        longnames_tend = ["u tendency","v tendency","eta tendency",
-                    "Advection of PV u-comp.","Advection of PV v-comp.",
-                    "Bernoulli potential x-gradient","Bernoulli potential y-gradient",
-                    "Volume flux x-gradient","Volume flux y-gradient",
-                    "Bottom friction u-comp.","Bottom friction v-comp.",
-                            "Diffusion u-comp. 1","Diffusion u-comp. 2",
-                            "Diffusion v-comp. 1","Diffusion v-comp. 2"]
+        longnames_progn = [ "zonal velocity",
+                            "meridional velocity",
+                            "sea surface height",
+                            "sea surface temperature"]
 
         # DIAGNOSTIC VARIABLES OUTPUT STRINGS#
-        all_output_diagn_vars = ["q","p","dudx","dvdy","dudy","dvdx","Lu","Lv","xd","yd","relvort"]
-        units_diagn = ["1/(ms)","m^2/s^2","m/s","m/s","m/s","m/s","m/s","m/s","1","1","1"]
-        longnames_diagn = ["Potential vorticity","Bernoulli potential",
-                            "Zonal velocity x-gradient","Meridional velocity y-gradient",
-                            "Zonal velocity y-gradient","Meridional velocity x-gradient",
-                            "Laplace of u velocity", "Laplace of v velocity",
-                            "Relative departure point x","Relative departure point y",
-                            "Relative vorticity"]
+        all_output_diagn_vars = ["q","relvort"]
+        units_diagn = ["1/(ms)","1"]
+        longnames_diagn = ["Potential vorticity","Relative vorticity"]
 
         # collect all grids for easy access per index
         allx = (x_u,x_v,x_T,x_q_halo[3:end-2+ep])
@@ -98,7 +96,14 @@ function output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,
     end
 end
 
-function nccreate(x::Array{Float64,1},y::Array{Float64,1},name::String,path::String,unit::String,long_name::String)
+"""Creates a netCDF file based on grid vectors x,y the variable name, its path, unit and long_name."""
+function nc_create( x::Array{T,1},
+                    y::Array{T,1},
+                    name::String,
+                    path::String,
+                    unit::String,
+                    long_name::String) where {T<:Real}
+
     xdim = NcDim("x",length(x),values=x)
     ydim = NcDim("y",length(y),values=y)
     tdim = NcDim("t",0,unlimited=true)
@@ -106,7 +111,7 @@ function nccreate(x::Array{Float64,1},y::Array{Float64,1},name::String,path::Str
     var = NcVar(name,[xdim,ydim,tdim],t=Float32)
     tvar = NcVar("t",tdim,t=Int32)
 
-    nc = NetCDF.create(path*name*".nc",[var,tvar],mode=NC_NETCDF4)
+    nc = NetCDF.create(joinpath(path,name*".nc"),[var,tvar],mode=NC_NETCDF4)
     NetCDF.putatt(nc,name,Dict("units"=>unit,"long_name"=>long_name))
     return nc
 end
