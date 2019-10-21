@@ -10,11 +10,11 @@ end
 
 @testset "BoundaryConditions" begin
     Prog = RunJuls(Ndays=1,bc="periodic")
-    @test all(abs(Prog.η) .< 10)    # sea surface height shouldn't exceed +-10m
+    @test all(abs.(Prog.η) .< 10)    # sea surface height shouldn't exceed +-10m
 
     Prog = RunJuls(Ndays=1,bc="nonperiodic")
-    @test all(abs(Prog.η) .< 10)
+    @test all(abs.(Prog.η) .< 10)
 
     Prog = RunJuls(Ndays=1,α=0)     # free-slip
-    @test all(abs(Prog.η) .< 10)
+    @test all(abs.(Prog.η) .< 10)
 end
