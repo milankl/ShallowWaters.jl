@@ -1,11 +1,57 @@
+function tracer!(   i::Integer,
+                    Prog::PrognosticVar,
+                    Diag::DiagnosticVar,
+                    S::ModelSetup)
+
+    @unpack tracer_advection = S.parameters
+    @unpack nadvstep_half,nadvstep = S.grid
+
+    # mid point (in time) velocity for the advective time step
+    if tracer_advection && ((i+nadvstep_half) % nadvstep) == 0
+
+        @unpack u,v = Prog
+        @unpack um,vm = Diag.SemiLagrange
+
+        copyto!(um,u)
+        copyto!(vm,v)
+    end
+
+    if tracer_advection && (i % nadvstep) == 0
+        #departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
+        departure!(Prog,Diag)
+        #adv_sst!(ssti,sst,xd,yd)
+        adv_sst!(Prog,Diag)
+
+        # if tracer_relaxation
+        #     tracer_relax!(ssti,sst_ref,SSTγ)
+        # end
+        # if tracer_consumption
+        #     tracer_consumption!(ssti)
+        # end
+
+        ghost_points_sst!(ssti,S)
+        copyto!(sst,ssti)
+
+        #TODO tracer conservation?
+        #println(mean(sst[halosstx+1:end-halosstx,halossty+1:end-halossty].*h[haloη+1:end-haloη,haloη+1:end-haloη]))
+    end
+end
+
+
 """Computes the departure point for semi-Lagrangian advection following Diamantakis, 2014.
 u,v are assumed to be the time averaged velocities over the previous advection time step.
 (Presumably need to be changed to 2nd order extrapolation in case the tracer is not passive)
 
 Uses fixed-point iteration once to find the departure point."""
-function departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
-    # u,v is t + dtadv, um,vm are averaged over (t,t_dtadv)
+function departure!(Prog::PrognosticVar,
+                    Diag::DiagnosticVar,
+                    S::ModelSetup)
 
+    @unpack u,v = Prog
+    @unpack u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd = Diag.SemiLagrange
+    @unpack dtadvu,dtadv,half_dtadvu,half_dtadvv = S.grid
+
+    # u,v is t + dtadv, um,vm are averaged over (t,t_dtadv)
     # interpolate u,um,v,vm onto the T-grid
     Ix!(u_T,u)
     Ix!(um_T,um)
@@ -18,16 +64,16 @@ function departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
 
     # fixed-point iteration for departure point
     # initial guess for departure point - mid point
-    backtraj!(xd,one_half*dtadvu,u_T)
-    backtraj!(yd,one_half*dtadvv,v_T)
+    backtraj!(xd,half_dtadvu,u_T,ep)
+    backtraj!(yd,half_dtadvv,v_T,ep)
 
     # interpolate um,vm onto mid-point
     interp_uv!(uinterp,um_T,xd,yd)
     interp_uv!(vinterp,vm_T,xd,yd)
 
     # update departure point
-    backtraj!(xd,dtadvu,uinterp)
-    backtraj!(yd,dtadvv,vinterp)
+    backtraj!(xd,dtadvu,uinterp,ep)
+    backtraj!(yd,dtadvv,vinterp,ep)
 end
 
 """ Solves the trajectory equation for a given time step dt and the velocity uv (this can be u or v).
@@ -39,7 +85,10 @@ One function for three cases
 
 Uses relative grid nodes in the departure points rd, such that actually solved is rd = 0 - dt*uv.
 The indices i,j of rd determine the arrival grid point."""
-function backtraj!(rd::AbstractMatrix,dt::Real,uv::AbstractMatrix)
+function backtraj!( rd::Array{T,2},
+                    dt::T,
+                    uv::Array{T,2},
+                    ep::Int) where {T<:AbstractFloat}
     m,n = size(rd)
 
     if (m,n) == size(uv)            # update departue point case, matrices have same size
@@ -70,7 +119,12 @@ Interpolation only onto the inner entries of uvi. (They will be copied back late
 Two cases
     (i) u velocities: from u-grid with halo to T-grid
     (ii) v velocities: from v-grid with halo to T-grid."""
-function interp_uv!(uvi::AbstractMatrix,uv::AbstractMatrix,xx::AbstractMatrix,yy::AbstractMatrix)
+function interp_uv!(uvi::AbstractMatrix,
+                    uv::AbstractMatrix,
+                    xx::AbstractMatrix,
+                    yy::AbstractMatrix,
+                    ep::Int)
+
     m,n = size(uvi)
     muv,nuv = size(uv)
     @boundscheck (m,n) == size(xx) || throw(BoundsError())
@@ -165,8 +219,8 @@ end
 
 """Bilinear interpolation on (x,y) in the unit square [0,1]x[0,1].
 The values at the corners are f00 = f(0,0), f01 = f(0,1), etc."""
-function bilin(f00::Real,f10::Real,f01::Real,f11::Real,x::Real,y::Real)
-    # oone is Numtype(1)
+function bilin(f00::T,f10::T,f01::T,f11::T,x::T,y::T) where {T<:AbstractFloat}
+    oone = one(T)
     return f00*(oone-x)*(oone-y) + f10*x*(oone-y) + f01*(oone-x)*y + f11*x*y
 end
 

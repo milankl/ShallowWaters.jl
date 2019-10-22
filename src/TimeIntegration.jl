@@ -86,29 +86,8 @@ function time_integration(  ::Type{T},
         copyto!(η,η0)
         t += dtint
 
-
         # TRACER ADVECTION
-        # mid point (in time) velocity for the advective time step
-        # if tracer_advection && ((i+nadvstep_half) % nadvstep) == 0
-        #     um .= u
-        #     vm .= v
-        # end
-        #
-        # if tracer_advection && (i % nadvstep) == 0
-        #     departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
-        #     adv_sst!(ssti,sst,xd,yd)
-        #     if tracer_relaxation
-        #         tracer_relax!(ssti,sst_ref,SSTγ)
-        #     end
-        #     if tracer_consumption
-        #         tracer_consumption!(ssti)
-        #     end
-        #     ghost_points_sst!(ssti)
-        #     sst .= ssti
-        #
-        #     # conserved?
-        #     #println(mean(sst[halosstx+1:end-halosstx,halossty+1:end-halossty].*h[haloη+1:end-haloη,haloη+1:end-haloη]))
-        # end
+        tracer!(i,Prog,Diag,S)
 
         # feedback and output
         feedback.i = i
