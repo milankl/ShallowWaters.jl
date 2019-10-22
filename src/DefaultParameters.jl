@@ -84,19 +84,8 @@
     SSTϕ::Real=0.5                      # latitude/longitude fraction ∈ [0,1] of sst edge
 
     # OUTPUT OPTIONS
-    output::Bool=false                  # for nc output
-    output_tend::Bool=false             # ouput for tendencies as well?
-    output_diagn::Bool=false            # output diagnostic variables as well?
-
-                                        # which prognostic variables to output?
-    output_progn_vars::Array{String,1}=["u","v","eta","sst"]
-                                        # which tendencies to output?
-    output_tend_vars::Array{String,1}=["du","dv","deta","Bu","Bv","LLu1","LLu2","LLv1","LLv2",
-                                "qhv","qhu","dpdx","dpdy","dUdx","dVdy"]
-                                        # which diagnostic variables to output?
-    output_diagn_vars::Array{String,1}=["q","p","dudx","dvdy","dudy","dvdx","Lu",
-                                "Lv","xd","yd"]
-
+    output::Bool=false                  # netcdf output?
+    output_vars::Array{String,1}=["u","v","eta","sst","q","ζ"]  # which variables to output?
     output_dt::Real=6                   # output time step [hours]
     outpath::String="data/"             # path to output folder
 
