@@ -28,9 +28,7 @@ function time_integration(  ::Type{T},
 
     # feedback and output
     feedback = feedback_init(S)
-    netCDFfiles = output_ini(Prog,Diag,S)
-    #ncs_progn,ncs_tend,ncs_diagn,iout = output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2,
-    #                                                q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
+    netCDFfiles = NcFiles(Prog,Diag,S)
 
     nans_detected = false
     t = 0           # model time
@@ -115,10 +113,7 @@ function time_integration(  ::Type{T},
         # feedback and output
         feedback.i = i
         feedback!(Prog,feedback)
-
-        #ncs_diagn = output_diagn_nc(ncs_diagn,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
-        #ncs_tend = output_tend_nc(ncs_tend,i,iout,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
-        #ncs_progn,iout = output_progn_nc(ncs_progn,i,iout,u,v,η,sst)
+        output_nc!(i,netCDFfiles,Prog,Diag,S)
 
         if feedback.nans_detected
             break
@@ -127,8 +122,7 @@ function time_integration(  ::Type{T},
 
     # finalise feedback and output
     feedback_end!(feedback)
-    #output_close(ncs_progn,ncs_tend,ncs_diagn,progrtxt)
-
+    output_close(netCDFfiles,feedback,S)
 
     return PrognosticVars{T}(remove_halo(u,v,η,sst,S)...)
 end
