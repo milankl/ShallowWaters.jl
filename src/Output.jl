@@ -86,7 +86,7 @@ function output_nc!(i::Int,
         @views v = Prog.v[halo+1:end-halo,halo+1:end-halo]
         @views η = Prog.η[haloη+1:end-haloη,haloη+1:end-haloη]
         @views sst = Prog.sst[halosstx+1:end-halosstx,halossty+1:end-halossty]
-        @views ζ = dvdx[2:end-1,2:end-1]-dudy[2+ep:end-1,2:end-1])./abs.(f_q)
+        @views ζ = (dvdx[2:end-1,2:end-1]-dudy[2+ep:end-1,2:end-1])./abs.(f_q)
 
         # WRITING THE VARIABLES
         if ncs.u != nothing

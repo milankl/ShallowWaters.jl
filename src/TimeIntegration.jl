@@ -101,7 +101,7 @@ function time_integration(  ::Type{T},
 
     # finalise feedback and output
     feedback_end!(feedback)
-    output_close(netCDFfiles,feedback,S)
+    output_close!(netCDFfiles,feedback,S)
 
     return PrognosticVars{T}(remove_halo(u,v,η,sst,S)...)
 end

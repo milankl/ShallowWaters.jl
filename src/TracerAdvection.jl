@@ -1,6 +1,6 @@
 function tracer!(   i::Integer,
-                    Prog::PrognosticVar,
-                    Diag::DiagnosticVar,
+                    Prog::PrognosticVars,
+                    Diag::DiagnosticVars,
                     S::ModelSetup)
 
     @unpack tracer_advection = S.parameters
@@ -17,10 +17,8 @@ function tracer!(   i::Integer,
     end
 
     if tracer_advection && (i % nadvstep) == 0
-        #departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
-        departure!(Prog,Diag)
-        #adv_sst!(ssti,sst,xd,yd)
-        adv_sst!(Prog,Diag)
+        departure!(Prog,Diag,S)
+        adv_sst!(Prog,Diag,S)
 
         # if tracer_relaxation
         #     tracer_relax!(ssti,sst_ref,SSTγ)
@@ -28,6 +26,9 @@ function tracer!(   i::Integer,
         # if tracer_consumption
         #     tracer_consumption!(ssti)
         # end
+
+        @unpack ssti = Diag.SemiLagrange
+        @unpack sst = Prog
 
         ghost_points_sst!(ssti,S)
         copyto!(sst,ssti)
@@ -43,13 +44,15 @@ u,v are assumed to be the time averaged velocities over the previous advection t
 (Presumably need to be changed to 2nd order extrapolation in case the tracer is not passive)
 
 Uses fixed-point iteration once to find the departure point."""
-function departure!(Prog::PrognosticVar,
-                    Diag::DiagnosticVar,
+function departure!(Prog::PrognosticVars,
+                    Diag::DiagnosticVars,
                     S::ModelSetup)
 
     @unpack u,v = Prog
-    @unpack u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd = Diag.SemiLagrange
-    @unpack dtadvu,dtadv,half_dtadvu,half_dtadvv = S.grid
+    @unpack u_T,v_T,um,vm,um_T,vm_T = Diag.SemiLagrange
+    @unpack uinterp,vinterp,xd,yd = Diag.SemiLagrange
+    @unpack dtadvu,dtadvv,half_dtadvu,half_dtadvv = S.grid
+    @unpack ep = S.grid
 
     # u,v is t + dtadv, um,vm are averaged over (t,t_dtadv)
     # interpolate u,um,v,vm onto the T-grid
@@ -68,8 +71,8 @@ function departure!(Prog::PrognosticVar,
     backtraj!(yd,half_dtadvv,v_T,ep)
 
     # interpolate um,vm onto mid-point
-    interp_uv!(uinterp,um_T,xd,yd)
-    interp_uv!(vinterp,vm_T,xd,yd)
+    interp_uv!(uinterp,um_T,xd,yd,S)
+    interp_uv!(vinterp,vm_T,xd,yd,S)
 
     # update departure point
     backtraj!(xd,dtadvu,uinterp,ep)
@@ -123,7 +126,9 @@ function interp_uv!(uvi::AbstractMatrix,
                     uv::AbstractMatrix,
                     xx::AbstractMatrix,
                     yy::AbstractMatrix,
-                    ep::Int)
+                    S::ModelSetup)
+
+    @unpack ep = S.grid
 
     m,n = size(uvi)
     muv,nuv = size(uv)
@@ -146,11 +151,13 @@ function interp_uv!(uvi::AbstractMatrix,
         throw(BoundsError())
     end
 
+    @unpack bc = S.parameters
+    clip_or_wrap = if bc == "periodic" wrap else clip end
+
     for j ∈ 1:n
         for i ∈ 1:m
-            # floor is not defined for posits...
-            xi = Int(floor(Float64(xx[i,j])))   # departure point indices lower left corner within grid cell
-            yi = Int(floor(Float64(yy[i,j])))
+            xi = Int(floor(xx[i,j]))   # departure point indices lower left corner within grid cell
+            yi = Int(floor(yy[i,j]))
 
             k,x0 = clip_or_wrap(xi,i,xx[i,j],muv,xh1,xh2)
             l,y0 = clip(yi,j,yy[i,j],nuv,yh1,yh2)
@@ -160,24 +167,34 @@ function interp_uv!(uvi::AbstractMatrix,
     end
 end
 
-"""Advection of sst/tracer based on the departure points xx,yy via bilinear interpolation.
+"""Advection of sst/tracer based on the departure points xd,yd via bilinear interpolation.
 Departure points are clipped/wrapped to remain within the domain. Boundary conditions either
 periodic (wrap around behaviour) or no-flux (no gradient via clipping). Once the respective
 4 surrounding grid points are found do bilinear interpolation on the unit square."""
-function adv_sst!(ssti::AbstractMatrix,sst::AbstractMatrix,xx::AbstractMatrix,yy::AbstractMatrix)
+function adv_sst!(  Prog::PrognosticVars,
+                    Diag::DiagnosticVars,
+                    S::ModelSetup)
+
+    @unpack sst = Prog
+    @unpack ssti,xd,yd = Diag.SemiLagrange
+    @unpack halosstx,halossty = S.grid
+
     m,n = size(ssti)
     @boundscheck (m,n) == size(sst) || throw(BoundsError())
-    @boundscheck (m-2*halosstx,n-2*halossty) == size(xx) || throw(BoundsError())
-    @boundscheck (m-2*halosstx,n-2*halossty) == size(yy) || throw(BoundsError())
+    @boundscheck (m-2*halosstx,n-2*halossty) == size(xd) || throw(BoundsError())
+    @boundscheck (m-2*halosstx,n-2*halossty) == size(yd) || throw(BoundsError())
+
+    @unpack bc = S.parameters
+    clip_or_wrap = if bc == "periodic" wrap else clip end
 
     @inbounds for j ∈ 1:n-2*halossty
         for i ∈ 1:m-2*halosstx
 
-            xi = Int(floor(Float64(xx[i,j])))   # departure point lower left corner
-            yi = Int(floor(Float64(yy[i,j])))   # coordinates
+            xi = Int(floor(Float64(xd[i,j])))   # departure point lower left corner
+            yi = Int(floor(Float64(yd[i,j])))   # coordinates
 
-            k,x0 = clip_or_wrap(xi,i,xx[i,j],m,halosstx,halosstx)
-            l,y0 = clip(yi,j,yy[i,j],n,halossty,halossty)
+            k,x0 = clip_or_wrap(xi,i,xd[i,j],m,halosstx,halosstx)
+            l,y0 = clip(yi,j,yd[i,j],n,halossty,halossty)
 
             ssti[i+halosstx,j+halossty] = bilin(sst[k,l],sst[k+1,l],sst[k,l+1],sst[k+1,l+1],x0,y0)
         end
@@ -187,33 +204,33 @@ end
 """Clips the relative lower-left corner index xyi (for both x or y indices) to remain within the domain.
 ij is the index of the underlying matrix. xy is the actual coordinate, mn (m or n) the size of the domain,
 and h1,h2 are the halo sizes (left/south and right/north)."""
-function clip(xyi::Int,ij::Int,xy::Real,mn::Int,h1::Int,h2::Int)
+function clip(xyi::Int,ij::Int,xy::T,mn::Int,h1::Int,h2::Int) where {T<:AbstractFloat}
 
     xyis = xyi+ij+h1                # shifted index (i.e. revert the relative index to an absolute)
 
     if xyis < 1+h1                  # beyond left/southern boundary
-        return 1+h1,zeero           # coordinate is then 0
-    elseif xyis > mn-1           # beyond right/northern boundary
-        return mn-1,oone         # coordinate is then 1
+        return 1+h1,zero(T)         # coordinate is then 0
+    elseif xyis > mn-1              # beyond right/northern boundary
+        return mn-1,one(T)          # coordinate is then 1
     else                            # normal case.
-        return xyis,xy-xyi          # relative coordinate ∈ [0,1]
+        return xyis,xy-T(xyi)       # relative coordinate ∈ [0,1]
     end
 end
 
 """Clips the relative lower-left corner index xyi (for both x or y indices) to remain within the domain.
 ij is the index of the underlying matrix. xy is the actual coordinate, mn (m or n) the size of the domain,
 and h is the halo size."""
-function wrap(xyi::Int,ij::Int,xy::Real,mn::Int,h1::Int,h2::Int)
+function wrap(xyi::Int,ij::Int,xy::T,mn::Int,h1::Int,h2::Int) where {T<:AbstractFloat}
 
-    xyis = xyi+ij+h1                 # shifted index (i.e. revert the relative index to an absolute)
-    xy0 = xy-xyi                     # relative coordinate ∈ [0,1]
+    xyis = xyi+ij+h1                # shifted index (i.e. revert the relative index to an absolute)
+    xy0 = xy-T(xyi)                 # relative coordinate ∈ [0,1]
 
-    if xyis < 1+h1                   # beyond left/southern boundary
-        return xyis+mn-h1-h2,xy0     # coordinate is wrapped around
+    if xyis < 1+h1                  # beyond left/southern boundary
+        return xyis+mn-h1-h2,xy0    # coordinate is wrapped around
     elseif xyis > mn-1              # beyond right/northern boundary
-        return xyis-mn+h1+h2,xy0     # coordinate is wrapped around
-    else                             # normal case.
-        return xyis,xy0              # just pass
+        return xyis-mn+h1+h2,xy0    # coordinate is wrapped around
+    else                            # normal case.
+        return xyis,xy0             # just pass
     end
 end
 
@@ -259,10 +276,4 @@ function sst_γ(x::AbstractVector,y::AbstractVector)
     γ = γ0/2 .* (1 .- tanh.((xx.-SST_λ0)./SST_λs))
     γ[xx .> x10E] .= 0.0
     return Numtype.(γ)
-end
-
-if bc_x == "periodic"
-    clip_or_wrap = wrap
-else
-    clip_or_wrap = clip
 end
