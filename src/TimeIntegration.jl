@@ -26,9 +26,10 @@ function time_integration(  ::Type{T},
     copyto!(v0,v)
     copyto!(η0,η)
 
-    # feedback and output
+    # feedback, output initialisation and storing initial conditions
     feedback = feedback_init(S)
-    netCDFfiles = NcFiles(Prog,Diag,S)
+    netCDFfiles = NcFiles(feedback,S)
+    output_nc!(0,netCDFfiles,Prog,Diag,S)
 
     nans_detected = false
     t = 0           # model time
@@ -91,7 +92,7 @@ function time_integration(  ::Type{T},
 
         # feedback and output
         feedback.i = i
-        feedback!(Prog,feedback)
+        feedback!(Prog,feedback,S)
         output_nc!(i,netCDFfiles,Prog,Diag,S)
 
         if feedback.nans_detected

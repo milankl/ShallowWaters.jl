@@ -23,7 +23,7 @@
 
     # BOTTOM TOPOGRAPHY OPTIONS
     topography::String="ridge"          # "ridge", "seamount", "flat", "ridges", "bathtub"
-    topo_height::Real=10.               # height of seamount [m]
+    topo_height::Real=50.               # height of seamount [m]
     topo_width::Real=300e3              # horizontal scale [m] of the seamount
 
     # SURFACE RELAXATION
@@ -65,7 +65,7 @@
     cSmag::Real=0.15                    # Smagorinsky coefficient [dimensionless]
 
     # TRACER ADVECTION
-    tracer_advection::Bool=false        # yes?
+    tracer_advection::Bool=true         # yes?
     tracer_relaxation::Bool=false       # yes?
     tracer_consumption::Bool=false      # yes?
     tracer_pumping::Bool=false          # yes?
@@ -80,18 +80,18 @@
     SST_λ0::Real=222e3                  # [m] transition position of relaxation timescale
     SST_λs::Real=111e3                  # [m] transition width of relaxation timescale
     SST_γ0::Real=8.35                   # [days] injection time scale
-    SSTw::Real=1000e3                   # width [m] of the tangent used for the IC and interface relaxation
+    SSTw::Real=50e3                     # width [m] of the tangent used for the IC and interface relaxation
     SSTϕ::Real=0.5                      # latitude/longitude fraction ∈ [0,1] of sst edge
 
     # OUTPUT OPTIONS
     output::Bool=false                  # netcdf output?
     output_vars::Array{String,1}=["u","v","eta","sst","q","ζ"]  # which variables to output?
     output_dt::Real=6                   # output time step [hours]
-    outpath::String="data/"             # path to output folder
+    outpath::String=pwd()               # path to output folder
 
     # INITIAL CONDITIONS
     initial_cond::String="rest"         # "rest" or "ncfile" for restart from file
-    initpath::String="data/"            # folder where to pick the restart files from
+    initpath::String=outpath            # folder where to pick the restart files from
     init_run_id::Int=0                  # run id for restart from run number
 
     # ASSERT - CHECK THAT THE INPUT PARAMETERS MAKE SENSE

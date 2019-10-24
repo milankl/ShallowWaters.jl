@@ -12,15 +12,15 @@ end
 NcFiles(x::Nothing) = NcFiles(x,x,x,x,x,x,[0])
 
 """Generator function for NcFiles struct, creating the underlying netCDF files."""
-function NcFiles(Prog::PrognosticVars,Diag::DiagnosticVars,S::ModelSetup)
+function NcFiles(feedback::Feedback,S::ModelSetup)
 
     if S.parameters.output
 
-        @unpack output_vars,runpath = S.parameters
-        @unpack x_u,x_v,x_T,x_q_halo = S.grid
-        @unpack y_u,y_v,y_T,y_q_halo = S.grid
+        @unpack output_vars = S.parameters
+        @unpack x_u,x_v,x_T,x_q = S.grid
+        @unpack y_u,y_v,y_T,y_q = S.grid
 
-        run_id,runpath = get_run_id_path(S)
+        @unpack run_id,runpath = feedback
 
         ncu = if "u" in output_vars nc_create(x_u,y_u,"u",runpath,"m/s","zonal velocity") else nothing end
         ncv = if "v" in output_vars nc_create(x_v,y_v,"v",runpath,"m/s","meridional velocity") else nothing end
@@ -147,9 +147,9 @@ end
 """Checks output folders to determine a 4-digit run id number."""
 function get_run_id_path(   S::ModelSetup,
                             order::String="continue",
-                            run_id::Union{Int,}=nothing)
+                            run_id::Union{Int,Nothing}=nothing)
 
-    @unpack ouput,outpath = S.parameters
+    @unpack output,outpath = S.parameters
 
     if output
         runlist = filter(x->startswith(x,"run"),readdir(outpath))
