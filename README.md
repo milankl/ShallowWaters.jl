@@ -1,7 +1,7 @@
-[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
-[![Build Status](https://travis-ci.com/milankl/Juls.jl.svg?branch=master)](https://travis-ci.com/milankl/Juls.jl)
-[![Build Status](https://ci.appveyor.com/api/projects/status/github/milankl/Juls.jl?svg=true)](https://ci.appveyor.com/project/milankl/Juls-jl)
-[![Build Status](https://api.cirrus-ci.com/github/milankl/Juls.jl.svg)](https://cirrus-ci.com/github/milankl/Juls.jl)
+[![Project Status: WIP – Initial development is in progress, but there has not yet been a stable, usable release suitable for the public.](https://img.shields.io/badge/repo_status-active-brightgreen?style=flat-square)](https://www.repostatus.org/#wip)
+![Travis (.com)](https://img.shields.io/travis/com/milankl/Juls.jl?label=Linux%20%26%20osx&logo=travis&style=flat-square)
+![AppVeyor](https://img.shields.io/appveyor/ci/milankl/Juls-jl?label=Windows&logo=appveyor&logoColor=white&style=flat-square)
+![Cirrus CI - Base Branch Build Status](https://img.shields.io/cirrus/github/milankl/Juls.jl?label=FreeBSD&logo=cirrus-ci&logoColor=white&style=flat-square)
 
 
 # Juls.jl - A type-flexible 16bit shallow water model
