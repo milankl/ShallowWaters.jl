@@ -2,7 +2,7 @@ module Juls
 
 export RunJuls, Parameter
 
-using NetCDF, FileIO, Parameters, Printf, Dates
+using NetCDF, Parameters, Printf, Dates
 
 include("DefaultParameters.jl")
 include("Grid.jl")

@@ -155,17 +155,17 @@ function get_run_id_path(   S::ModelSetup,
         runlist = filter(x->startswith(x,"run"),readdir(outpath))
         existing_runs = [parse(Int,id[4:end]) for id in runlist]
         if length(existing_runs) == 0           # if no runfolder exists yet
-            runpath = outpath*"run0000/"
+            runpath = joinpath(outpath,"run0000")
             mkdir(runpath)
             return 0,runpath
         else                                    # create next folder
             if order == "fill"  # find the smallest gap in runfolders
                 run_id = gap(existing_runs)
-                runpath = outpath*"run"*@sprintf("%04d",run_id)*"/"
+                runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
                 mkdir(runpath)
 
             elseif order == "specific" # specify the run_id as input argument
-                runpath = outpath*"run"*@sprintf("%04d",run_id)*"/"
+                runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
                 try # create folder if not existent
                     mkdir(runpath)
                 catch # else rm folder and create new one
@@ -175,10 +175,10 @@ function get_run_id_path(   S::ModelSetup,
 
             elseif order == "continue" # find largest folder and count one up
                 run_id = maximum(existing_runs)+1
-                runpath = outpath*"run"*@sprintf("%04d",run_id)*"/"
+                runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
                 mkdir(runpath)
             else
-                throw(error("Order $order is not valid for get_run_id_path(), chose continue, specific or fill."))
+                throw(error("Order '$order' is not valid for get_run_id_path(), chose continue, specific or fill."))
             end
             return run_id,runpath
         end
