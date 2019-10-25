@@ -61,7 +61,7 @@
 
     # DIFFUSION OPTIONS
     diffusion::String="Smagorinsky"     # "Smagorinsky" or "Constant", biharmonic in both cases
-    νB::Real=500.0                      # [m^2/s] scaling constant for Constant biharmonic diffusion
+    νB::Real=500.0                      # [m^2/s] scaling constant for constant biharmonic diffusion
     cSmag::Real=0.15                    # Smagorinsky coefficient [dimensionless]
 
     # TRACER ADVECTION
@@ -69,10 +69,10 @@
     tracer_relaxation::Bool=false       # yes?
     tracer_consumption::Bool=false      # yes?
     tracer_pumping::Bool=false          # yes?
-    injection_region::String="west"     # "west", "south", "rect" or flat
+    injection_region::String="west"     # "west" or "south"
     sst_initial::String="south"         # same here
     sstrestart::Bool=true               # start from previous sst file
-    Uadv::Real=0.15                     # Velocity scale [m/s] for tracer advection
+    Uadv::Real=0.25                     # Velocity scale [m/s] for tracer advection
     SSTmax::Real=1.                     # tracer (sea surface temperature) max for restoring
     SSTmin::Real=0.                     # tracer (sea surface temperature) min for restoring
     τSST::Real=500.                     # tracer restoring time scale [days]
@@ -95,9 +95,32 @@
     init_run_id::Int=0                  # run id for restart from run number
 
     # ASSERT - CHECK THAT THE INPUT PARAMETERS MAKE SENSE
-    @assert all((nx,Lx,L_ratio) .> 0.)
-    @assert all((g,H,ρ,ω,R) .> 0.)
-    @assert ϕ <= 90.0 && ϕ >= -90.0
-    #TODO more of that
-
+    @assert all((nx,Lx,L_ratio) .> 0.)  "nx, Lx, L_ratio have to be >0"
+    @assert all((g,H,ρ,ω,R) .> 0.)      "g,H,ρ,ω,R have to be >0"
+    @assert ϕ <= 90.0 && ϕ >= -90.0     "ϕ has to be in (-90,90), $ϕ given."
+    @assert wind_forcing_x in ["channel","double_gyre","shear","constant","none"] "Wind forcing '$wind_forcing_x' unsupported"
+    @assert wind_forcing_y in ["channel","double_gyre","shear","constant","none"] "Wind forcing '$wind_forcing_y' unsupported"
+    @assert topography in ["ridge","seamount","flat","ridges"] "Topography '$topography' unsupported"
+    @assert topo_width > 0.0    "topo_width has to be >0, $topo_width given."
+    @assert t_relax > 0.0       "t_relax has to be >0, $t_relax given."
+    @assert η_refw > 0.0        "η_refw has to be >0, $η_refw given."
+    @assert ωyr > 0.0           "ωyr has to be >0, $ωyr given."
+    @assert RKo in [3,4]        "RKo has to be 3 or 4, $RKo given."
+    @assert Ndays > 0.0         "Ndays has to be >0, $Ndyas given."
+    @assert nstep_diff > 0      "nstep_diff has to be >0, $nstep_diff given."
+    @assert nstep_advcor >= 0   "nstep_advcor has to be >=0, $nstep_advcor given."
+    @assert bc in ["periodic","nonperiodic"]    "boundary condition '$bc' unsupported."
+    @assert α >= 0.0 && α <= 2.0    "Tangential boundary condition α has to be in (0,2), $α given."
+    @assert adv_scheme in ["Sadourny","ArakawaHsu"] "Advection scheme '$adv_scheme' unsupported"
+    @assert dynamics in ["linear","nonlinear"]  "Dynamics '$dynamics' unsupoorted."
+    @assert bottom_drag in ["quadratic","linear","none"] "Bottom drag '$bottom_drag' unsupported."
+    @assert cD >= 0.0    "Bottom drag coefficient cD has to be >=0, $cD given."
+    @assert τD >= 0.0    "Bottom drag coefficient τD has to be >=0, $τD given."
+    @assert diffusion in ["Smagorinsky", "constant"] "Diffusion '$diffusion' unsupoorted."
+    @assert νB > 0.0     "Diffusion scaling constant νB has to be > 0, $νB given."
+    @assert cSmag > 0.0  "Smagorinsky coefficient cSmag has to be >0, $cSmag given."
+    @assert injection_region in ["west","south"] "Injection region '$injection_region' unsupported."
+    @assert Uadv > 0.0   "Advection velocity scale Uadv has to be >0, $Uadv given."
+    @assert output_dt > 0   "Output time step has to be >0, $output_dt given."
+    @assert initial_cond in ["rest", "ncfile"] "Initial conditions '$initial_cond' unsupported."
 end
