@@ -79,6 +79,8 @@
     dtadvint::Int = nadvstep*dtint                          # advection time step [s]
     dtadvu::T = T(dtadvint*nx/Lx)                           # Rescaled advection time step for u [s/m]
     dtadvv::T = T(dtadvint*ny/Ly)                           # Rescaled advection time step for v [s/m]
+    half_dtadvu::T = T(dtadvint*nx/Lx/2)                    # dtadvu/2
+    half_dtadvv::T = T(dtadvint*ny/Ly/2)                    # dtadvv/2 
 
     # N TIME STEPS FOR OUTPUT
     nout::Int = Int(floor(output_dt*3600/dtint))            # output every n time steps

@@ -8,6 +8,8 @@ function diffusion!(    u::AbstractMatrix,
         diffusion_constant!(u,v,Diag,S)
     elseif S.parameters.diffusion == "Smagorinsky"
         diffusion_smagorinsky!(u,v,Diag,S)
+    else
+        throw(error("Diffusion scheme $(S.parameters.diffusion) is unsupported."))
     end
 end
 
@@ -126,55 +128,6 @@ function viscous_tensor_smagorinsky!(Diag::DiagnosticVars)
     @unpack dLudx,dLudy,dLvdx,dLvdy = Diag.Laplace
     @unpack νSmag,νSmag_q,S11,S12,S21,S22 = Diag.Smagorinsky
     @unpack ep = Diag.Smagorinsky
-
-    m,n = size(S11)
-    @boundscheck (m+2-ep,n) == size(νSmag) || throw(BoundsError())
-    @boundscheck (m,n) == size(dLudx) || throw(BoundsError())
-
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            S11[i,j] = νSmag[i+1-ep,j] * dLudx[i,j]
-        end
-    end
-
-    m,n = size(S12)
-    @boundscheck (m,n) == size(νSmag_q) || throw(BoundsError())
-    @boundscheck (m+ep,n) == size(dLudy) || throw(BoundsError())
-
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            S12[i,j] = νSmag_q[i,j] * dLudy[i+ep,j]
-        end
-    end
-
-    m,n = size(S21)
-    @boundscheck (m,n) == size(νSmag_q) || throw(BoundsError())
-    @boundscheck (m,n) == size(dLvdx) || throw(BoundsError())
-
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            S21[i,j] = νSmag_q[i,j] * dLvdx[i,j]
-        end
-    end
-
-    m,n = size(S22)
-    @boundscheck (m,n+2) == size(νSmag) || throw(BoundsError())
-    @boundscheck (m,n) == size(dLvdy) || throw(BoundsError())
-
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            S22[i,j] = νSmag[i,j+1] * dLvdy[i,j]
-        end
-    end
-end
-
-"""Biharmonic stress tensor times Smagorinsky coefficient
-νSmag * ∇∇² ⃗u = (S11, S12; S21, S22)."""
-function viscous_tensor_smagorinsky!(Diag::DiagnosticVars)
-
-    @unpack dLudx,dLudy,dLvdx,dLvdy = Diag.Laplace
-    @unpack νSmag,νSmag_q,S11,S12,S21,S22 = Diag.Smagorinsky
-    @unpack ep = Diag.Laplace
 
     m,n = size(S11)
     @boundscheck (m+2-ep,n) == size(νSmag) || throw(BoundsError())

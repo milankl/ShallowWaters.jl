@@ -26,10 +26,10 @@ function time_integration(  ::Type{T},
     copyto!(v0,v)
     copyto!(η0,η)
 
-    # feedback and output
+    # feedback, output initialisation and storing initial conditions
     feedback = feedback_init(S)
-    #ncs_progn,ncs_tend,ncs_diagn,iout = output_ini(u,v,η,sst,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2,
-    #                                                q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
+    netCDFfiles = NcFiles(feedback,S)
+    output_nc!(0,netCDFfiles,Prog,Diag,S)
 
     nans_detected = false
     t = 0           # model time
@@ -87,37 +87,13 @@ function time_integration(  ::Type{T},
         copyto!(η,η0)
         t += dtint
 
-
         # TRACER ADVECTION
-        # mid point (in time) velocity for the advective time step
-        # if tracer_advection && ((i+nadvstep_half) % nadvstep) == 0
-        #     um .= u
-        #     vm .= v
-        # end
-        #
-        # if tracer_advection && (i % nadvstep) == 0
-        #     departure!(u,v,u_T,v_T,um,vm,um_T,vm_T,uinterp,vinterp,xd,yd)
-        #     adv_sst!(ssti,sst,xd,yd)
-        #     if tracer_relaxation
-        #         tracer_relax!(ssti,sst_ref,SSTγ)
-        #     end
-        #     if tracer_consumption
-        #         tracer_consumption!(ssti)
-        #     end
-        #     ghost_points_sst!(ssti)
-        #     sst .= ssti
-        #
-        #     # conserved?
-        #     #println(mean(sst[halosstx+1:end-halosstx,halossty+1:end-halossty].*h[haloη+1:end-haloη,haloη+1:end-haloη]))
-        # end
+        tracer!(i,Prog,Diag,S)
 
         # feedback and output
         feedback.i = i
-        feedback!(Prog,feedback)
-
-        #ncs_diagn = output_diagn_nc(ncs_diagn,i,iout,q,p,dudx,dvdy,dudy,dvdx,Lu,Lv,xd,yd,f_q)
-        #ncs_tend = output_tend_nc(ncs_tend,i,iout,du,dv,dη,qhv,qhu,dpdx,dpdy,dUdx,dVdy,Bu,Bv,LLu1,LLu2,LLv1,LLv2)
-        #ncs_progn,iout = output_progn_nc(ncs_progn,i,iout,u,v,η,sst)
+        feedback!(Prog,feedback,S)
+        output_nc!(i,netCDFfiles,Prog,Diag,S)
 
         if feedback.nans_detected
             break
@@ -126,8 +102,7 @@ function time_integration(  ::Type{T},
 
     # finalise feedback and output
     feedback_end!(feedback)
-    #output_close(ncs_progn,ncs_tend,ncs_diagn,progrtxt)
-
+    output_close!(netCDFfiles,feedback,S)
 
     return PrognosticVars{T}(remove_halo(u,v,η,sst,S)...)
 end
