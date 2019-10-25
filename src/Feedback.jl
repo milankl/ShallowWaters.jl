@@ -1,5 +1,6 @@
 @with_kw mutable struct Feedback
     t0::Float64=time()                      # start time
+    t1::Float64=time()                      # time for duration estimation
     nans_detected::Bool=false               # did NaNs occur in the simulation?
     progress_txt::Union{IOStream,Nothing}   # txt is a Nothing in case of no output
     output::Bool                            # output to netCDF?
@@ -36,16 +37,17 @@ end
 """Estimates the total time the model integration will take."""
 function duration_estimate(feedback::Feedback,S::ModelSetup)
 
-    @unpack t0,i,nt,output,progress_txt = feedback
+    @unpack t1,i,nt,output,progress_txt = feedback
     @unpack nadvstep = S.grid
 
-    time_per_step = (time()-t0) / (i-nadvstep)
+    time_per_step = (time()-t1) / (i-nadvstep)
     time_total = Int(round(time_per_step*nt))
     time_to_go = Int(round(time_per_step*(nt-i)))
 
     s1 = "Model integration will take approximately "*readable_secs(time_total)*","
     s2 = "and is hopefully done on "*Dates.format(now() + Dates.Second(time_to_go),Dates.RFC1123Format)
 
+    print("\r\u1b[K")
     println(s1)     # print inline
     println(s2)
     if output == 1  # print in txt
@@ -111,11 +113,13 @@ function feedback!(Prog::PrognosticVars,feedback::Feedback,S::ModelSetup)
     @unpack nadvstep = S.grid
     @unpack i = feedback
 
-    if i == nadvstep # measure time after tracer advection executed once
-        feedback.t0 = time()
-    elseif i == min(2*nadvstep,nadvstep+50)
-        # after the tracer advection executed twice or at least 50 steps
-        duration_estimate(feedback,S)
+    if feedback.output
+        if i == nadvstep # measure time after tracer advection executed once
+            feedback.t1 = time()
+        elseif i == 2*nadvstep
+            # after the tracer advection executed twice or at least 50 steps
+            duration_estimate(feedback,S)
+        end
     end
 
     @unpack i, nans_detected, nout, output = feedback
