@@ -12,15 +12,15 @@ end
 NcFiles(x::Nothing) = NcFiles(x,x,x,x,x,x,[0])
 
 """Generator function for NcFiles struct, creating the underlying netCDF files."""
-function NcFiles(Prog::PrognosticVars,Diag::DiagnosticVars,S::ModelSetup)
+function NcFiles(feedback::Feedback,S::ModelSetup)
 
     if S.parameters.output
 
-        @unpack output_vars,runpath = S.parameters
-        @unpack x_u,x_v,x_T,x_q_halo = S.grid
-        @unpack y_u,y_v,y_T,y_q_halo = S.grid
+        @unpack output_vars = S.parameters
+        @unpack x_u,x_v,x_T,x_q = S.grid
+        @unpack y_u,y_v,y_T,y_q = S.grid
 
-        run_id,runpath = get_run_id_path(S)
+        @unpack run_id,runpath = feedback
 
         ncu = if "u" in output_vars nc_create(x_u,y_u,"u",runpath,"m/s","zonal velocity") else nothing end
         ncv = if "v" in output_vars nc_create(x_v,y_v,"v",runpath,"m/s","meridional velocity") else nothing end
@@ -86,7 +86,7 @@ function output_nc!(i::Int,
         @views v = Prog.v[halo+1:end-halo,halo+1:end-halo]
         @views η = Prog.η[haloη+1:end-haloη,haloη+1:end-haloη]
         @views sst = Prog.sst[halosstx+1:end-halosstx,halossty+1:end-halossty]
-        @views ζ = dvdx[2:end-1,2:end-1]-dudy[2+ep:end-1,2:end-1])./abs.(f_q)
+        @views ζ = (dvdx[2:end-1,2:end-1]-dudy[2+ep:end-1,2:end-1])./abs.(f_q)
 
         # WRITING THE VARIABLES
         if ncs.u != nothing
@@ -147,25 +147,25 @@ end
 """Checks output folders to determine a 4-digit run id number."""
 function get_run_id_path(   S::ModelSetup,
                             order::String="continue",
-                            run_id::Union{Int,}=nothing)
+                            run_id::Union{Int,Nothing}=nothing)
 
-    @unpack ouput,outpath = S.parameters
+    @unpack output,outpath = S.parameters
 
     if output
         runlist = filter(x->startswith(x,"run"),readdir(outpath))
         existing_runs = [parse(Int,id[4:end]) for id in runlist]
         if length(existing_runs) == 0           # if no runfolder exists yet
-            runpath = outpath*"run0000/"
+            runpath = joinpath(outpath,"run0000")
             mkdir(runpath)
             return 0,runpath
         else                                    # create next folder
             if order == "fill"  # find the smallest gap in runfolders
                 run_id = gap(existing_runs)
-                runpath = outpath*"run"*@sprintf("%04d",run_id)*"/"
+                runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
                 mkdir(runpath)
 
             elseif order == "specific" # specify the run_id as input argument
-                runpath = outpath*"run"*@sprintf("%04d",run_id)*"/"
+                runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
                 try # create folder if not existent
                     mkdir(runpath)
                 catch # else rm folder and create new one
@@ -175,10 +175,10 @@ function get_run_id_path(   S::ModelSetup,
 
             elseif order == "continue" # find largest folder and count one up
                 run_id = maximum(existing_runs)+1
-                runpath = outpath*"run"*@sprintf("%04d",run_id)*"/"
+                runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
                 mkdir(runpath)
             else
-                throw(error("Order $order is not valid for get_run_id_path(), chose continue, specific or fill."))
+                throw(error("Order '$order' is not valid for get_run_id_path(), chose continue, specific or fill."))
             end
             return run_id,runpath
         end

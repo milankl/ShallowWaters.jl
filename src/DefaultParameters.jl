@@ -23,7 +23,7 @@
 
     # BOTTOM TOPOGRAPHY OPTIONS
     topography::String="ridge"          # "ridge", "seamount", "flat", "ridges", "bathtub"
-    topo_height::Real=10.               # height of seamount [m]
+    topo_height::Real=50.               # height of seamount [m]
     topo_width::Real=300e3              # horizontal scale [m] of the seamount
 
     # SURFACE RELAXATION
@@ -61,11 +61,11 @@
 
     # DIFFUSION OPTIONS
     diffusion::String="Smagorinsky"     # "Smagorinsky" or "Constant", biharmonic in both cases
-    νB::Real=500.0                      # [m^2/s] scaling constant for Constant biharmonic diffusion
+    νB::Real=500.0                      # [m^2/s] scaling constant for constant biharmonic diffusion
     cSmag::Real=0.15                    # Smagorinsky coefficient [dimensionless]
 
     # TRACER ADVECTION
-    tracer_advection::Bool=false        # yes?
+    tracer_advection::Bool=true         # yes?
     tracer_relaxation::Bool=false       # yes?
     tracer_consumption::Bool=false      # yes?
     tracer_pumping::Bool=false          # yes?
@@ -81,14 +81,14 @@
     SST_λ0::Real=222e3                  # [m] transition position of relaxation timescale
     SST_λs::Real=111e3                  # [m] transition width of relaxation timescale
     SST_γ0::Real=8.35                   # [days] injection time scale
-    SSTw::Real=1000e3                   # width [m] of the tangent used for the IC and interface relaxation
+    SSTw::Real=50e3                     # width [m] of the tangent used for the IC and interface relaxation
     SSTϕ::Real=0.5                      # latitude/longitude fraction ∈ [0,1] of sst edge
 
     # OUTPUT OPTIONS
     output::Bool=false                  # netcdf output?
     output_vars::Array{String,1}=["u","v","eta","sst","q","ζ"]  # which variables to output?
     output_dt::Real=6                   # output time step [hours]
-    outpath::String="data/"             # path to output folder
+    outpath::String=pwd()               # path to output folder
 
     # INITIAL CONDITIONS
     initial_cond::String="rest"         # "rest" or "ncfile" for restart from file
@@ -97,9 +97,32 @@
     init_starti::Int=-1                 # timestep to start from (-1 meaning last)
 
     # ASSERT - CHECK THAT THE INPUT PARAMETERS MAKE SENSE
-    @assert all((nx,Lx,L_ratio) .> 0.)
-    @assert all((g,H,ρ,ω,R) .> 0.)
-    @assert ϕ <= 90.0 && ϕ >= -90.0
-    #TODO more of that
-
+    @assert all((nx,Lx,L_ratio) .> 0.)  "nx, Lx, L_ratio have to be >0"
+    @assert all((g,H,ρ,ω,R) .> 0.)      "g,H,ρ,ω,R have to be >0"
+    @assert ϕ <= 90.0 && ϕ >= -90.0     "ϕ has to be in (-90,90), $ϕ given."
+    @assert wind_forcing_x in ["channel","double_gyre","shear","constant","none"] "Wind forcing '$wind_forcing_x' unsupported"
+    @assert wind_forcing_y in ["channel","double_gyre","shear","constant","none"] "Wind forcing '$wind_forcing_y' unsupported"
+    @assert topography in ["ridge","seamount","flat","ridges"] "Topography '$topography' unsupported"
+    @assert topo_width > 0.0    "topo_width has to be >0, $topo_width given."
+    @assert t_relax > 0.0       "t_relax has to be >0, $t_relax given."
+    @assert η_refw > 0.0        "η_refw has to be >0, $η_refw given."
+    @assert ωyr > 0.0           "ωyr has to be >0, $ωyr given."
+    @assert RKo in [3,4]        "RKo has to be 3 or 4, $RKo given."
+    @assert Ndays > 0.0         "Ndays has to be >0, $Ndyas given."
+    @assert nstep_diff > 0      "nstep_diff has to be >0, $nstep_diff given."
+    @assert nstep_advcor >= 0   "nstep_advcor has to be >=0, $nstep_advcor given."
+    @assert bc in ["periodic","nonperiodic"]    "boundary condition '$bc' unsupported."
+    @assert α >= 0.0 && α <= 2.0    "Tangential boundary condition α has to be in (0,2), $α given."
+    @assert adv_scheme in ["Sadourny","ArakawaHsu"] "Advection scheme '$adv_scheme' unsupported"
+    @assert dynamics in ["linear","nonlinear"]  "Dynamics '$dynamics' unsupoorted."
+    @assert bottom_drag in ["quadratic","linear","none"] "Bottom drag '$bottom_drag' unsupported."
+    @assert cD >= 0.0    "Bottom drag coefficient cD has to be >=0, $cD given."
+    @assert τD >= 0.0    "Bottom drag coefficient τD has to be >=0, $τD given."
+    @assert diffusion in ["Smagorinsky", "constant"] "Diffusion '$diffusion' unsupoorted."
+    @assert νB > 0.0     "Diffusion scaling constant νB has to be > 0, $νB given."
+    @assert cSmag > 0.0  "Smagorinsky coefficient cSmag has to be >0, $cSmag given."
+    @assert injection_region in ["west","south"] "Injection region '$injection_region' unsupported."
+    @assert Uadv > 0.0   "Advection velocity scale Uadv has to be >0, $Uadv given."
+    @assert output_dt > 0   "Output time step has to be >0, $output_dt given."
+    @assert initial_cond in ["rest", "ncfile"] "Initial conditions '$initial_cond' unsupported."
 end

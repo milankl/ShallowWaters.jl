@@ -8,6 +8,8 @@ function diffusion!(    u::AbstractMatrix,
         diffusion_constant!(u,v,Diag,S)
     elseif S.parameters.diffusion == "Smagorinsky"
         diffusion_smagorinsky!(u,v,Diag,S)
+    else
+        throw(error("Diffusion scheme $(S.parameters.diffusion) is unsupported."))
     end
 end
 

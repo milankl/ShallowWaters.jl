@@ -21,10 +21,10 @@ include("PVadvection.jl")
 include("Continuity.jl")
 include("Bottomdrag.jl")
 include("Diffusion.jl")
-#include("TracerAdvection.jl")
+include("TracerAdvection.jl")
 
 include("Feedback.jl")
-#include("Output.jl")
+include("Output.jl")
 include("RunJuls.jl")
 
 end

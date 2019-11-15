@@ -98,8 +98,8 @@ function ConstantWind(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
     @unpack Fx0,Fy0,H,ρ = P
 
     # for non-dimensional gradients the wind forcing needs to contain the grid spacing Δ
-    Fx = (Δ*Fx0/ρ/H)*ones(T,nux,nuy)
-    Fy = (Δ*Fy0/ρ/H)*ones(T,nvx,nvy)
+    Fx = T.(Δ*Fx0/ρ/H)*ones(T,nux,nuy)
+    Fy = T.(Δ*Fy0/ρ/H)*ones(T,nvx,nvy)
 
     return Fx,Fy
 end
@@ -173,5 +173,6 @@ end
 """Returns a matrix of constant water depth H."""
 function FlatBottom(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
     @unpack nx,ny,haloη = G
+    @unpack H = P
     return fill(T(H),(nx+2*haloη,ny+2*haloη))
 end
