@@ -17,7 +17,7 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
     @unpack nux,nuy,nvx,nvy,nx,ny = S.grid
     @unpack initial_cond = S.parameters
 
-    if intitial_cond == "rest"
+    if initial_cond == "rest"
 
         u = zeros(T,nux,nuy)
         v = zeros(T,nvx,nvy)
@@ -27,10 +27,11 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
 
         @unpack initpath,init_run_id,init_starti = S.parameters
 
-        inirunpath = initpath*"run"*@sprintf("%04d",init_run_id)*"/"
+        inirunpath = joinpath(initpath,"run"*@sprintf("%04d",init_run_id))
 
         # take starti time step from existing netcdf files
-        ncu = NetCDF.open(inirunpath*"u.nc")
+        ncstring = joinpath(inirunpath,"u.nc")
+        ncu = NetCDF.open(ncstring)
 
         if init_starti == -1    # replace -1 with length of time dimension
             init_starti = size(ncu.vars["t"])[end]
@@ -39,11 +40,11 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
         u = ncu.vars["u"][:,:,init_starti]
         NetCDF.close(ncu)
 
-        ncv = NetCDF.open(inirunpath*"v.nc")
+        ncv = NetCDF.open(joinpath(inirunpath,"v.nc"))
         v = ncv.vars["v"][:,:,init_starti]
         NetCDF.close(ncv)
 
-        ncη = NetCDF.open(inirunpath*"eta.nc")
+        ncη = NetCDF.open(joinpath(inirunpath,"eta.nc"))
         η = ncη.vars["eta"][:,:,init_starti]
         NetCDF.close(ncη)
 
@@ -59,7 +60,7 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
 
     @unpack SSTmin, SSTmax, SSTw, SSTϕ = S.parameters
     @unpack sst_initial = S.parameters
-    @unpack x_T, y_T, Ly = S.grid
+    @unpack x_T,y_T,Lx,Ly = S.grid
 
     xx_T,yy_T = meshgrid(x_T,y_T)
 
@@ -79,7 +80,7 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
     end
 
     if initial_cond == "ncfile" && sst_initial == "restart"
-        ncsst = NetCDF.open(inirunpath*"sst.nc")
+        ncsst = NetCDF.open(joinpath(inirunpath,"sst.nc"))
         sst = ncsst.vars["sst"][:,:,init_starti]
         NetCDF.close(ncsst)
 
