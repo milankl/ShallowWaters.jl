@@ -69,10 +69,11 @@
     tracer_relaxation::Bool=false       # yes?
     tracer_consumption::Bool=false      # yes?
     tracer_pumping::Bool=false          # yes?
-    injection_region::String="west"     # "west" or "south"
-    sst_initial::String="south"         # same here
-    sstrestart::Bool=true               # start from previous sst file
-    Uadv::Real=0.25                     # Velocity scale [m/s] for tracer advection
+    injection_region::String="west"     # "west", "south", "rect" or "flat"
+    sst_initial::String="south"         # "west", "south", "rect", "flat" or "restart"
+    sst_rect_coords::Array{Float64,1}=[0.,0.15,0.,1.0]
+                                        # (x0,x1,y0,y1) are the size of the rectangle in [0,1]
+    Uadv::Real=0.15                     # Velocity scale [m/s] for tracer advection
     SSTmax::Real=1.                     # tracer (sea surface temperature) max for restoring
     SSTmin::Real=0.                     # tracer (sea surface temperature) min for restoring
     τSST::Real=500.                     # tracer restoring time scale [days]
@@ -85,7 +86,7 @@
 
     # OUTPUT OPTIONS
     output::Bool=false                  # netcdf output?
-    output_vars::Array{String,1}=["u","v","eta","sst","q","ζ"]  # which variables to output?
+    output_vars::Array{String,1}=["u","v","η","sst","q","ζ"]  # which variables to output?
     output_dt::Real=6                   # output time step [hours]
     outpath::String=pwd()               # path to output folder
 
@@ -93,6 +94,7 @@
     initial_cond::String="rest"         # "rest" or "ncfile" for restart from file
     initpath::String=outpath            # folder where to pick the restart files from
     init_run_id::Int=0                  # run id for restart from run number
+    init_starti::Int=-1                 # timestep to start from (-1 meaning last)
 
     # ASSERT - CHECK THAT THE INPUT PARAMETERS MAKE SENSE
     @assert all((nx,Lx,L_ratio) .> 0.)  "nx, Lx, L_ratio have to be >0"
