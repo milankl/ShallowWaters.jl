@@ -17,6 +17,7 @@ struct Constants{T<:AbstractFloat}
     rSST::T                 # tracer restoring timescale
     jSST::T                 # tracer consumption timescale
     SSTmin::T               # tracer minimum
+    ωyr::Float64            # # frequency [1/s] of Kelvin pumping (including 2π)
 end
 
 """Generator function for the mutable struct Constants."""
@@ -53,5 +54,8 @@ function Constants{T}(P::Parameter,G::Grid) where {T<:AbstractFloat}
     jSST = T(G.dtadvint/(P.jSST*3600*24))    # tracer consumption [1]
     SSTmin = T(P.SSTmin)
 
-    return Constants{T}(RKaΔt,RKbΔt,one_minus_α,g,cD,rD,γ,cSmag,νB,rSST,jSST,SSTmin)
+    # SURFACE FORCING
+    ωyr = -2π*P.ωyr/24/365/3600
+
+    return Constants{T}(RKaΔt,RKbΔt,one_minus_α,g,cD,rD,γ,cSmag,νB,rSST,jSST,SSTmin,ωyr)
 end

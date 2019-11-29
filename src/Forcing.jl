@@ -3,6 +3,7 @@ struct Forcing{T<:AbstractFloat}
     Fy::Array{T,2}
     H::Array{T,2}
     η_ref::Array{T,2}
+    Fη::Array{T,2}
     #sst_ref::Array{T,2}
     #sst_γ::Array{T,2}
 end
@@ -19,6 +20,8 @@ function Forcing{T}(P::Parameter,G::Grid) where {T<:AbstractFloat}
         Fx,_ = DoubleGyreWind(T,P,G)
     elseif wind_forcing_x == "constant"
         Fx,_ = ConstantWind(T,P,G)
+    elseif wind_forcing_x == "none"
+        Fx,_ = NoWind(T,P,G)
     end
 
     if wind_forcing_y == "channel"
@@ -29,6 +32,8 @@ function Forcing{T}(P::Parameter,G::Grid) where {T<:AbstractFloat}
         _,Fy = DoubleGyreWind(T,P,G)
     elseif wind_forcing_y == "constant"
         _,Fy = ConstantWind(T,P,G)
+    elseif wind_forcing_x == "none"
+        _,Fy = NoWind(T,P,G)
     end
 
     if topography == "ridge"
@@ -42,8 +47,9 @@ function Forcing{T}(P::Parameter,G::Grid) where {T<:AbstractFloat}
     end
 
     η_ref = InterfaceRelaxation(T,P,G)
+    Fη = KelvinPump(T,P,G)
 
-    return Forcing{T}(Fx,Fy,H,η_ref)
+    return Forcing{T}(Fx,Fy,H,η_ref,Fη)
 end
 
 """Returns the constant forcing matrices Fx,Fy that vary only meriodionally/zonally
@@ -104,6 +110,17 @@ function ConstantWind(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
     return Fx,Fy
 end
 
+"""Returns constant in in space forcing matrices Fx,Fy."""
+function NoWind(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
+
+    @unpack nux,nuy,nvx,nvy = G
+
+    # for non-dimensional gradients the wind forcing needs to contain the grid spacing Δ
+    Fx = zeros(T,nux,nuy)
+    Fy = zeros(T,nvx,nvy)
+
+    return Fx,Fy
+end
 
 """Returns a reference state for Newtonian cooling/surface relaxation shaped as a
 hyperbolic tangent to force the continuity equation."""
@@ -175,4 +192,32 @@ function FlatBottom(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
     @unpack nx,ny,haloη = G
     @unpack H = P
     return fill(T(H),(nx+2*haloη,ny+2*haloη))
+end
+
+"""Returns Kelvin wave pumping forcing of the continuity equation at the equator."""
+function KelvinPump(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
+
+    @unpack x_T,y_T,Lx,Ly = G
+    @unpack c,β,R,ϕ,Δ = G
+    @unpack A = P
+
+    xx_T,yy_T = meshgrid(x_T,y_T)
+
+    # y-coordinate of the Equator
+    mϕ = 2π*R/360.      # meters per degree latitude
+    y_eq = Ly/2 - ϕ*mϕ
+    y_15S = Ly/2 - (ϕ+15)*mϕ
+    y_15N = Ly/2 - (ϕ-15)*mϕ
+
+    Fη = A*Δ*exp.(-β*(yy_T.-y_eq).^2/(2c))
+
+    Fη[yy_T .< y_15S] .= 0.0
+    Fη[yy_T .> y_15N] .= 0.0
+
+    return T.(Fη)
+end
+
+"""Time evolution of surface forcing."""
+function Fηt(::Type{T},t::Int,ωyr::AbstractFloat) where {T<:AbstractFloat}
+    return T(sin(ωyr*t))
 end

@@ -3,14 +3,15 @@ function rhs!(  u::AbstractMatrix,
                 v::AbstractMatrix,
                 η::AbstractMatrix,
                 Diag::DiagnosticVars,
-                S::ModelSetup)
+                S::ModelSetup,
+                t::Int)
 
     @unpack dynamics = S.parameters
 
     if dynamics == "linear"
-        rhs_linear!(u,v,η,Diag,S)
+        rhs_linear!(u,v,η,Diag,S,t)
     else
-        rhs_nonlinear!(u,v,η,Diag,S)
+        rhs_nonlinear!(u,v,η,Diag,S,t)
     end
 end
 
@@ -25,7 +26,8 @@ function rhs_nonlinear!(u::AbstractMatrix,
                         v::AbstractMatrix,
                         η::AbstractMatrix,
                         Diag::DiagnosticVars,
-                        S::ModelSetup)
+                        S::ModelSetup,
+                        t::Int)
 
     @unpack h,h_u,h_v,U,V,dUdx,dVdy = Diag.VolumeFluxes
     @unpack H = S.forcing
@@ -55,14 +57,13 @@ function rhs_nonlinear!(u::AbstractMatrix,
     ∂x!(dpdx,p)
     ∂y!(dpdy,p)
 
-    #TODO check whether the order of PV,PVadvection etc. is correct
     # Potential vorticity and advection thereof
     PVadvection!(Diag,S)
 
     # adding the terms
     momentum_u!(Diag,S)
     momentum_v!(Diag,S)
-    continuity!(Diag,S)
+    continuity!(η,Diag,S,t)
 end
 
 """Tendencies du,dv,dη of
@@ -76,7 +77,8 @@ function rhs_linear!(   u::AbstractMatrix,
                         v::AbstractMatrix,
                         η::AbstractMatrix,
                         Diag::DiagnosticVars,
-                        S::ModelSetup)
+                        S::ModelSetup,
+                        t::Int)
 
     @unpack h,h_u,h_v,U,V,dUdx,dVdy = Diag.VolumeFluxes
     @unpack g = S.constants
@@ -106,7 +108,7 @@ function rhs_linear!(   u::AbstractMatrix,
     # adding the terms
     momentum_u!(Diag,S)
     momentum_v!(Diag,S)
-    continuity!(Diag,S)
+    continuity!(η,Diag,S,t)
 end
 
 """ Update advective and Coriolis tendencies."""
