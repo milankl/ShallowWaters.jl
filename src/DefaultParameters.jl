@@ -2,6 +2,9 @@
 
     T::DataType=Float32                 # number format
 
+    Tprog::DataType=T                   # number format for prognostic variables
+    Tcomm::DataType=T                   # number format for ghost-point copies
+
     # DOMAIN RESOLUTION AND RATIO
     nx::Int=100                         # number of grid cells in x-direction
     Lx::Real=2000e3                     # length of the domain in x-direction [m]
@@ -30,7 +33,7 @@
     surface_relax::Bool=false           # yes?
     t_relax::Real=100.                  # time scale of the relaxation [days]
     η_refh::Real=5.                     # height difference [m] of the interface relaxation profile
-    η_refw::Real=50e3                  # width [m] of the tangent used for the interface relaxation
+    η_refw::Real=50e3                   # width [m] of the tangent used for the interface relaxation
 
     # SURFACE FORCING (Currently only Kelvin wave pumping at Eq.)
     surface_forcing::Bool=false         # yes?

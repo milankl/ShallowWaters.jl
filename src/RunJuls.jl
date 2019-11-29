@@ -24,13 +24,15 @@ end
 
 function RunJuls(::Type{T},P::Parameter) where {T<:AbstractFloat}
 
+    @unpack Tprog = P
+
     G = Grid{T}(P)
-    C = Constants{T}(P,G)
+    C = Constants{T,Tprog}(P,G)
     F = Forcing{T}(P,G)
     S = ModelSetup{T}(P,G,C,F)
 
-    Prog = initial_conditions(T,S)
-    Diag = preallocate(T,G)
+    Prog = initial_conditions(Tprog,S)
+    Diag = preallocate(T,Tprog,Prog,G)
 
     Prog = time_integration(T,Prog,Diag,S)
     return Prog

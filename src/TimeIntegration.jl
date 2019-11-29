@@ -47,7 +47,7 @@ function time_integration(  ::Type{T},
                 ghost_points!(u1,v1,η1,S)
             end
 
-            rhs!(u1,v1,η1,Diag,S,t)
+            rhs!(T,u1,v1,η1,Diag,S,t)
 
             if rki < RKo
                 caxb!(u1,u,RKbΔt[rki],du)   #u1 .= u .+ RKb[rki]*Δt*du

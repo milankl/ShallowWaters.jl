@@ -436,9 +436,9 @@ end
 
 ###################################################################
 
-struct DiagnosticVars{T}
-    RungeKutta::RungeKuttaVars{T}
-    Tendencies::TendencyVars{T}
+struct DiagnosticVars{T,Tprog}
+    RungeKutta::RungeKuttaVars{Tprog}
+    Tendencies::TendencyVars{Tprog}
     VolumeFluxes::VolumeFluxVars{T}
     Vorticity::VorticityVars{T}
     Bernoulli::BernoulliVars{T}
@@ -447,12 +447,17 @@ struct DiagnosticVars{T}
     Laplace::LaplaceVars{T}
     Smagorinsky::SmagorinskyVars{T}
     SemiLagrange::SemiLagrangeVars{T}
+    PrognosticRHS::PrognosticVars{T}        # low precision version of prognostic variables for RHS
 end
 
 """Preallocate the diagnostic variables and return them as matrices in structs."""
-function preallocate(::Type{T},G::Grid) where {T<:AbstractFloat}
-    RK = RungeKuttaVars{T}(G)
-    TD = TendencyVars{T}(G)
+function preallocate(   ::Type{T},
+                        ::Type{Tprog},
+                        Prog::PrognosticVars,
+                        G::Grid) where {T<:AbstractFloat,Tprog<:AbstractFloat}
+
+    RK = RungeKuttaVars{Tprog}(G)
+    TD = TendencyVars{Tprog}(G)
     VF = VolumeFluxVars{T}(G)
     VT = VorticityVars{T}(G)
     BN = BernoulliVars{T}(G)
@@ -461,6 +466,7 @@ function preallocate(::Type{T},G::Grid) where {T<:AbstractFloat}
     LP = LaplaceVars{T}(G)
     SM = SmagorinskyVars{T}(G)
     SL = SemiLagrangeVars{T}(G)
+    PR = PrognosticVars{T}(Prog.u,Prog.v,Prog.η,Prog.sst)
 
-    return DiagnosticVars{T}(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL)
+    return DiagnosticVars{T,Tprog}(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PR)
 end

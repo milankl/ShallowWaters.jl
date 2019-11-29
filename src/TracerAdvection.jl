@@ -239,18 +239,18 @@ function bilin(f00::T,f10::T,f01::T,f11::T,x::T,y::T) where {T<:AbstractFloat}
     return f00*(oone-x)*(oone-y) + f10*x*(oone-y) + f01*(oone-x)*y + f11*x*y
 end
 
-"""Tracer relaxation."""
-function tracer_relax!(sst::AbstractMatrix,sst_ref::AbstractMatrix,SSTγ::AbstractMatrix)
-    m,n = size(sst)
-    @boundscheck (m-2*halosstx,n-2*halossty) == size(sst_ref) || throw(BoundsError())
-    @boundscheck (m-2*halosstx,n-2*halossty) == size(SSTγ) || throw(BoundsError())
-
-    @inbounds for j ∈ 1+halossty:n-halossty
-        for i ∈ 1+halosstx:m-halosstx
-            sst[i,j] += SSTγ[i-halosstx,j-halossty]*(sst_ref[i-halosstx,j-halossty] - sst[i,j])
-        end
-    end
-end
+# """Tracer relaxation."""
+# function tracer_relax!(sst::AbstractMatrix,sst_ref::AbstractMatrix,SSTγ::AbstractMatrix)
+#     m,n = size(sst)
+#     @boundscheck (m-2*halosstx,n-2*halossty) == size(sst_ref) || throw(BoundsError())
+#     @boundscheck (m-2*halosstx,n-2*halossty) == size(SSTγ) || throw(BoundsError())
+#
+#     @inbounds for j ∈ 1+halossty:n-halossty
+#         for i ∈ 1+halosstx:m-halosstx
+#             sst[i,j] += SSTγ[i-halosstx,j-halossty]*(sst_ref[i-halosstx,j-halossty] - sst[i,j])
+#         end
+#     end
+# end
 
 """Tracer consumption via relaxation back to ."""
 function tracer_consumption!(   sst::Array{T,2},
@@ -268,15 +268,15 @@ function tracer_consumption!(   sst::Array{T,2},
     end
 end
 
-"""Spatially dependent relaxation time scale."""
-function sst_γ(x::AbstractVector,y::AbstractVector)
-    xx,yy = meshgrid(x,y)
-
-    # convert from days to one over 1/s and include adv time step
-    γ0 = dtadvint/(SST_γ0*3600*24)
-
-    x10E = 10*m_per_lat()   # assume Equator: lat/lon equivalence
-    γ = γ0/2 .* (1 .- tanh.((xx.-SST_λ0)./SST_λs))
-    γ[xx .> x10E] .= 0.0
-    return Numtype.(γ)
-end
+# """Spatially dependent relaxation time scale."""
+# function sst_γ(x::AbstractVector,y::AbstractVector)
+#     xx,yy = meshgrid(x,y)
+#
+#     # convert from days to one over 1/s and include adv time step
+#     γ0 = dtadvint/(SST_γ0*3600*24)
+#
+#     x10E = 10*m_per_lat()   # assume Equator: lat/lon equivalence
+#     γ = γ0/2 .* (1 .- tanh.((xx.-SST_λ0)./SST_λs))
+#     γ[xx .> x10E] .= 0.0
+#     return Numtype.(γ)
+# end
