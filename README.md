@@ -11,7 +11,7 @@ A shallow water model with a focus on type-flexibility and 16bit number formats.
 
 Juls is fully-explicit with an energy and enstrophy conserving advection scheme and a Smagorinsky-like biharmonic diffusion operator. Tracer advection is implemented with a semi-Lagrangian advection scheme. Runge-Kutta 4th-order is used for pressure, advective and Coriolis terms and the continuity equation. Semi-implicit time stepping for diffusion and bottom friction. Boundary conditions are either periodic (only in x direction) or non-periodic super-slip, free-slip, partial-slip, or no-slip. Output via NetCDF.
 
-# How to use
+## How to use
 
 You find the default parameters in `src/DefaultParameters.jl`. They can be changed with keyword arguments. Optionally, the number format `T` is defined as the first argument of `RunJuls(T,...)`
 ```julia
@@ -25,12 +25,12 @@ julia> P = Parameter(bc="nonperiodic",wind_forcing_x="double_gyre",L_ratio=1,nx=
 julia> Prog = RunJuls(P);
 ```
 
-# Installation
+## Installation
 ```julia
 julia> ] add https://github.com/milankl/Juls.jl
 ```
 
-# THE EQUATIONS
+## The equations
 
 The non-linear shallow water model plus tracer equation is
 
