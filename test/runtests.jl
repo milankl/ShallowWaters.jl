@@ -18,3 +18,13 @@ end
     Prog = RunJuls(Ndays=1,α=0)     # free-slip
     @test all(abs.(Prog.η) .< 10)
 end
+
+@testset "ContinuityForcing" begin
+    Prog = RunJuls(Ndays=1,surface_relax=true)
+    @test all(abs.(Prog.η) .< 10)    # sea surface height shouldn't exceed +-10m
+    @test all(Prog.u .!= 0.0f0)
+
+    Prog = RunJuls(Ndays=1,surface_forcing=true)
+    @test all(abs.(Prog.η) .< 10)
+    @test all(Prog.u .!= 0.0f0)
+end

@@ -73,11 +73,11 @@
     sst_initial::String="south"         # "west", "south", "rect", "flat" or "restart"
     sst_rect_coords::Array{Float64,1}=[0.,0.15,0.,1.0]
                                         # (x0,x1,y0,y1) are the size of the rectangle in [0,1]
-    Uadv::Real=0.15                     # Velocity scale [m/s] for tracer advection
+    Uadv::Real=0.25                     # Velocity scale [m/s] for tracer advection
     SSTmax::Real=1.                     # tracer (sea surface temperature) max for restoring
     SSTmin::Real=0.                     # tracer (sea surface temperature) min for restoring
     τSST::Real=500.                     # tracer restoring time scale [days]
-    jSST::Real=50*365.                  # tracer consumption [days]
+    jSST::Real=365.                     # tracer consumption [days]
     SST_λ0::Real=222e3                  # [m] transition position of relaxation timescale
     SST_λs::Real=111e3                  # [m] transition width of relaxation timescale
     SST_γ0::Real=8.35                   # [days] injection time scale

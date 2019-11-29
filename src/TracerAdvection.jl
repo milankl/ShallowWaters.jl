@@ -3,7 +3,7 @@ function tracer!(   i::Integer,
                     Diag::DiagnosticVars,
                     S::ModelSetup)
 
-    @unpack tracer_advection = S.parameters
+    @unpack tracer_advection, tracer_consumption = S.parameters
     @unpack nadvstep_half,nadvstep = S.grid
 
     # mid point (in time) velocity for the advective time step
@@ -20,21 +20,19 @@ function tracer!(   i::Integer,
         departure!(Prog,Diag,S)
         adv_sst!(Prog,Diag,S)
 
-        # if tracer_relaxation
-        #     tracer_relax!(ssti,sst_ref,SSTγ)
-        # end
-        # if tracer_consumption
-        #     tracer_consumption!(ssti)
-        # end
-
         @unpack ssti = Diag.SemiLagrange
         @unpack sst = Prog
 
+        # if tracer_relaxation
+        #     tracer_relax!(ssti,sst_ref,SSTγ)
+        # end
+
+        if tracer_consumption
+            tracer_consumption!(ssti,S)
+        end
+
         ghost_points_sst!(ssti,S)
         copyto!(sst,ssti)
-
-        #TODO tracer conservation?
-        #println(mean(sst[halosstx+1:end-halosstx,halossty+1:end-halossty].*h[haloη+1:end-haloη,haloη+1:end-haloη]))
     end
 end
 
@@ -254,13 +252,18 @@ function tracer_relax!(sst::AbstractMatrix,sst_ref::AbstractMatrix,SSTγ::Abstra
     end
 end
 
-"""Tracer consumption."""
-function tracer_consumption!(sst::AbstractMatrix)
+"""Tracer consumption via relaxation back to ."""
+function tracer_consumption!(   sst::Array{T,2},
+                                S::ModelSetup) where {T<:AbstractFloat}
+
+    @unpack jSST,SSTmin = S.constants
+    @unpack halosstx,halossty = S.grid
+
     m,n = size(sst)
 
     @inbounds for j ∈ 1+halossty:n-halossty
         for i ∈ 1+halosstx:m-halosstx
-            sst[i,j] += SST_J*(SST0 - sst[i,j])
+            sst[i,j] += jSST*(SSTmin - sst[i,j])
         end
     end
 end
