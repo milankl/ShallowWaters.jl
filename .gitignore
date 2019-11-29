@@ -2,3 +2,5 @@
 *.jld
 *.nc
 nohup.out
+progress.txt
+parameter.txt

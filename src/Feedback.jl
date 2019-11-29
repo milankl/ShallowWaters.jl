@@ -97,6 +97,11 @@ function feedback_init(S::ModelSetup)
         write(txt,"Boundary conditions are $bc with lbc=$α.\n")
         write(txt,"Number format is "*string(T)*".\n")
         write(txt,"\nAll data will be stored in $runpath\n")
+
+        # Parameter.txt
+        ptxt = open(joinpath(runpath,"parameter.txt"),"w")
+        print(ptxt,S.parameters)
+        close(ptxt)
     else
         println("Starting Juls on "*Dates.format(now(),Dates.RFC1123Format)*" without output.")
         txt = nothing

@@ -30,9 +30,9 @@
     surface_relax::Bool=false           # yes?
     t_relax::Real=100.                  # time scale of the relaxation [days]
     η_refh::Real=5.                     # height difference [m] of the interface relaxation profile
-    η_refw::Real=100e3                  # width [m] of the tangent used for the interface relaxation
+    η_refw::Real=50e3                  # width [m] of the tangent used for the interface relaxation
 
-    # SURFACE FORCING
+    # SURFACE FORCING (Currently only Kelvin wave pumping at Eq.)
     surface_forcing::Bool=false         # yes?
     ωyr::Real=1.0                       # (annual) frequency [1/year]
     A::Real=3e-5                        # Amplitude [m/s]
