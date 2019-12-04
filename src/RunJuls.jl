@@ -34,6 +34,6 @@ function RunJuls(::Type{T},P::Parameter) where {T<:AbstractFloat}
     Prog = initial_conditions(Tprog,S)
     Diag = preallocate(T,Tprog,G)
 
-    Prog = time_integration(T,Prog,Diag,S)
+    Prog = time_integration(Prog,Diag,S)
     return Prog
 end

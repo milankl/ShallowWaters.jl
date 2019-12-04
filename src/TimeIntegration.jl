@@ -67,16 +67,15 @@ function time_integration(  Prog::PrognosticVars{Tprog},
 
         ghost_points!(u0,v0,η0,S)
 
+        # type conversion for mixed precision
+        u0rhs = convert(Diag.PrognosticRHS.u,u0)
+        v0rhs = convert(Diag.PrognosticRHS.v,v0)
+        η0rhs = convert(Diag.PrognosticRHS.η,η0)
+
         # ADVECTION and CORIOLIS TERMS
         # although included in the tendency of every RK substep,
         # only update every nstep_advcor steps if nstep_advcor > 0
         if dynamics == "nonlinear" && nstep_advcor > 0 && (i % nstep_advcor) == 0
-
-            # type conversion for mixed precision
-            u0rhs = convert(Diag.PrognosticRHS.u,u0)
-            v0rhs = convert(Diag.PrognosticRHS.v,v0)
-            η0rhs = convert(Diag.PrognosticRHS.η,η0)
-
             advection_coriolis!(u0rhs,v0rhs,η0rhs,Diag,S)
         end
 
@@ -84,12 +83,6 @@ function time_integration(  Prog::PrognosticVars{Tprog},
         # use u0 = u^(n+1) to evaluate tendencies, add to u0 = u^n + rhs
         # evaluate only every nstep_diff time steps
         if (i % nstep_diff) == 0
-
-            # type conversion for mixed precision
-            u0rhs = convert(Diag.PrognosticRHS.u,u0)
-            v0rhs = convert(Diag.PrognosticRHS.v,v0)
-            η0rhs = convert(Diag.PrognosticRHS.η,η0)
-
             bottom_drag!(u0rhs,v0rhs,η0rhs,Diag,S)
             diffusion!(u0rhs,v0rhs,Diag,S)
             add_drag_diff_tendencies!(u0,v0,Diag,S)
@@ -102,7 +95,7 @@ function time_integration(  Prog::PrognosticVars{Tprog},
         t += dtint
 
         # TRACER ADVECTION
-        tracer!(i,Prog,Diag,S)
+        tracer!(i,u0rhs,v0rhs,Prog,Diag,S)
 
         # feedback and output
         feedback.i = i
