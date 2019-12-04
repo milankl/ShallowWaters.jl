@@ -1,11 +1,11 @@
-struct Constants{T<:AbstractFloat}
+struct Constants{T<:AbstractFloat,Tprog<:AbstractFloat}
 
     # RUNGE-KUTTA COEFFICIENTS 3rd/4th order including timestep Δt
-    RKaΔt::Array{T,1}
-    RKbΔt::Array{T,1}
+    RKaΔt::Array{Tprog,1}
+    RKbΔt::Array{Tprog,1}
 
     # BOUNDARY CONDITIONS
-    one_minus_α::T      # tangential boundary condition for the ghost-point copy
+    one_minus_α::Tprog      # tangential boundary condition for the ghost-point copy
 
     # PHYSICAL CONSTANTS
     g::T                    # gravity
@@ -17,23 +17,23 @@ struct Constants{T<:AbstractFloat}
     rSST::T                 # tracer restoring timescale
     jSST::T                 # tracer consumption timescale
     SSTmin::T               # tracer minimum
-    ωyr::Float64            # # frequency [1/s] of Kelvin pumping (including 2π)
+    ωyr::Float64            # frequency [1/s] of Kelvin pumping (including 2π)
 end
 
 """Generator function for the mutable struct Constants."""
-function Constants{T}(P::Parameter,G::Grid) where {T<:AbstractFloat}
+function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<:AbstractFloat}
 
     # Runge-Kutta 3rd/4th order coefficients including time step Δt
     # (which includes the grid spacing Δ too)
     if P.RKo == 3     # version 2
-        RKaΔt = T.([1/4,0.,3/4]*G.dtint/G.Δ)
-        RKbΔt = T.([1/3,2/3]*G.dtint/G.Δ)
+        RKaΔt = Tprog.([1/4,0.,3/4]*G.dtint/G.Δ)
+        RKbΔt = Tprog.([1/3,2/3]*G.dtint/G.Δ)
     elseif P.RKo == 4
-        RKaΔt = T.([1/6,1/3,1/3,1/6]*G.dtint/G.Δ)
-        RKbΔt = T.([.5,.5,1.]*G.dtint/G.Δ)
+        RKaΔt = Tprog.([1/6,1/3,1/3,1/6]*G.dtint/G.Δ)
+        RKbΔt = Tprog.([.5,.5,1.]*G.dtint/G.Δ)
     end
 
-    one_minus_α = T(1-P.α)    # for the ghost point copy/tangential boundary conditions
+    one_minus_α = Tprog(1-P.α)    # for the ghost point copy/tangential boundary conditions
     g = T(P.g)                # gravity - for Bernoulli potential
 
     # BOTTOM FRICTION COEFFICENTS
@@ -57,5 +57,5 @@ function Constants{T}(P::Parameter,G::Grid) where {T<:AbstractFloat}
     # SURFACE FORCING
     ωyr = -2π*P.ωyr/24/365/3600
 
-    return Constants{T}(RKaΔt,RKbΔt,one_minus_α,g,cD,rD,γ,cSmag,νB,rSST,jSST,SSTmin,ωyr)
+    return Constants{T,Tprog}(RKaΔt,RKbΔt,one_minus_α,g,cD,rD,γ,cSmag,νB,rSST,jSST,SSTmin,ωyr)
 end

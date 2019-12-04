@@ -218,10 +218,10 @@ function viscous_tensor_constant!(  Diag::DiagnosticVars,
 end
 
 """Update u with bottom friction tendency (Bu,Bv) and biharmonic viscosity."""
-function add_drag_diff_tendencies!( u::AbstractMatrix,
-                                    v::AbstractMatrix,
-                                    Diag::DiagnosticVars,
-                                    S::ModelSetup)
+function add_drag_diff_tendencies!( u::Array{Tprog,2},
+                                    v::Array{Tprog,2},
+                                    Diag::DiagnosticVars{T,Tprog},
+                                    S::ModelSetup{T,Tprog}) where {T,Tprog}
 
     @unpack Bu,Bv = Diag.Bottomdrag
     @unpack LLu1,LLu2,LLv1,LLv2 = Diag.Smagorinsky
@@ -234,7 +234,7 @@ function add_drag_diff_tendencies!( u::AbstractMatrix,
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            u[i+2,j+2] += Δt_diff*(Bu[i+1-ep,j+1] + LLu1[i,j+1] + LLu2[i+1-ep,j])
+            u[i+2,j+2] += Δt_diff*(Tprog(Bu[i+1-ep,j+1]) + Tprog(LLu1[i,j+1]) + Tprog(LLu2[i+1-ep,j]))
         end
     end
 
@@ -245,7 +245,7 @@ function add_drag_diff_tendencies!( u::AbstractMatrix,
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-             v[i+2,j+2] += Δt_diff*(Bv[i+1,j+1] + LLv1[i,j+1] + LLv2[i+1,j])
+             v[i+2,j+2] += Δt_diff*(Tprog(Bv[i+1,j+1]) + Tprog(LLv1[i,j+1]) + Tprog(LLv2[i+1,j]))
         end
     end
 end

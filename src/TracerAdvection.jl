@@ -1,15 +1,15 @@
 function tracer!(   i::Integer,
+                    u::AbstractMatrix,
+                    v::AbstractMatrix,
                     Prog::PrognosticVars,
                     Diag::DiagnosticVars,
                     S::ModelSetup)
 
-    @unpack tracer_advection = S.parameters
+    @unpack tracer_advection, tracer_consumption = S.parameters
     @unpack nadvstep_half,nadvstep = S.grid
 
     # mid point (in time) velocity for the advective time step
     if tracer_advection && ((i+nadvstep_half) % nadvstep) == 0
-
-        @unpack u,v = Prog
         @unpack um,vm = Diag.SemiLagrange
 
         copyto!(um,u)
@@ -17,24 +17,28 @@ function tracer!(   i::Integer,
     end
 
     if tracer_advection && (i % nadvstep) == 0
-        departure!(Prog,Diag,S)
-        adv_sst!(Prog,Diag,S)
+
+        @unpack sst = Prog
+        @unpack ssti = Diag.SemiLagrange
+
+        # convert to type T for mixed precision
+        sstrhs = convert(Diag.PrognosticRHS.sst,sst)
+
+        departure!(u,v,Diag,S)
+        adv_sst!(sstrhs,Diag,S)
 
         # if tracer_relaxation
         #     tracer_relax!(ssti,sst_ref,SSTγ)
         # end
-        # if tracer_consumption
-        #     tracer_consumption!(ssti)
-        # end
 
-        @unpack ssti = Diag.SemiLagrange
-        @unpack sst = Prog
+        if tracer_consumption
+            tracer_consumption!(ssti,S)
+        end
 
         ghost_points_sst!(ssti,S)
-        copyto!(sst,ssti)
 
-        #TODO tracer conservation?
-        #println(mean(sst[halosstx+1:end-halosstx,halossty+1:end-halossty].*h[haloη+1:end-haloη,haloη+1:end-haloη]))
+        # copy back to sst, and convert to type Tprog if necessary
+        copyto!(sst,ssti)
     end
 end
 
@@ -44,11 +48,11 @@ u,v are assumed to be the time averaged velocities over the previous advection t
 (Presumably need to be changed to 2nd order extrapolation in case the tracer is not passive)
 
 Uses fixed-point iteration once to find the departure point."""
-function departure!(Prog::PrognosticVars,
+function departure!(u::AbstractMatrix,
+                    v::AbstractMatrix,
                     Diag::DiagnosticVars,
                     S::ModelSetup)
 
-    @unpack u,v = Prog
     @unpack u_T,v_T,um,vm,um_T,vm_T = Diag.SemiLagrange
     @unpack uinterp,vinterp,xd,yd = Diag.SemiLagrange
     @unpack dtadvu,dtadvv,half_dtadvu,half_dtadvv = S.grid
@@ -110,7 +114,7 @@ function backtraj!( rd::Array{T,2},
     # relative grid means rd = 0 - dt*uv. The arrival information is stored in
     # the indices i,j of rd: rd[2,3] => -0.5,-0.5 means for the arrival grid node (2,3)
     # the departure is (2-0.5,3-0.5) = (1.5,2.5)
-    @inbounds for j ∈ 1:n
+    for j ∈ 1:n
         for i ∈ 1:m
             rd[i,j] = -dt*uv[i+ishift,j+jshift]
         end
@@ -171,11 +175,10 @@ end
 Departure points are clipped/wrapped to remain within the domain. Boundary conditions either
 periodic (wrap around behaviour) or no-flux (no gradient via clipping). Once the respective
 4 surrounding grid points are found do bilinear interpolation on the unit square."""
-function adv_sst!(  Prog::PrognosticVars,
+function adv_sst!(  sst::AbstractMatrix,
                     Diag::DiagnosticVars,
                     S::ModelSetup)
 
-    @unpack sst = Prog
     @unpack ssti,xd,yd = Diag.SemiLagrange
     @unpack halosstx,halossty = S.grid
 
@@ -187,7 +190,7 @@ function adv_sst!(  Prog::PrognosticVars,
     @unpack bc = S.parameters
     clip_or_wrap = if bc == "periodic" wrap else clip end
 
-    @inbounds for j ∈ 1:n-2*halossty
+    for j ∈ 1:n-2*halossty
         for i ∈ 1:m-2*halosstx
 
             xi = Int(floor(Float64(xd[i,j])))   # departure point lower left corner
@@ -241,39 +244,44 @@ function bilin(f00::T,f10::T,f01::T,f11::T,x::T,y::T) where {T<:AbstractFloat}
     return f00*(oone-x)*(oone-y) + f10*x*(oone-y) + f01*(oone-x)*y + f11*x*y
 end
 
-"""Tracer relaxation."""
-function tracer_relax!(sst::AbstractMatrix,sst_ref::AbstractMatrix,SSTγ::AbstractMatrix)
+# """Tracer relaxation."""
+# function tracer_relax!(sst::AbstractMatrix,sst_ref::AbstractMatrix,SSTγ::AbstractMatrix)
+#     m,n = size(sst)
+#     @boundscheck (m-2*halosstx,n-2*halossty) == size(sst_ref) || throw(BoundsError())
+#     @boundscheck (m-2*halosstx,n-2*halossty) == size(SSTγ) || throw(BoundsError())
+#
+#     @inbounds for j ∈ 1+halossty:n-halossty
+#         for i ∈ 1+halosstx:m-halosstx
+#             sst[i,j] += SSTγ[i-halosstx,j-halossty]*(sst_ref[i-halosstx,j-halossty] - sst[i,j])
+#         end
+#     end
+# end
+
+"""Tracer consumption via relaxation back to ."""
+function tracer_consumption!(   sst::Array{T,2},
+                                S::ModelSetup) where {T<:AbstractFloat}
+
+    @unpack jSST,SSTmin = S.constants
+    @unpack halosstx,halossty = S.grid
+
     m,n = size(sst)
-    @boundscheck (m-2*halosstx,n-2*halossty) == size(sst_ref) || throw(BoundsError())
-    @boundscheck (m-2*halosstx,n-2*halossty) == size(SSTγ) || throw(BoundsError())
 
     @inbounds for j ∈ 1+halossty:n-halossty
         for i ∈ 1+halosstx:m-halosstx
-            sst[i,j] += SSTγ[i-halosstx,j-halossty]*(sst_ref[i-halosstx,j-halossty] - sst[i,j])
+            sst[i,j] += jSST*(SSTmin - sst[i,j])
         end
     end
 end
 
-"""Tracer consumption."""
-function tracer_consumption!(sst::AbstractMatrix)
-    m,n = size(sst)
-
-    @inbounds for j ∈ 1+halossty:n-halossty
-        for i ∈ 1+halosstx:m-halosstx
-            sst[i,j] += SST_J*(SST0 - sst[i,j])
-        end
-    end
-end
-
-"""Spatially dependent relaxation time scale."""
-function sst_γ(x::AbstractVector,y::AbstractVector)
-    xx,yy = meshgrid(x,y)
-
-    # convert from days to one over 1/s and include adv time step
-    γ0 = dtadvint/(SST_γ0*3600*24)
-
-    x10E = 10*m_per_lat()   # assume Equator: lat/lon equivalence
-    γ = γ0/2 .* (1 .- tanh.((xx.-SST_λ0)./SST_λs))
-    γ[xx .> x10E] .= 0.0
-    return Numtype.(γ)
-end
+# """Spatially dependent relaxation time scale."""
+# function sst_γ(x::AbstractVector,y::AbstractVector)
+#     xx,yy = meshgrid(x,y)
+#
+#     # convert from days to one over 1/s and include adv time step
+#     γ0 = dtadvint/(SST_γ0*3600*24)
+#
+#     x10E = 10*m_per_lat()   # assume Equator: lat/lon equivalence
+#     γ = γ0/2 .* (1 .- tanh.((xx.-SST_λ0)./SST_λs))
+#     γ[xx .> x10E] .= 0.0
+#     return Numtype.(γ)
+# end
