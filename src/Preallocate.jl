@@ -447,13 +447,12 @@ struct DiagnosticVars{T,Tprog}
     Laplace::LaplaceVars{T}
     Smagorinsky::SmagorinskyVars{T}
     SemiLagrange::SemiLagrangeVars{T}
-    PrognosticRHS::PrognosticVars{T}        # low precision version of prognostic variables for RHS
+    PrognosticRHS::PrognosticVars{T}        # low precision version
 end
 
 """Preallocate the diagnostic variables and return them as matrices in structs."""
 function preallocate(   ::Type{T},
                         ::Type{Tprog},
-                        Prog::PrognosticVars,
                         G::Grid) where {T<:AbstractFloat,Tprog<:AbstractFloat}
 
     RK = RungeKuttaVars{Tprog}(G)
@@ -466,7 +465,7 @@ function preallocate(   ::Type{T},
     LP = LaplaceVars{T}(G)
     SM = SmagorinskyVars{T}(G)
     SL = SemiLagrangeVars{T}(G)
-    PR = PrognosticVars{T}(Prog.u,Prog.v,Prog.η,Prog.sst)
+    PV = PrognosticVars{T}(G)
 
-    return DiagnosticVars{T,Tprog}(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PR)
+    return DiagnosticVars{T,Tprog}(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PV)
 end

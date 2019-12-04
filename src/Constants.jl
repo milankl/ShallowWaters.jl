@@ -5,7 +5,7 @@ struct Constants{T<:AbstractFloat,Tprog<:AbstractFloat}
     RKbΔt::Array{Tprog,1}
 
     # BOUNDARY CONDITIONS
-    one_minus_α::T      # tangential boundary condition for the ghost-point copy
+    one_minus_α::Tprog      # tangential boundary condition for the ghost-point copy
 
     # PHYSICAL CONSTANTS
     g::T                    # gravity
@@ -33,7 +33,7 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
         RKbΔt = Tprog.([.5,.5,1.]*G.dtint/G.Δ)
     end
 
-    one_minus_α = T(1-P.α)    # for the ghost point copy/tangential boundary conditions
+    one_minus_α = Tprog(1-P.α)    # for the ghost point copy/tangential boundary conditions
     g = T(P.g)                # gravity - for Bernoulli potential
 
     # BOTTOM FRICTION COEFFICENTS

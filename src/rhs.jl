@@ -1,22 +1,10 @@
 """Transit function to call either the  rhs_linear or the rhs_nonlinear."""
-function rhs!(  ::Type{T},
-                u::Array{Tprog,2},
-                v::Array{Tprog,2},
-                η::Array{Tprog,2},
+function rhs!(  u::AbstractMatrix,
+                v::AbstractMatrix,
+                η::AbstractMatrix,
                 Diag::DiagnosticVars,
                 S::ModelSetup,
-                t::Int) where {T<:AbstractFloat,Tprog<:AbstractFloat}
-
-    if T != Tprog   # convert high precision Tprog to low precision T
-        Diag.PrognosticRHS.u .= convert.(T,u)
-        Diag.PrognosticRHS.v .= convert.(T,v)
-        Diag.PrognosticRHS.η .= convert.(T,η)
-
-        # reset pointer
-        u = Diag.PrognosticRHS.u
-        v = Diag.PrognosticRHS.v
-        η = Diag.PrognosticRHS.η
-    end
+                t::Int)
 
     @unpack dynamics = S.parameters
 
@@ -293,7 +281,7 @@ function fu!(   qhu::AbstractMatrix,
 end
 
 """Sum up the tendencies of the non-diffusive right-hand side for the u-component."""
-function momentum_u!(Diag::DiagnosticVars,S::ModelSetup)
+function momentum_u!(Diag::DiagnosticVars{T,Tprog},S::ModelSetup) where {T,Tprog}
 
     @unpack du = Diag.Tendencies
     @unpack qhv = Diag.Vorticity
@@ -308,19 +296,13 @@ function momentum_u!(Diag::DiagnosticVars,S::ModelSetup)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            du[i+2,j+2] = qhv[i,j] - dpdx[i+1-ep,j+1] + Fx[i,j]
+            du[i+2,j+2] = Tprog(qhv[i,j]) - Tprog(dpdx[i+1-ep,j+1]) + TProg(Fx[i,j])
         end
     end
-
-    # @inbounds for j ∈ 1:n
-    #     for i ∈ 1:m
-    #         du[i+2,j+2] = Tprog(qhv[i,j]) - Tprog(dpdx[i+1-ep,j+1]) + TProg(Fx[i,j])
-    #     end
-    # end
 end
 
 """Sum up the tendencies of the non-diffusive right-hand side for the v-component."""
-function momentum_v!(Diag::DiagnosticVars,S::ModelSetup)
+function momentum_v!(Diag::DiagnosticVars{T,Tprog},S::ModelSetup) where {T,Tprog}
 
     @unpack dv = Diag.Tendencies
     @unpack qhu = Diag.Vorticity
@@ -334,13 +316,7 @@ function momentum_v!(Diag::DiagnosticVars,S::ModelSetup)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-             dv[i+2,j+2] = -qhu[i,j] - dpdy[i+1,j+1] + Fy[i,j]
+             dv[i+2,j+2] = -Tprog(qhu[i,j]) - Tprog(dpdy[i+1,j+1]) + Tprog(Fy[i,j])
         end
     end
-
-    # @inbounds for j ∈ 1:n
-    #     for i ∈ 1:m
-    #          dv[i+2,j+2] = -Tprog(qhu[i,j]) - Tprog(dpdy[i+1,j+1]) + Tprog(Fy[i,j])
-    #     end
-    # end
 end
