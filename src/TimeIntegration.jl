@@ -1,8 +1,7 @@
 """Integrates Juls forward in time."""
-function time_integration(  ::Type{T},
-                            Prog::PrognosticVars,
-                            Diag::DiagnosticVars,
-                            S::ModelSetup) where {T<:AbstractFloat}
+function time_integration(  Prog::PrognosticVars{Tprog},
+                            Diag::DiagnosticVars{T,Tprog},
+                            S::ModelSetup) where {T<:AbstractFloat,Tprog<:AbstractFloat}
 
     @unpack u,v,η,sst = Prog
     @unpack u0,v0,η0 = Diag.RungeKutta
@@ -47,7 +46,12 @@ function time_integration(  ::Type{T},
                 ghost_points!(u1,v1,η1,S)
             end
 
-            rhs!(u1,v1,η1,Diag,S)
+            # type conversion for mixed precision
+            u1rhs = convert(Diag.PrognosticRHS.u,u1)
+            v1rhs = convert(Diag.PrognosticRHS.v,v1)
+            η1rhs = convert(Diag.PrognosticRHS.η,η1)
+
+            rhs!(u1rhs,v1rhs,η1rhs,Diag,S,t)
 
             if rki < RKo
                 caxb!(u1,u,RKbΔt[rki],du)   #u1 .= u .+ RKb[rki]*Δt*du
@@ -63,21 +67,24 @@ function time_integration(  ::Type{T},
 
         ghost_points!(u0,v0,η0,S)
 
+        # type conversion for mixed precision
+        u0rhs = convert(Diag.PrognosticRHS.u,u0)
+        v0rhs = convert(Diag.PrognosticRHS.v,v0)
+        η0rhs = convert(Diag.PrognosticRHS.η,η0)
+
         # ADVECTION and CORIOLIS TERMS
         # although included in the tendency of every RK substep,
         # only update every nstep_advcor steps if nstep_advcor > 0
-        if dynamics == "nonlinear" &&
-            nstep_advcor > 0 &&
-            (i % nstep_advcor) == 0
-            advection_coriolis!(u0,v0,η0,Diag,S)
+        if dynamics == "nonlinear" && nstep_advcor > 0 && (i % nstep_advcor) == 0
+            advection_coriolis!(u0rhs,v0rhs,η0rhs,Diag,S)
         end
 
         # DIFFUSIVE TERMS - SEMI-IMPLICIT EULER
         # use u0 = u^(n+1) to evaluate tendencies, add to u0 = u^n + rhs
         # evaluate only every nstep_diff time steps
         if (i % nstep_diff) == 0
-            bottom_drag!(u0,v0,η0,Diag,S)
-            diffusion!(u0,v0,Diag,S)
+            bottom_drag!(u0rhs,v0rhs,η0rhs,Diag,S)
+            diffusion!(u0rhs,v0rhs,Diag,S)
             add_drag_diff_tendencies!(u0,v0,Diag,S)
         end
 
@@ -88,7 +95,7 @@ function time_integration(  ::Type{T},
         t += dtint
 
         # TRACER ADVECTION
-        tracer!(i,Prog,Diag,S)
+        tracer!(i,u0rhs,v0rhs,Prog,Diag,S)
 
         # feedback and output
         feedback.i = i
@@ -104,7 +111,7 @@ function time_integration(  ::Type{T},
     feedback_end!(feedback)
     output_close!(netCDFfiles,feedback,S)
 
-    return PrognosticVars{T}(remove_halo(u,v,η,sst,S)...)
+    return PrognosticVars{Tprog}(remove_halo(u,v,η,sst,S)...)
 end
 
 """Add to a x multiplied with b. a += x*b """
@@ -132,4 +139,25 @@ function caxb!(c::Array{T,2},a::Array{T,2},x::T,b::Array{T,2}) where {T<:Abstrac
            c[i,j] = a[i,j] + x*b[i,j]
         end
     end
+end
+
+"""Convert function for two arrays, X1, X2, in case their eltypes differ.
+Convert every element from X1 and store it in X2."""
+function Base.convert(X2::Array{T2,N},X1::Array{T1,N}) where {T1,T2,N}
+
+    @boundscheck size(X2) == size(X1) || throw(BoundsError())
+
+    @inbounds for i in eachindex(X1)
+            X2[i] = T2(X1[i])
+    end
+
+    return X2
+end
+
+
+"""Convert function for two arrays, X1, X2, in case their eltypes are identical.
+Just pass X1, such that X2 is pointed to the same place in memory."""
+function Base.convert(X2::Array{T,N},X1::Array{T,N}) where {T,N}
+    @boundscheck size(X2) == size(X1) || throw(BoundsError())
+    return X1
 end

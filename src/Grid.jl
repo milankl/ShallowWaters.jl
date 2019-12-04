@@ -1,4 +1,4 @@
-@with_kw struct Grid{T<:AbstractFloat}
+@with_kw struct Grid{T<:AbstractFloat,Tprog<:AbstractFloat}
 
     # Parameters taken from Parameter struct
     nx::Int                             # number of grid cells in x-direction
@@ -71,7 +71,7 @@
     nt::Int = Int(ceil(Ndays*3600*24/dtint))    # number of time steps to integrate
     dt::T = T(dtint)                            # time step [s]
     Δt::T = T(dtint/Δ)                          # time step divided by grid spacing [s/m]
-    Δt_diff::T = T(nstep_diff*dtint/Δ)          # time step for diffusive terms
+    Δt_diff::Tprog = Tprog(nstep_diff*dtint/Δ)  # time step for diffusive terms
 
     # TIME STEPS FOR ADVECTION
     nadvstep::Int = max(1,Int(floor(Δ/Uadv/dtint)))         # advection each n time steps
@@ -80,7 +80,7 @@
     dtadvu::T = T(dtadvint*nx/Lx)                           # Rescaled advection time step for u [s/m]
     dtadvv::T = T(dtadvint*ny/Ly)                           # Rescaled advection time step for v [s/m]
     half_dtadvu::T = T(dtadvint*nx/Lx/2)                    # dtadvu/2
-    half_dtadvv::T = T(dtadvint*ny/Ly/2)                    # dtadvv/2 
+    half_dtadvv::T = T(dtadvint*ny/Ly/2)                    # dtadvv/2
 
     # N TIME STEPS FOR OUTPUT
     nout::Int = Int(floor(output_dt*3600/dtint))            # output every n time steps
@@ -99,9 +99,9 @@ end
 function yy_q(bc::String,x_q_halo::AbstractVector,y_q_halo::AbstractVector)
     if bc == "periodic"
         # points on the right edge needed too
-        xx_q,yy_q = meshgrid(x_q_halo[3:end-1],y_q_halo[3:end-2])
+        _,yy_q = meshgrid(x_q_halo[3:end-1],y_q_halo[3:end-2])
     else
-        xx_q,yy_q = meshgrid(x_q_halo[3:end-2],y_q_halo[3:end-2])
+        _,yy_q = meshgrid(x_q_halo[3:end-2],y_q_halo[3:end-2])
     end
 
     return yy_q
@@ -109,14 +109,14 @@ end
 
 
 """Generator function for the Grid struct."""
-function Grid{T}(P::Parameter) where {T<:AbstractFloat}
+function Grid{T,Tprog}(P::Parameter) where {T<:AbstractFloat,Tprog<:AbstractFloat}
     @unpack nx,Lx,L_ratio = P
     @unpack bc,g,H,cfl = P
     @unpack Ndays,nstep_diff,nstep_advcor = P
     @unpack Uadv,output_dt = P
     @unpack ϕ,ω,R = P
 
-    return Grid{T}(nx=nx,Lx=Lx,L_ratio=L_ratio,bc=bc,g=g,H=H,cfl=cfl,Ndays=Ndays,
+    return Grid{T,Tprog}(nx=nx,Lx=Lx,L_ratio=L_ratio,bc=bc,g=g,H=H,cfl=cfl,Ndays=Ndays,
                 nstep_diff=nstep_diff,nstep_advcor=nstep_advcor,Uadv=Uadv,output_dt=output_dt,
                 ϕ=ϕ,ω=ω,R=R)
 end

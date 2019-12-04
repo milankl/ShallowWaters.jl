@@ -10,6 +10,19 @@ struct PrognosticVars{T<:AbstractFloat}
     sst::Array{T,2}         # tracer / sea surface temperature
 end
 
+"""Zero generator function for Grid G as argument."""
+function PrognosticVars{T}(G::Grid) where {T<:AbstractFloat}
+    @unpack nux,nuy,nvx,nvy,nx,ny = G
+    @unpack halo,haloη,halosstx,halossty = G
+
+    u = zeros(T,nux+2halo,nuy+2halo)
+    v = zeros(T,nvx+2halo,nvy+2halo)
+    η = zeros(T,nx+2haloη,ny+2haloη)
+    sst = zeros(T,nx+2halosstx,ny+2halossty)
+
+    return PrognosticVars{T}(u,v,η,sst)
+end
+
 function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
 
     ## PROGNOSTIC VARIABLES U,V,η
@@ -49,7 +62,7 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
         NetCDF.close(ncη)
 
         # remove singleton time dimension
-        # and convert from Float32 to Numtype
+        # and convert from Float32 to type T
         u = T.(reshape(u,size(u)[1:2]))
         v = T.(reshape(v,size(v)[1:2]))
         η = T.(reshape(η,size(η)[1:2]))

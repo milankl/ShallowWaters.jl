@@ -2,6 +2,9 @@
 
     T::DataType=Float32                 # number format
 
+    Tprog::DataType=T                   # number format for prognostic variables
+    Tcomm::DataType=T                   # number format for ghost-point copies
+
     # DOMAIN RESOLUTION AND RATIO
     nx::Int=100                         # number of grid cells in x-direction
     Lx::Real=2000e3                     # length of the domain in x-direction [m]
@@ -30,9 +33,9 @@
     surface_relax::Bool=false           # yes?
     t_relax::Real=100.                  # time scale of the relaxation [days]
     η_refh::Real=5.                     # height difference [m] of the interface relaxation profile
-    η_refw::Real=100e3                  # width [m] of the tangent used for the interface relaxation
+    η_refw::Real=50e3                   # width [m] of the tangent used for the interface relaxation
 
-    # SURFACE FORCING
+    # SURFACE FORCING (Currently only Kelvin wave pumping at Eq.)
     surface_forcing::Bool=false         # yes?
     ωyr::Real=1.0                       # (annual) frequency [1/year]
     A::Real=3e-5                        # Amplitude [m/s]
@@ -73,11 +76,11 @@
     sst_initial::String="south"         # "west", "south", "rect", "flat" or "restart"
     sst_rect_coords::Array{Float64,1}=[0.,0.15,0.,1.0]
                                         # (x0,x1,y0,y1) are the size of the rectangle in [0,1]
-    Uadv::Real=0.15                     # Velocity scale [m/s] for tracer advection
+    Uadv::Real=0.25                     # Velocity scale [m/s] for tracer advection
     SSTmax::Real=1.                     # tracer (sea surface temperature) max for restoring
     SSTmin::Real=0.                     # tracer (sea surface temperature) min for restoring
     τSST::Real=500.                     # tracer restoring time scale [days]
-    jSST::Real=50*365.                  # tracer consumption [days]
+    jSST::Real=365.                     # tracer consumption [days]
     SST_λ0::Real=222e3                  # [m] transition position of relaxation timescale
     SST_λs::Real=111e3                  # [m] transition width of relaxation timescale
     SST_γ0::Real=8.35                   # [days] injection time scale

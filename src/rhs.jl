@@ -3,14 +3,15 @@ function rhs!(  u::AbstractMatrix,
                 v::AbstractMatrix,
                 η::AbstractMatrix,
                 Diag::DiagnosticVars,
-                S::ModelSetup)
+                S::ModelSetup,
+                t::Int)
 
     @unpack dynamics = S.parameters
 
     if dynamics == "linear"
-        rhs_linear!(u,v,η,Diag,S)
+        rhs_linear!(u,v,η,Diag,S,t)
     else
-        rhs_nonlinear!(u,v,η,Diag,S)
+        rhs_nonlinear!(u,v,η,Diag,S,t)
     end
 end
 
@@ -25,7 +26,8 @@ function rhs_nonlinear!(u::AbstractMatrix,
                         v::AbstractMatrix,
                         η::AbstractMatrix,
                         Diag::DiagnosticVars,
-                        S::ModelSetup)
+                        S::ModelSetup,
+                        t::Int)
 
     @unpack h,h_u,h_v,U,V,dUdx,dVdy = Diag.VolumeFluxes
     @unpack H = S.forcing
@@ -55,14 +57,13 @@ function rhs_nonlinear!(u::AbstractMatrix,
     ∂x!(dpdx,p)
     ∂y!(dpdy,p)
 
-    #TODO check whether the order of PV,PVadvection etc. is correct
     # Potential vorticity and advection thereof
     PVadvection!(Diag,S)
 
     # adding the terms
     momentum_u!(Diag,S)
     momentum_v!(Diag,S)
-    continuity!(Diag,S)
+    continuity!(η,Diag,S,t)
 end
 
 """Tendencies du,dv,dη of
@@ -76,7 +77,8 @@ function rhs_linear!(   u::AbstractMatrix,
                         v::AbstractMatrix,
                         η::AbstractMatrix,
                         Diag::DiagnosticVars,
-                        S::ModelSetup)
+                        S::ModelSetup,
+                        t::Int)
 
     @unpack h,h_u,h_v,U,V,dUdx,dVdy = Diag.VolumeFluxes
     @unpack g = S.constants
@@ -106,7 +108,7 @@ function rhs_linear!(   u::AbstractMatrix,
     # adding the terms
     momentum_u!(Diag,S)
     momentum_v!(Diag,S)
-    continuity!(Diag,S)
+    continuity!(η,Diag,S,t)
 end
 
 """ Update advective and Coriolis tendencies."""
@@ -279,7 +281,7 @@ function fu!(   qhu::AbstractMatrix,
 end
 
 """Sum up the tendencies of the non-diffusive right-hand side for the u-component."""
-function momentum_u!(Diag::DiagnosticVars,S::ModelSetup)
+function momentum_u!(Diag::DiagnosticVars{T,Tprog},S::ModelSetup) where {T,Tprog}
 
     @unpack du = Diag.Tendencies
     @unpack qhv = Diag.Vorticity
@@ -294,13 +296,13 @@ function momentum_u!(Diag::DiagnosticVars,S::ModelSetup)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            du[i+2,j+2] = qhv[i,j] - dpdx[i+1-ep,j+1] + Fx[i,j]
+            du[i+2,j+2] = Tprog(qhv[i,j]) - Tprog(dpdx[i+1-ep,j+1]) + Tprog(Fx[i,j])
         end
     end
 end
 
 """Sum up the tendencies of the non-diffusive right-hand side for the v-component."""
-function momentum_v!(Diag::DiagnosticVars,S::ModelSetup)
+function momentum_v!(Diag::DiagnosticVars{T,Tprog},S::ModelSetup) where {T,Tprog}
 
     @unpack dv = Diag.Tendencies
     @unpack qhu = Diag.Vorticity
@@ -314,7 +316,7 @@ function momentum_v!(Diag::DiagnosticVars,S::ModelSetup)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-             dv[i+2,j+2] = -qhu[i,j] - dpdy[i+1,j+1] + Fy[i,j]
+             dv[i+2,j+2] = -Tprog(qhu[i,j]) - Tprog(dpdy[i+1,j+1]) + Tprog(Fy[i,j])
         end
     end
 end
