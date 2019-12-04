@@ -1,7 +1,7 @@
 """Integrates Juls forward in time."""
 function time_integration(  Prog::PrognosticVars{Tprog},
                             Diag::DiagnosticVars{T,Tprog},
-                            S::ModelSetup) where {T<:AbstractFloat,Tprog<:AbstractFloat}
+                            S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<:AbstractFloat}
 
     @unpack u,v,η,sst = Prog
     @unpack u0,v0,η0 = Diag.RungeKutta
@@ -52,7 +52,7 @@ function time_integration(  Prog::PrognosticVars{Tprog},
             η1rhs = convert(Diag.PrognosticRHS.η,η1)
 
             rhs!(u1rhs,v1rhs,η1rhs,Diag,S,t)
-
+            
             if rki < RKo
                 caxb!(u1,u,RKbΔt[rki],du)   #u1 .= u .+ RKb[rki]*Δt*du
                 caxb!(v1,v,RKbΔt[rki],dv)   #v1 .= v .+ RKb[rki]*Δt*dv

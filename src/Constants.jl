@@ -17,7 +17,7 @@ struct Constants{T<:AbstractFloat,Tprog<:AbstractFloat}
     rSST::T                 # tracer restoring timescale
     jSST::T                 # tracer consumption timescale
     SSTmin::T               # tracer minimum
-    ωyr::Float64            # # frequency [1/s] of Kelvin pumping (including 2π)
+    ωyr::Float64            # frequency [1/s] of Kelvin pumping (including 2π)
 end
 
 """Generator function for the mutable struct Constants."""

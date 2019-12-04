@@ -1,10 +1,10 @@
 """Transit function to call either the  rhs_linear or the rhs_nonlinear."""
-function rhs!(  u::AbstractMatrix,
-                v::AbstractMatrix,
-                η::AbstractMatrix,
-                Diag::DiagnosticVars,
-                S::ModelSetup,
-                t::Int)
+function rhs!(  u::Array{T,2},
+                v::Array{T,2},
+                η::Array{T,2},
+                Diag::DiagnosticVars{T,Tprog},
+                S::ModelSetup{T,Tprog},
+                t::Int) where {T,Tprog}
 
     @unpack dynamics = S.parameters
 
@@ -112,11 +112,11 @@ function rhs_linear!(   u::AbstractMatrix,
 end
 
 """ Update advective and Coriolis tendencies."""
-function advection_coriolis!(   u::AbstractMatrix,
-                                v::AbstractMatrix,
-                                η::AbstractMatrix,
-                                Diag::DiagnosticVars,
-                                S::ModelSetup)
+function advection_coriolis!(   u::Array{T,2},
+                                v::Array{T,2},
+                                η::Array{T,2},
+                                Diag::DiagnosticVars{T,Tprog},
+                                S::ModelSetup{T,Tprog}) where {T,Tprog}
 
     @unpack h = Diag.VolumeFluxes
     @unpack H = S.forcing

@@ -1,14 +1,14 @@
-using Juls
+#using Juls
 using Test
 
-@testset "NoForcing" begin
+@testset "No Forcing" begin
     Prog = RunJuls(Ndays=1,Fx0=0)
     @test all(Prog.u .== 0.0f0)
     @test all(Prog.v .== 0.0f0)
     @test all(Prog.η .== 0.0f0)
 end
 
-@testset "BoundaryConditions" begin
+@testset "Boundary Conditions" begin
     Prog = RunJuls(Ndays=1,bc="periodic")
     @test all(abs.(Prog.η) .< 10)    # sea surface height shouldn't exceed +-10m
 
@@ -19,12 +19,22 @@ end
     @test all(abs.(Prog.η) .< 10)
 end
 
-@testset "ContinuityForcing" begin
+@testset "Continuity Forcing" begin
     Prog = RunJuls(Ndays=1,surface_relax=true)
     @test all(abs.(Prog.η) .< 10)    # sea surface height shouldn't exceed +-10m
     @test all(Prog.u .!= 0.0f0)
 
     Prog = RunJuls(Ndays=1,surface_forcing=true)
     @test all(abs.(Prog.η) .< 10)
+    @test all(Prog.u .!= 0.0f0)
+end
+
+@testset "Mixed Precision" begin
+    Prog = RunJuls(Float32,Tprog=Float64,Ndays=1)
+    @test all(abs.(Prog.η) .< 10)    # sea surface height shouldn't exceed +-10m
+    @test all(Prog.u .!= 0.0f0)
+
+    Prog = RunJuls(Float16,Tprog=Float32,Ndays=1)
+    @test all(abs.(Prog.η) .< 10)    # sea surface height shouldn't exceed +-10m
     @test all(Prog.u .!= 0.0f0)
 end

@@ -2,7 +2,7 @@
 -∂x(uh) - ∂y(vh) + γ*(η_ref - η)."""
 function continuity_surf_relax!(η::Array{T,2},
                                 Diag::DiagnosticVars{T,Tprog},
-                                S::ModelSetup,
+                                S::ModelSetup{T,Tprog},
                                 t::Int) where {T,Tprog}
 
     @unpack dη = Diag.Tendencies
@@ -25,7 +25,7 @@ end
 
 """Continuity equation's right-hand side with time&space dependent forcing."""
 function continuity_forcing!(   Diag::DiagnosticVars{T,Tprog},
-                                S::ModelSetup,
+                                S::ModelSetup{T,Tprog},
                                 t::Int) where {T,Tprog}
 
     @unpack dη = Diag.Tendencies
@@ -50,7 +50,7 @@ end
 
 """Continuity equation's right-hand side -∂x(uh) - ∂y(vh) without forcing."""
 function continuity_itself!(Diag::DiagnosticVars{T,Tprog},
-                            S::ModelSetup,
+                            S::ModelSetup{T,Tprog},
                             t::Int) where {T,Tprog}
 
     @unpack dη = Diag.Tendencies

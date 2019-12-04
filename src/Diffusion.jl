@@ -221,7 +221,7 @@ end
 function add_drag_diff_tendencies!( u::Array{Tprog,2},
                                     v::Array{Tprog,2},
                                     Diag::DiagnosticVars{T,Tprog},
-                                    S::ModelSetup) where {T,Tprog}
+                                    S::ModelSetup{T,Tprog}) where {T,Tprog}
 
     @unpack Bu,Bv = Diag.Bottomdrag
     @unpack LLu1,LLu2,LLv1,LLv2 = Diag.Smagorinsky
