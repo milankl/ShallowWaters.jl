@@ -447,7 +447,7 @@ struct DiagnosticVars{T,Tprog}
     Laplace::LaplaceVars{T}
     Smagorinsky::SmagorinskyVars{T}
     SemiLagrange::SemiLagrangeVars{T}
-    PrognosticRHS::PrognosticVars{T}        # low precision version
+    PrognosticVarsRHS::PrognosticVars{T}        # low precision version
 end
 
 """Preallocate the diagnostic variables and return them as matrices in structs."""
