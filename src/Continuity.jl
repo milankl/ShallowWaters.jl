@@ -62,7 +62,7 @@ function continuity_itself!(Diag::DiagnosticVars{T,Tprog},
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            dη[i+1,j+1] = -(Tprog(dUdx[i,j+1]) + Tprog(dVdy[i+1,j]))
+            dη[i+1,j+1] = -(Tprog(dUdx[i,j+1] + dVdy[i+1,j]))
         end
     end
 end
