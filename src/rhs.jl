@@ -296,7 +296,7 @@ function momentum_u!(Diag::DiagnosticVars{T,Tprog},S::ModelSetup) where {T,Tprog
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            du[i+2,j+2] = Tprog(qhv[i,j]) - Tprog(dpdx[i+1-ep,j+1]) + Tprog(Fx[i,j])
+            du[i+2,j+2] = Tprog(qhv[i,j] - dpdx[i+1-ep,j+1] + Fx[i,j])
         end
     end
 end
@@ -316,7 +316,7 @@ function momentum_v!(Diag::DiagnosticVars{T,Tprog},S::ModelSetup) where {T,Tprog
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-             dv[i+2,j+2] = -Tprog(qhu[i,j]) - Tprog(dpdy[i+1,j+1]) + Tprog(Fy[i,j])
+             dv[i+2,j+2] = Tprog(-qhu[i,j] - dpdy[i+1,j+1] + Fy[i,j])
         end
     end
 end
