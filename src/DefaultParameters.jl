@@ -50,7 +50,7 @@
 
     # BOUNDARY CONDITION OPTIONS
     bc::String="periodic"               # "periodic" or anything else for nonperiodic
-    α::Real=2.                          # lateral boundary condition parameter
+    α::Real=1.                          # lateral boundary condition parameter
                                         # 0 free-slip, 0<α<2 partial-slip, 2 no-slip
 
     # MOMENTUM ADVECTION OPTIONS
@@ -63,7 +63,7 @@
     τD::Real=300.                       # bottom drag coefficient [days] for linear
 
     # DIFFUSION OPTIONS
-    diffusion::String="Smagorinsky"     # "Smagorinsky" or "Constant", biharmonic in both cases
+    diffusion::String="constant"        # "Smagorinsky" or "constant", biharmonic in both cases
     νB::Real=500.0                      # [m^2/s] scaling constant for constant biharmonic diffusion
     cSmag::Real=0.15                    # Smagorinsky coefficient [dimensionless]
 
