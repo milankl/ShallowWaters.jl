@@ -6,7 +6,7 @@ RunJuls(Float32,
         outpath="/network/aopp/chaos/pred/kloewer/julsdata/forecast",
         output_vars=["u","v","η"],
         α=1.,
-        diffusion="Constant")
+        diffusion="constant")
 
 RunJuls(Float32,
         output=true,
@@ -16,4 +16,4 @@ RunJuls(Float32,
         initial_cond="ncfile",
         init_run_id=0,
         α=1.,
-        diffusion="Constant")
+        diffusion="constant")
