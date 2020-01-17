@@ -148,7 +148,7 @@ function interp_uv!(uvi::AbstractMatrix,
     elseif (m+4,n+2) == (muv,nuv)    # v case
         # halo sizes 1: left/bottom, 2: right/top
         xh1 = 2
-        xh2 = 1         # don't fully understand why this is 1 ...
+        xh2 = 2
         yh1 = 1
         yh2 = 1
     else
