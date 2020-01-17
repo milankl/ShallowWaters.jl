@@ -76,7 +76,7 @@
     sst_initial::String="south"         # "west", "south", "rect", "flat" or "restart"
     sst_rect_coords::Array{Float64,1}=[0.,0.15,0.,1.0]
                                         # (x0,x1,y0,y1) are the size of the rectangle in [0,1]
-    Uadv::Real=0.25                     # Velocity scale [m/s] for tracer advection
+    Uadv::Real=0.2                      # Velocity scale [m/s] for tracer advection
     SSTmax::Real=1.                     # tracer (sea surface temperature) max for restoring
     SSTmin::Real=0.                     # tracer (sea surface temperature) min for restoring
     τSST::Real=500.                     # tracer restoring time scale [days]
@@ -84,7 +84,7 @@
     SST_λ0::Real=222e3                  # [m] transition position of relaxation timescale
     SST_λs::Real=111e3                  # [m] transition width of relaxation timescale
     SST_γ0::Real=8.35                   # [days] injection time scale
-    SSTw::Real=50e3                     # width [m] of the tangent used for the IC and interface relaxation
+    SSTw::Real=5e3                      # width [m] of the tangent used for the IC and interface relaxation
     SSTϕ::Real=0.5                      # latitude/longitude fraction ∈ [0,1] of sst edge
 
     # OUTPUT OPTIONS
@@ -111,7 +111,7 @@
     @assert η_refw > 0.0        "η_refw has to be >0, $η_refw given."
     @assert ωyr > 0.0           "ωyr has to be >0, $ωyr given."
     @assert RKo in [3,4]        "RKo has to be 3 or 4, $RKo given."
-    @assert Ndays > 0.0         "Ndays has to be >0, $Ndyas given."
+    @assert Ndays > 0.0         "Ndays has to be >0, $Ndays given."
     @assert nstep_diff > 0      "nstep_diff has to be >0, $nstep_diff given."
     @assert nstep_advcor >= 0   "nstep_advcor has to be >=0, $nstep_advcor given."
     @assert bc in ["periodic","nonperiodic"]    "boundary condition '$bc' unsupported."
