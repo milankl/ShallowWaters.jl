@@ -76,7 +76,7 @@
     sst_initial::String="south"         # "west", "south", "rect", "flat" or "restart"
     sst_rect_coords::Array{Float64,1}=[0.,0.15,0.,1.0]
                                         # (x0,x1,y0,y1) are the size of the rectangle in [0,1]
-    Uadv::Real=0.2                      # Velocity scale [m/s] for tracer advection
+    Uadv::Real=0.25                     # Velocity scale [m/s] for tracer advection
     SSTmax::Real=1.                     # tracer (sea surface temperature) max for restoring
     SSTmin::Real=0.                     # tracer (sea surface temperature) min for restoring
     τSST::Real=500.                     # tracer restoring time scale [days]
@@ -128,4 +128,6 @@
     @assert Uadv > 0.0   "Advection velocity scale Uadv has to be >0, $Uadv given."
     @assert output_dt > 0   "Output time step has to be >0, $output_dt given."
     @assert initial_cond in ["rest", "ncfile"] "Initial conditions '$initial_cond' unsupported."
+    @assert init_run_id >= 0 "Initial condition run id, init_run_id, has to be >= 0, $init_run_id given."
+    @assert init_starti > 0 || init_starti == -1 "Start index, init_starti, has to be >0 || -1, $init_starti given."
 end

@@ -73,7 +73,7 @@ end
 
 """Initialises the progress txt file."""
 function feedback_init(S::ModelSetup)
-    @unpack output = S.parameters
+    @unpack output,init_starti = S.parameters
     @unpack nt,nout = S.grid
 
     if output
@@ -92,7 +92,11 @@ function feedback_init(S::ModelSetup)
         if initial_cond == "rest"
             write(txt,"rest.\n")
         else
-            write(txt,"last time step of run $init_run_id.\n")
+            if init_starti > 0
+                write(txt,"time step $init_starti of run $init_run_id.\n")
+            else
+                write(txt,"last time step of run $init_run_id.\n")
+            end
         end
         write(txt,"Boundary conditions are $bc with lbc=$α.\n")
         write(txt,"Number format is "*string(T)*".\n")
