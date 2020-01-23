@@ -10,7 +10,7 @@ julia> u,v,η,sst = RunModel(Float64,nx=200,output=true)
 ```
 """
 function RunModel(::Type{T}=Float32;     # number format
-    kwargs...                           # all additional parameters
+    kwargs...                            # all additional parameters
     ) where {T<:AbstractFloat}
 
     P = Parameter(T=T;kwargs...)
