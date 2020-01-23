@@ -145,12 +145,10 @@ function gap(a::Array{Int,1})
 end
 
 """Checks output folders to determine a 4-digit run id number."""
-function get_run_id_path(   S::ModelSetup,
-                            order::String="continue",
-                            run_id::Union{Int,Nothing}=nothing)
+function get_run_id_path(S::ModelSetup)
 
-    @unpack output,outpath = S.parameters
-
+    @unpack output,outpath,get_id_mode = S.parameters
+    
     if output
         runlist = filter(x->startswith(x,"run"),readdir(outpath))
         existing_runs = [parse(Int,id[4:end]) for id in runlist]
@@ -159,26 +157,26 @@ function get_run_id_path(   S::ModelSetup,
             mkdir(runpath)
             return 0,runpath
         else                                    # create next folder
-            if order == "fill"  # find the smallest gap in runfolders
+            if get_id_mode == "fill"  # find the smallest gap in runfolders
                 run_id = gap(existing_runs)
                 runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
                 mkdir(runpath)
 
-            elseif order == "specific" # specify the run_id as input argument
-                runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
-                try # create folder if not existent
-                    mkdir(runpath)
-                catch # else rm folder and create new one
-                    rm(runpath,recursive=true)
-                    mkdir(runpath)
-                end
+            # elseif order == "specific" # specify the run_id as input argument
+            #     runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
+            #     try # create folder if not existent
+            #         mkdir(runpath)
+            #     catch # else rm folder and create new one
+            #         rm(runpath,recursive=true)
+            #         mkdir(runpath)
+            #     end
 
-            elseif order == "continue" # find largest folder and count one up
+            elseif get_id_mode == "continue" # find largest folder and count one up
                 run_id = maximum(existing_runs)+1
                 runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
                 mkdir(runpath)
             else
-                throw(error("Order '$order' is not valid for get_run_id_path(), chose continue, specific or fill."))
+                throw(error("Order '$get_id_mode' is not valid for get_run_id_path(), choose continue or fill."))
             end
             return run_id,runpath
         end
