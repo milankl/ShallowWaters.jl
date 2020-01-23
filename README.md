@@ -1,7 +1,7 @@
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://img.shields.io/badge/repo_status-active-brightgreen?style=flat-square)](https://www.repostatus.org/#active)
-[![Travis](https://img.shields.io/travis/com/milankl/Juls.jl?label=Linux%20%26%20osx&logo=travis&style=flat-square)](https://travis-ci.com/milankl/Juls.jl)
-[![AppVeyor](https://img.shields.io/appveyor/ci/milankl/Juls-jl?label=Windows&logo=appveyor&logoColor=white&style=flat-square)](https://ci.appveyor.com/project/milankl/juls-jl)
-[![Cirrus CI](https://img.shields.io/cirrus/github/milankl/Juls.jl?label=FreeBSD&logo=cirrus-ci&logoColor=white&style=flat-square)](https://cirrus-ci.com/github/milankl/Juls.jl)
+[![Travis](https://img.shields.io/travis/com/milankl/ShallowWaters.jl?label=Linux%20%26%20osx&logo=travis&style=flat-square)](https://travis-ci.com/milankl/ShallowWaters.jl)
+[![AppVeyor](https://img.shields.io/appveyor/ci/milankl/ShallowWaters-jl?label=Windows&logo=appveyor&logoColor=white&style=flat-square)](https://ci.appveyor.com/project/milankl/ShallowWaters-jl)
+[![Cirrus CI](https://img.shields.io/cirrus/github/milankl/ShallowWaters.jl?label=FreeBSD&logo=cirrus-ci&logoColor=white&style=flat-square)](https://cirrus-ci.com/github/milankl/ShallowWaters.jl)
 
 
 # ShallowWaters.jl - A type-flexible 16bit shallow water model
