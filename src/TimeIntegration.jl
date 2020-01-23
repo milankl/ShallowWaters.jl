@@ -1,4 +1,4 @@
-"""Integrates Juls forward in time."""
+"""Integrates ShallowWaters forward in time."""
 function time_integration(  Prog::PrognosticVars{Tprog},
                             Diag::DiagnosticVars{T,Tprog},
                             S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<:AbstractFloat}

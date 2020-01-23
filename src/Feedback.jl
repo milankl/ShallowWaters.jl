@@ -84,10 +84,10 @@ function feedback_init(S::ModelSetup)
         run_id,runpath = get_run_id_path(S)
 
         txt = open(joinpath(runpath,"progress.txt"),"w")
-        s = "Starting Juls run $run_id on "*Dates.format(now(),Dates.RFC1123Format)
+        s = "Starting ShallowWaters run $run_id on "*Dates.format(now(),Dates.RFC1123Format)
         println(s)
         write(txt,s*"\n")
-        write(txt,"Juls will integrate $(Ndays)days at a resolution of $(nx)x$(ny) with Δ=$(Δ/1e3)km\n")
+        write(txt,"Model will integrate $(Ndays)days at a resolution of $(nx)x$(ny) with Δ=$(Δ/1e3)km\n")
         write(txt,"Initial conditions are ")
         if initial_cond == "rest"
             write(txt,"rest.\n")
@@ -107,7 +107,7 @@ function feedback_init(S::ModelSetup)
         print(ptxt,S.parameters)
         close(ptxt)
     else
-        println("Starting Juls on "*Dates.format(now(),Dates.RFC1123Format)*" without output.")
+        println("Starting ShallowWaters on "*Dates.format(now(),Dates.RFC1123Format)*" without output.")
         txt = nothing
         run_id = -1
         runpath = ""

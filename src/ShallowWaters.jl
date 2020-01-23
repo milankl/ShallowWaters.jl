@@ -1,6 +1,6 @@
-module Juls
+module ShallowWaters
 
-export RunJuls, Parameter
+export RunModel, Parameter
 
 using NetCDF, Parameters, Printf, Dates
 
@@ -25,6 +25,6 @@ include("TracerAdvection.jl")
 
 include("Feedback.jl")
 include("Output.jl")
-include("RunJuls.jl")
+include("RunModel.jl")
 
 end

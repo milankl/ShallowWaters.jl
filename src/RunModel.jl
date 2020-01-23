@@ -1,28 +1,28 @@
 """
 
-    u,v,η,sst = RunJuls()
+    u,v,η,sst = RunModel()
 
-runs Juls with default parameters as defined in src/DefaultParameters.jl
+runs ShallowWaters with default parameters as defined in src/DefaultParameters.jl
 
 # Examples
 ```jldoc
-julia> u,v,η,sst = RunJuls(Float64,nx=200,output=true)
+julia> u,v,η,sst = RunModel(Float64,nx=200,output=true)
 ```
 """
-function RunJuls(::Type{T}=Float32;     # number format
+function RunModel(::Type{T}=Float32;     # number format
     kwargs...                           # all additional parameters
     ) where {T<:AbstractFloat}
 
     P = Parameter(T=T;kwargs...)
-    return RunJuls(T,P)
+    return RunModel(T,P)
 end
 
-function RunJuls(P::Parameter)
+function RunModel(P::Parameter)
     @unpack T = P
-    return RunJuls(T,P)
+    return RunModel(T,P)
 end
 
-function RunJuls(::Type{T},P::Parameter) where {T<:AbstractFloat}
+function RunModel(::Type{T},P::Parameter) where {T<:AbstractFloat}
 
     @unpack Tprog = P
 

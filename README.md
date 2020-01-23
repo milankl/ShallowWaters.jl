@@ -4,30 +4,30 @@
 [![Cirrus CI](https://img.shields.io/cirrus/github/milankl/Juls.jl?label=FreeBSD&logo=cirrus-ci&logoColor=white&style=flat-square)](https://cirrus-ci.com/github/milankl/Juls.jl)
 
 
-# Juls.jl - A type-flexible 16bit shallow water model
+# ShallowWaters.jl - A type-flexible 16bit shallow water model
 ![sst](figs/sst_posit16.png?raw=true "SST")
 
-A shallow water model with a focus on type-flexibility and 16bit number formats. Juls allows for Float64/32/16, BigFloat/[ArbFloat](https://github.com/JeffreySarnoff/ArbNumerics.jl), [Posit32/16](https://github.com/milankl/SoftPosit.jl), [BFloat16](https://github.com/JuliaComputing/BFloat16s.jl), [Sonum16](https://github.com/milankl/Sonums.jl) and in general every number format with arithmetics and conversions implemented.
+A shallow water model with a focus on type-flexibility and 16bit number formats. ShallowWaters allows for Float64/32/16, BigFloat/[ArbFloat](https://github.com/JeffreySarnoff/ArbNumerics.jl), [Posit32/16](https://github.com/milankl/SoftPosit.jl), [BFloat16](https://github.com/JuliaComputing/BFloat16s.jl), [Sonum16](https://github.com/milankl/Sonums.jl) and in general every number format with arithmetics and conversions implemented.
 
-Juls is fully-explicit with an energy and enstrophy conserving advection scheme and a Smagorinsky-like biharmonic diffusion operator. Tracer advection is implemented with a semi-Lagrangian advection scheme. Runge-Kutta 4th-order is used for pressure, advective and Coriolis terms and the continuity equation. Semi-implicit time stepping for diffusion and bottom friction. Boundary conditions are either periodic (only in x direction) or non-periodic super-slip, free-slip, partial-slip, or no-slip. Output via NetCDF.
+ShallowWaters is fully-explicit with an energy and enstrophy conserving advection scheme and a Smagorinsky-like biharmonic diffusion operator. Tracer advection is implemented with a semi-Lagrangian advection scheme. Runge-Kutta 4th-order is used for pressure, advective and Coriolis terms and the continuity equation. Semi-implicit time stepping for diffusion and bottom friction. Boundary conditions are either periodic (only in x direction) or non-periodic super-slip, free-slip, partial-slip, or no-slip. Output via NetCDF.
 
 ## How to use
 
-You find the default parameters in `src/DefaultParameters.jl`. They can be changed with keyword arguments. Optionally, the number format `T` is defined as the first argument of `RunJuls(T,...)`
+You find the default parameters in `src/DefaultParameters.jl`. They can be changed with keyword arguments. Optionally, the number format `T` is defined as the first argument of `RunModel(T,...)`
 ```julia
-julia> Prog = RunJuls(Float32,Ndays=10,g=10,H=500,Fx0=0.12);
-Starting Juls on Sun, 20 Oct 2019 19:58:25 without output.
+julia> Prog = RunModel(Float32,Ndays=10,g=10,H=500,Fx0=0.12);
+Starting ShallowWaters on Sun, 20 Oct 2019 19:58:25 without output.
 100% Integration done in 4.65s.
 ```
 or by creating a Parameter struct
 ```julia
 julia> P = Parameter(bc="nonperiodic",wind_forcing_x="double_gyre",L_ratio=1,nx=128);
-julia> Prog = RunJuls(P);
+julia> Prog = RunModel(P);
 ```
 
 ## Installation
 ```julia
-julia> ] add https://github.com/milankl/Juls.jl
+julia> ] add https://github.com/milankl/ShallowWaters.jl
 ```
 
 ## The equations
@@ -48,6 +48,6 @@ The linear shallow water model equivalent is
           ∂η/∂t = -H*∇⋅u⃗ + γ*(η_ref - η) + Fηt(t)*Fη(x,y)         (3)
           ∂ϕ/∂t = -u⃗⋅∇ϕ                                           (4)
 
-Juls discretises the equation on an equi-distant Arakawa C-grid, with 2nd order finite-difference operators. Boundary conditions are implemented via a ghost-point copy and each variable has a halo of variable size to account for different stencil sizes of various operators.
+ShallowWaters.jl discretises the equation on an equi-distant Arakawa C-grid, with 2nd order finite-difference operators. Boundary conditions are implemented via a ghost-point copy and each variable has a halo of variable size to account for different stencil sizes of various operators.
 
-Juls splits the time steps for various terms: Runge Kutta 4th order scheme for the fast varying terms. The diffusive terms (bottom friction and diffusion) are solved semi-implicitly every n-th time step. The tracer equation is solved with a semi-Lagrangian scheme that uses usually much larger time steps.
+ShallowWaters.jl splits the time steps for various terms: Runge Kutta 4th order scheme for the fast varying terms. The diffusive terms (bottom friction and diffusion) are solved semi-implicitly every n-th time step. The tracer equation is solved with a semi-Lagrangian scheme that uses much larger time steps.
