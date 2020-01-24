@@ -3,6 +3,8 @@
 [![AppVeyor](https://img.shields.io/appveyor/ci/milankl/ShallowWaters-jl?label=Windows&logo=appveyor&logoColor=white&style=flat-square)](https://ci.appveyor.com/project/milankl/ShallowWaters-jl)
 [![Cirrus CI](https://img.shields.io/cirrus/github/milankl/ShallowWaters.jl?label=FreeBSD&logo=cirrus-ci&logoColor=white&style=flat-square)](https://cirrus-ci.com/github/milankl/ShallowWaters.jl)
 
+[![DOI](https://zenodo.org/badge/132787050.svg)](https://zenodo.org/badge/latestdoi/132787050)
+
 
 # ShallowWaters.jl - A type-flexible 16bit shallow water model
 ![sst](figs/sst_posit16.png?raw=true "SST")
