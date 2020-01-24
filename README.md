@@ -11,6 +11,8 @@ A shallow water model with a focus on type-flexibility and 16bit number formats.
 
 ShallowWaters is fully-explicit with an energy and enstrophy conserving advection scheme and a Smagorinsky-like biharmonic diffusion operator. Tracer advection is implemented with a semi-Lagrangian advection scheme. Runge-Kutta 4th-order is used for pressure, advective and Coriolis terms and the continuity equation. Semi-implicit time stepping for diffusion and bottom friction. Boundary conditions are either periodic (only in x direction) or non-periodic super-slip, free-slip, partial-slip, or no-slip. Output via NetCDF.
 
+Please feel free to raise an [issue](https://github.com/milankl/ShallowWaters.jl/issues) if you discover bugs or have an idea how to improve ShallowWaters.
+
 ## How to use
 
 You find the default parameters in `src/DefaultParameters.jl`. They can be changed with keyword arguments. Optionally, the number format `T` is defined as the first argument of `RunModel(T,...)`
@@ -26,8 +28,11 @@ julia> Prog = RunModel(P);
 ```
 
 ## Installation
+
+ShallowWaters.jl is a registered package, so simply do
+
 ```julia
-julia> ] add https://github.com/milankl/ShallowWaters.jl
+julia> ] add ShallowWaters
 ```
 
 ## The equations
