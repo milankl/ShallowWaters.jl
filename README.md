@@ -17,7 +17,7 @@ Please feel free to raise an [issue](https://github.com/milankl/ShallowWaters.jl
 
 ## How to use
 
-You find the default parameters in `src/DefaultParameters.jl`. They can be changed with keyword arguments. Optionally, the number format `T` is defined as the first argument of `RunModel(T,...)`
+You find the options and default parameters in `src/DefaultParameters.jl` (or by typing `?Parameter`). They can be changed with keyword arguments. Optionally, the number format `T` is defined as the first argument of `RunModel(T,...)`
 ```julia
 julia> Prog = RunModel(Float32,Ndays=10,g=10,H=500,Fx0=0.12);
 Starting ShallowWaters on Sun, 20 Oct 2019 19:58:25 without output.
