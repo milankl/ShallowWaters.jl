@@ -14,7 +14,7 @@
     g::Real=10.                         # gravitational acceleration [m/s]
     H::Real=500.                        # layer thickness at rest [m]
     ρ::Real=1e3                         # water density [kg/m^3]
-    ϕ::Real=45.                         # central latitue of the domain (for coriolis) [°]
+    ϕ::Real=45.                         # central latitude of the domain (for coriolis) [°]
     ω::Real=2π/(24*3600)                # Earth's angular frequency [s^-1]
     R::Real=6.371e6                     # Earth's radius [m]
 
@@ -35,10 +35,12 @@
     η_refh::Real=5.                     # height difference [m] of the interface relaxation profile
     η_refw::Real=50e3                   # width [m] of the tangent used for the interface relaxation
 
-    # SURFACE FORCING (Currently only Kelvin wave pumping at Eq.)
+    # SURFACE FORCING
     surface_forcing::Bool=false         # yes?
     ωyr::Real=1.0                       # (annual) frequency [1/year]
     A::Real=3e-5                        # Amplitude [m/s]
+    ϕk::Real=ϕ                          # Central latitude of Kelvin wave pumping
+    wk::Real=10e3                       # width [m] in y of Gaussian used for surface forcing
 
     # TIME STEPPING OPTIONS
     RKo::Int=4                          # Order of the RK time stepping scheme (3 or 4)

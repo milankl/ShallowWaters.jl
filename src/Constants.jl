@@ -55,7 +55,7 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
     SSTmin = T(P.SSTmin)
 
     # SURFACE FORCING
-    ωyr = -2π*P.ωyr/24/365/3600
+    ωyr = -2π*P.ωyr/24/365.25/3600
 
     return Constants{T,Tprog}(RKaΔt,RKbΔt,one_minus_α,g,cD,rD,γ,cSmag,νB,rSST,jSST,SSTmin,ωyr)
 end
