@@ -194,25 +194,19 @@ function FlatBottom(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
     return fill(T(H),(nx+2*haloη,ny+2*haloη))
 end
 
-"""Returns Kelvin wave pumping forcing of the continuity equation at the equator."""
+"""Returns Kelvin wave pumping forcing of the continuity equation."""
 function KelvinPump(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     @unpack x_T,y_T,Lx,Ly = G
-    @unpack c,β,R,ϕ,Δ = G
-    @unpack A = P
+    @unpack R,ϕ,Δ = G
+    @unpack A,ϕk,wk = P
 
     xx_T,yy_T = meshgrid(x_T,y_T)
 
-    # y-coordinate of the Equator
-    mϕ = 2π*R/360.      # meters per degree latitude
-    y_eq = Ly/2 - ϕ*mϕ
-    y_15S = Ly/2 - (ϕ+15)*mϕ
-    y_15N = Ly/2 - (ϕ-15)*mϕ
+    mϕ = 2π*R/360.          # meters per degree latitude
+    y0 = Ly/2 - (ϕ-ϕk)*mϕ   # y[m] for central latitude of pumping
 
-    Fη = A*Δ*exp.(-β*(yy_T.-y_eq).^2/(2c))
-
-    Fη[yy_T .< y_15S] .= 0.0
-    Fη[yy_T .> y_15N] .= 0.0
+    Fη = A*Δ*exp.(-(yy_T.-y0).^2/(2*wk^2))
 
     return T.(Fη)
 end
