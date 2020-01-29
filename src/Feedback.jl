@@ -139,6 +139,7 @@ function feedback!(Prog::PrognosticVars,feedback::Feedback,S::ModelSetup)
             if feedback.nans_detected
                 println(" NaNs detected at time step $i")
                 if output
+                    @unpack progress_txt = feedback
                     write(progress_txt," NaNs detected at time step $i")
                     flush(progress_txt)
                 end
