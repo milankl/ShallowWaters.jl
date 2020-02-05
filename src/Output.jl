@@ -5,11 +5,14 @@ struct NcFiles
     sst::Union{NcFile,Nothing}      # tracer / sea surface temperature
     q::Union{NcFile,Nothing}        # potentival vorticity
     ζ::Union{NcFile,Nothing}        # relative vorticity
+    du::Union{NcFile,Nothing}       # tendency of u [m^2/s^2]
+    dv::Union{NcFile,Nothing}       # tendency of v [m^2/s^2]
+    dη::Union{NcFile,Nothing}       # tendency of η [m^2/s]
     iout::Array{Integer,1}          # output index, stored in array for mutability
 end
 
 """Generator function for "empty" NcFiles struct."""
-NcFiles(x::Nothing) = NcFiles(x,x,x,x,x,x,[0])
+NcFiles(x::Nothing) = NcFiles(x,x,x,x,x,x,x,x,x,[0])
 
 """Generator function for NcFiles struct, creating the underlying netCDF files."""
 function NcFiles(feedback::Feedback,S::ModelSetup)
@@ -28,8 +31,11 @@ function NcFiles(feedback::Feedback,S::ModelSetup)
         ncsst = if "sst" in output_vars nc_create(x_T,y_T,"sst",runpath,"1","sea surface temperature") else nothing end
         ncq = if "q" in output_vars nc_create(x_q,y_q,"q",runpath,"1/(ms)","potential vorticity") else nothing end
         ncζ = if "ζ" in output_vars nc_create(x_q,y_q,"relvort",runpath,"1","relative vorticity") else nothing end
+        ncdu = if "du" in output_vars nc_create(x_u,y_u,"du",runpath,"m^2/s^2","zonal velocity tendency") else nothing end
+        ncdv = if "dv" in output_vars nc_create(x_v,y_v,"dv",runpath,"m^2/s^2","meridional velocity tendency") else nothing end
+        ncdη = if "dη" in output_vars nc_create(x_T,y_T,"deta",runpath,"m^2/s","sea surface height tendency") else nothing end
 
-        for nc in (ncu,ncv,ncη,ncsst,ncq,ncζ)
+        for nc in (ncu,ncv,ncη,ncsst,ncq,ncζ,ncdu,ncdv,ncdη)
             if nc != nothing
                 NetCDF.putatt(nc,"t",Dict("units"=>"s","long_name"=>"time"))
                 NetCDF.putatt(nc,"x",Dict("units"=>"m","long_name"=>"zonal coordinate"))
@@ -37,7 +43,7 @@ function NcFiles(feedback::Feedback,S::ModelSetup)
             end
         end
 
-        return NcFiles(ncu,ncv,ncη,ncsst,ncq,ncζ,[0])
+        return NcFiles(ncu,ncv,ncη,ncsst,ncq,ncζ,ncdu,ncdv,ncdη,[0])
     else
         return NcFiles(nothing)
     end
@@ -87,6 +93,9 @@ function output_nc!(i::Int,
         @views η = Prog.η[haloη+1:end-haloη,haloη+1:end-haloη]
         @views sst = Prog.sst[halosstx+1:end-halosstx,halossty+1:end-halossty]
         @views ζ = (dvdx[2:end-1,2:end-1]-dudy[2+ep:end-1,2:end-1])./abs.(f_q)
+        @views du = Diag.Tendencies.du[halo+1:end-halo,halo+1:end-halo]
+        @views dv = Diag.Tendencies.dv[halo+1:end-halo,halo+1:end-halo]
+        @views dη = Diag.Tendencies.dη[haloη+1:end-haloη,haloη+1:end-haloη]
 
         # WRITING THE VARIABLES
         if ncs.u != nothing
@@ -107,9 +116,19 @@ function output_nc!(i::Int,
         if ncs.ζ != nothing
             NetCDF.putvar(ncs.ζ,"relvort",Float32.(ζ),start=[1,1,iout],count=[-1,-1,1])
         end
+        if ncs.du != nothing
+            NetCDF.putvar(ncs.du,"du",Float32.(du),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs.dv != nothing
+            NetCDF.putvar(ncs.dv,"dv",Float32.(dv),start=[1,1,iout],count=[-1,-1,1])
+        end
+        if ncs.dη != nothing
+            NetCDF.putvar(ncs.dη,"deta",Float32.(dη),start=[1,1,iout],count=[-1,-1,1])
+        end
+
 
         # WRITING THE TIME
-        for nc in (ncs.u,ncs.v,ncs.η,ncs.sst,ncs.q,ncs.ζ)
+        for nc in (ncs.u,ncs.v,ncs.η,ncs.sst,ncs.q,ncs.ζ,ncs.du,ncs.dv,ncs.dη)
             if nc != nothing
                 NetCDF.putvar(nc,"t",Int64[i*dtint],start=[iout])
                 NetCDF.sync(nc)         # sync to view netcdf while model is still running
@@ -124,7 +143,7 @@ function output_close!(ncs::NcFiles,feedback::Feedback,S::ModelSetup)
     @unpack output = S.parameters
 
     if output
-        for nc in (ncs.u,ncs.v,ncs.η,ncs.sst,ncs.q,ncs.ζ)
+        for nc in (ncs.u,ncs.v,ncs.η,ncs.sst,ncs.q,ncs.ζ,ncs.du,ncs.dv,ncs.dη)
             if nc != nothing
                 NetCDF.close(nc)
             end
@@ -148,7 +167,7 @@ end
 function get_run_id_path(S::ModelSetup)
 
     @unpack output,outpath,get_id_mode = S.parameters
-    
+
     if output
         runlist = filter(x->startswith(x,"run"),readdir(outpath))
         existing_runs = [parse(Int,id[4:end]) for id in runlist]
@@ -184,101 +203,3 @@ function get_run_id_path(S::ModelSetup)
         return 0,"no runpath"
     end
 end
-
-# #TODO in ensemble mode, the .jl files might have changed since the start and do not correspond to what
-# #TODO is actually executed!
-# """Archives all .jl files of juls in the output folder to make runs reproducible."""
-# function scripts_output()
-#     if output #&& prank == 0
-#         # copy all files in juls main folder
-#         mkdir(runpath*"scripts")
-#         for juliafile in filter(x->endswith(x,".jl"),readdir())
-#             cp(juliafile,runpath*"scripts/"*juliafile)
-#         end
-#
-#         # and also in the src folder
-#         mkdir(runpath*"scripts/src")
-#         for juliafile in filter(x->endswith(x,".jl"),readdir("src"))
-#             cp("src/"*juliafile,runpath*"scripts/src/"*juliafile)
-#         end
-#     end
-# end
-#
-# """Creates a dictionary with many parameter constants to be included in the nc files."""
-# function output_dict()
-#     # Attributes for nc
-#     Dictu = Dict{String,Any}("description"=>"Data from shallow-water model juls.")
-#     Dictu["details"] = "Cartesian coordinates, f or beta-plane, Arakawa C-grid"
-#     Dictu["reference"] = "github.com/milankl/juls"
-#
-#     Dictu["nx"] = nx
-#     Dictu["Lx"] = Lx
-#     Dictu["L_ratio"] = L_ratio
-#     Dictu["delta"] = Δ
-#
-#     Dictu["halo"] = halo
-#     Dictu["haloeta"] = haloη
-#     Dictu["halosstx"] = halosstx
-#     Dictu["halossty"] = halossty
-#
-#     Dictu["g"] = gravity
-#     Dictu["water_depth"] = water_depth
-#     Dictu["phi"] = ϕ
-#     Dictu["density"] = ρ
-#
-#     Dictu["wind_forcing_x"] = wind_forcing_x
-#     Dictu["wind_forcing_y"] = wind_forcing_y
-#     Dictu["Fx0"] = Fx0
-#     Dictu["Fy0"] = Fy0
-#
-#     Dictu["topography_feature"] = topography_feature
-#     Dictu["topofeat_height"] = topofeat_height
-#     Dictu["topofeat_width"] = topofeat_width
-#
-#     Dictu["surface_forcing"] = string(surface_forcing)
-#     Dictu["t_relax"] = t_relax
-#     Dictu["eta_refh"] = η_refh
-#     Dictu["η_refw"] = η_refw
-#
-#     Dictu["Numtype"] = string(Numtype)
-#     Dictu["output_dt"] = output_dt
-#     Dictu["nout"] = nout
-#     Dictu["nadvstep"] = nadvstep
-#     Dictu["nstep_diff"] = nstep_diff
-#     Dictu["nstep_advcor"] = nstep_advcor
-#
-#     Dictu["RKo"] = RKo
-#     Dictu["cfl"] = cfl
-#     Dictu["Ndays"] = Ndays
-#
-#     Dictu["bc_x"] = bc_x
-#     Dictu["lbc"] = lbc
-#
-#     Dictu["adv_scheme"] = adv_scheme
-#     Dictu["dynamics"] = dynamics
-#
-#     Dictu["bottom_friction"] = bottom_friction
-#     Dictu["drag"] = drag
-#     Dictu["taudrag"] = τdrag
-#
-#     Dictu["diffusion"] = diffusion
-#     Dictu["nuConst"] = ν_const
-#     Dictu["c_smag"] = c_smag
-#
-#     Dictu["tracer_advcetion"] = string(tracer_advection)
-#     Dictu["tracer_relaxation"] = string(tracer_relaxation)
-#     Dictu["injection_region"] = injection_region
-#     Dictu["sstrestart"] = string(sstrestart)
-#     Dictu["Uadv"] = Uadv
-#     Dictu["SSTmax"] = SSTmax
-#     Dictu["SSTmin"] = SSTmin
-#     Dictu["tauSST"] = τSST
-#     Dictu["SSTw"] = SSTw
-#     Dictu["SSTphi"] = SSTϕ
-#
-#     Dictu["initial_cond"] = initial_cond
-#     Dictu["init_run_id"] = init_run_id
-#     Dictu["initpath"] = initpath
-#
-#     return Dictu
-# end

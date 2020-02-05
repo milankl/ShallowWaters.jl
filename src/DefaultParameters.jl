@@ -91,7 +91,7 @@
 
     # OUTPUT OPTIONS
     output::Bool=false                  # netcdf output?
-    output_vars::Array{String,1}=["u","v","η","sst","q","ζ"]  # which variables to output?
+    output_vars::Array{String,1}=["u","v","η","sst","q","ζ"]  # which variables to output? "du","dv","dη" also allowed
     output_dt::Real=6                   # output time step [hours]
     outpath::String=pwd()               # path to output folder
 

@@ -116,8 +116,8 @@ function ghost_points_η_periodic!(::Type{Tcomm},η::Array{T,2}) where {Tcomm,T}
     @views @inbounds η[1,:] .= T.(Tcomm.(η[end-1,:]))
     @views @inbounds η[end,:] .= T.(Tcomm.(η[2,:]))
 
-    @views @inbounds η[:,1] .= T.(Tcomm.(η[:,2]))
-    @views @inbounds η[:,end] .= T.(Tcomm.(η[:,end-1]))
+    @views @inbounds η[:,1] .= η[:,2]
+    @views @inbounds η[:,end] .= η[:,end-1]
 end
 
 """ Copy ghost points for η from inside to the halo in the nonperiodic case. """
