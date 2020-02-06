@@ -88,10 +88,6 @@ function time_integration(  Prog::PrognosticVars{Tprog},
             add_drag_diff_tendencies!(u0,v0,Diag,S)
         end
 
-        # RK3/4 copy back from substeps
-        copyto!(u,u0)
-        copyto!(v,v0)
-        copyto!(η,η0)
         t += dtint
 
         # TRACER ADVECTION
@@ -105,6 +101,11 @@ function time_integration(  Prog::PrognosticVars{Tprog},
         if feedback.nans_detected
             break
         end
+
+        # RK3/4 copy back from substeps
+        copyto!(u,u0)
+        copyto!(v,v0)
+        copyto!(η,η0)
     end
 
     # finalise feedback and output
