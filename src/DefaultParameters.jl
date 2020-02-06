@@ -101,6 +101,7 @@
     init_run_id::Int=0                  # run id for restart from run number
     init_starti::Int=-1                 # timestep to start from (-1 meaning last)
     get_id_mode::String="continue"      # How to determine the run id: "continue" or "fill"
+    run_id::Int=-1                      # Output with a specific run id
 
     # ASSERT - CHECK THAT THE INPUT PARAMETERS MAKE SENSE
     @assert all((nx,Lx,L_ratio) .> 0.)  "nx, Lx, L_ratio have to be >0"
@@ -133,7 +134,7 @@
     @assert initial_cond in ["rest", "ncfile"] "Initial conditions '$initial_cond' unsupported."
     @assert init_run_id >= 0 "Initial condition run id, init_run_id, has to be >= 0, $init_run_id given."
     @assert init_starti > 0 || init_starti == -1 "Start index, init_starti, has to be >0 || -1, $init_starti given."
-    @assert get_id_mode in ["continue","fill"] "get_id_mode $get_id_mode unsupported."
+    @assert get_id_mode in ["continue","fill","specific"] "get_id_mode $get_id_mode unsupported."
 end
 
 """

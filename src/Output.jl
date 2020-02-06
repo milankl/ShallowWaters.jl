@@ -88,42 +88,55 @@ function output_nc!(i::Int,
         @unpack f_q,ep,dtint = S.grid
 
         # CUT OFF HALOS
-        @views u = Prog.u[halo+1:end-halo,halo+1:end-halo]
-        @views v = Prog.v[halo+1:end-halo,halo+1:end-halo]
-        @views η = Prog.η[haloη+1:end-haloη,haloη+1:end-haloη]
-        @views sst = Prog.sst[halosstx+1:end-halosstx,halossty+1:end-halossty]
-        @views ζ = (dvdx[2:end-1,2:end-1]-dudy[2+ep:end-1,2:end-1])./abs.(f_q)
-        @views du = Diag.Tendencies.du[halo+1:end-halo,halo+1:end-halo]
-        @views dv = Diag.Tendencies.dv[halo+1:end-halo,halo+1:end-halo]
-        @views dη = Diag.Tendencies.dη[haloη+1:end-haloη,haloη+1:end-haloη]
+        # @views u = Prog.u[halo+1:end-halo,halo+1:end-halo]
+        # @views v = Prog.v[halo+1:end-halo,halo+1:end-halo]
+        # @views η = Prog.η[haloη+1:end-haloη,haloη+1:end-haloη]
+        # @views sst = Prog.sst[halosstx+1:end-halosstx,halossty+1:end-halossty]
+        # @views ζ = (dvdx[2:end-1,2:end-1]-dudy[2+ep:end-1,2:end-1])./abs.(f_q)
+        # @views du = Diag.Tendencies.du[halo+1:end-halo,halo+1:end-halo]
+        # @views dv = Diag.Tendencies.dv[halo+1:end-halo,halo+1:end-halo]
+        # @views dη = Diag.Tendencies.dη[haloη+1:end-haloη,haloη+1:end-haloη]
+
+        # As output is before copyto!(u,u0), take u0,v0,η0
+        @views u = Float32.(Diag.RungeKutta.u0[halo+1:end-halo,halo+1:end-halo])
+        @views v = Float32.(Diag.RungeKutta.v0[halo+1:end-halo,halo+1:end-halo])
+        @views η = Float32.(Diag.RungeKutta.η0[haloη+1:end-haloη,haloη+1:end-haloη])
+        
+        @views sst = Float32.(Prog.sst[halosstx+1:end-halosstx,halossty+1:end-halossty])
+        @views ζ = Float32.((dvdx[2:end-1,2:end-1]-dudy[2+ep:end-1,2:end-1])./abs.(f_q))
+
+        # Tendencies calculate from the last time step, du = u_n+1-u_n etc
+        @views du = u-Float32.(Prog.u[halo+1:end-halo,halo+1:end-halo])
+        @views dv = v-Float32.(Prog.v[halo+1:end-halo,halo+1:end-halo])
+        @views dη = η-Float32.(Prog.η[haloη+1:end-haloη,haloη+1:end-haloη])
 
         # WRITING THE VARIABLES
         if ncs.u != nothing
-            NetCDF.putvar(ncs.u,"u",Float32.(u),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs.u,"u",u,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.v != nothing
-            NetCDF.putvar(ncs.v,"v",Float32.(v),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs.v,"v",v,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.η != nothing
-            NetCDF.putvar(ncs.η,"eta",Float32.(η),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs.η,"eta",η,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.sst != nothing
-            NetCDF.putvar(ncs.sst,"sst",Float32.(sst),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs.sst,"sst",sst,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.q != nothing
-            NetCDF.putvar(ncs.q,"q",Float32.(q),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs.q,"q",q,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.ζ != nothing
-            NetCDF.putvar(ncs.ζ,"relvort",Float32.(ζ),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs.ζ,"relvort",ζ,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.du != nothing
-            NetCDF.putvar(ncs.du,"du",Float32.(du),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs.du,"du",du,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.dv != nothing
-            NetCDF.putvar(ncs.dv,"dv",Float32.(dv),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs.dv,"dv",dv,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.dη != nothing
-            NetCDF.putvar(ncs.dη,"deta",Float32.(dη),start=[1,1,iout],count=[-1,-1,1])
+            NetCDF.putvar(ncs.dη,"deta",dη,start=[1,1,iout],count=[-1,-1,1])
         end
 
 
@@ -181,14 +194,15 @@ function get_run_id_path(S::ModelSetup)
                 runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
                 mkdir(runpath)
 
-            # elseif order == "specific" # specify the run_id as input argument
-            #     runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
-            #     try # create folder if not existent
-            #         mkdir(runpath)
-            #     catch # else rm folder and create new one
-            #         rm(runpath,recursive=true)
-            #         mkdir(runpath)
-            #     end
+            elseif get_id_mode == "specific" # specify the run_id as input argument
+                @unpack run_id = S.parameters
+                runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
+                try # create folder if not existent
+                    mkdir(runpath)
+                catch # else rm folder and create new one
+                    rm(runpath,recursive=true)
+                    mkdir(runpath)
+                end
 
             elseif get_id_mode == "continue" # find largest folder and count one up
                 run_id = maximum(existing_runs)+1
