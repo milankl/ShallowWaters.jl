@@ -1,6 +1,6 @@
 module ShallowWaters
 
-export RunModel, Parameter
+export RunModel, Parameter, ∂x, ∂y, Ix, Iy
 
 using NetCDF, Parameters, Printf, Dates
 
