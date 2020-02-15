@@ -39,3 +39,36 @@ function ∇²!(du::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
         end
     end
 end
+
+function ∂x(u::Array{T,2},Δx::Real) where {T<:AbstractFloat}
+
+    m,n = size(u)
+
+    dudx = Array{T,2}(undef,m-1,n)
+    one_over_dx = T(1.0/Δx)
+
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m-1
+            dudx[i,j] = one_over_dx*(u[i+1,j] - u[i,j])
+        end
+    end
+
+    return dudx
+end
+
+function ∂y(u::Array{T,2},Δy::Real) where {T<:AbstractFloat}
+
+    m,n = size(u)
+
+    dudy = Array{T,2}(undef,m,n-1)
+    one_over_dy = T(1.0/Δy)
+
+    @inbounds for j ∈ 1:n-1
+        for i ∈ 1:m
+            dudy[i,j] = one_over_dy*(u[i,j+1] - u[i,j])
+        end
+    end
+
+    return dudy
+end

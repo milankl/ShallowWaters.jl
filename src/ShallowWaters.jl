@@ -1,8 +1,8 @@
 module ShallowWaters
 
-export RunModel, Parameter
+export RunModel, Parameter, ∂x, ∂y, Ix, Iy
 
-using NetCDF, Parameters, Printf, Dates
+using NetCDF, Parameters, Printf, Dates, Interpolations
 
 include("DefaultParameters.jl")
 include("Grid.jl")

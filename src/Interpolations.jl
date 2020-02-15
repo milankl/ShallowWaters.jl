@@ -42,3 +42,35 @@ function Ixy!(uxy::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
         end
     end
 end
+
+function Ix(u::Array{T,2}) where {T<:AbstractFloat}
+
+    m,n = size(u)
+    ux = Array{T,2}(undef,m-1,n)
+
+    one_half = T(0.5)
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m-1
+            ux[i,j] = one_half*(u[i+1,j] + u[i,j])
+        end
+    end
+
+    return ux
+end
+
+function Iy(u::Array{T,2}) where {T<:AbstractFloat}
+
+    m,n = size(u)
+    uy = Array{T,2}(undef,m,n-1)
+
+    one_half = T(0.5)
+
+    @inbounds for j ∈ 1:n-1
+        for i ∈ 1:m
+            uy[i,j] = one_half*(u[i,j+1] + u[i,j])
+        end
+    end
+
+    return uy
+end

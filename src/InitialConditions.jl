@@ -39,6 +39,8 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
     elseif initial_cond == "ncfile"
 
         @unpack initpath,init_run_id,init_starti = S.parameters
+        @unpack init_interpolation = S.parameters
+        @unpack nx,ny = S.grid
 
         inirunpath = joinpath(initpath,"run"*@sprintf("%04d",init_run_id))
 
@@ -62,11 +64,61 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
         NetCDF.close(ncη)
 
         # remove singleton time dimension
-        # and convert from Float32 to type T
-        u = T.(reshape(u,size(u)[1:2]))
-        v = T.(reshape(v,size(v)[1:2]))
-        η = T.(reshape(η,size(η)[1:2]))
+        u = reshape(u,size(u)[1:2])
+        v = reshape(v,size(v)[1:2])
+        η = reshape(η,size(η)[1:2])
 
+        # Interpolation in case the grids don't match?
+
+        nx_old,ny_old = size(η)
+
+        if (nx_old,ny_old) != (nx,ny)
+            if init_interpolation
+
+                # old grids
+                x_T = collect(0.5:nx_old-0.5)
+                y_T = collect(0.5:ny_old-0.5)
+
+                # assuming periodic BC for now #TODO make flexible
+                x_u = collect(0:nx_old-1)
+                y_u = y_T
+
+                x_v = x_T
+                y_v = collect(1:ny_old-1)
+
+                # set up interpolation functions
+                u_itp = interpolate((x_u,y_u),u,Gridded(Linear()))
+                v_itp = interpolate((x_v,y_v),v,Gridded(Linear()))
+                η_itp = interpolate((x_T,y_T),η,Gridded(Linear()))
+
+                #TODO in case of interpolation on larger grids
+                #TODO make BC adapting to actual BCs used.
+                u_etp = extrapolate(u_itp,(Flat(),Flat()))
+                v_etp = extrapolate(v_itp,(Flat(),Flat()))
+                η_etp = extrapolate(η_itp,(Flat(),Flat()))
+
+                # new grids
+                Δx = nx_old/nx
+                Δy = ny_old/ny
+
+                x_T_new = collect(Δx/2:Δx:nx_old-Δx/2)
+                y_T_new = collect(Δy/2:Δy:ny_old-Δy/2)
+
+                x_u_new = collect(0:Δx:nx_old-Δx)
+                y_u_new = y_T_new
+
+                x_v_new = x_T_new
+                y_v_new = collect(Δy:Δy:ny_old-Δy)
+
+                # retrieve values and overwrite existing arrays
+                u = u_etp(x_u_new,y_u_new)
+                v = v_etp(x_v_new,y_v_new)
+                η = η_etp(x_T_new,y_T_new)
+
+            else
+                throw(error("Grid size $((nx,ny)) doesn't match initial conditions on a $(size(η)) grid."))
+            end
+        end
     end
 
     ## SST
@@ -102,6 +154,11 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
 
     # Convert to number format T
     sst = T.(sst)
+    u = T.(u)
+    v = T.(v)
+    η = T.(η)
+
+    #TODO SST INTERPOLATION
 
     u,v,η,sst = add_halo(u,v,η,sst,S)
 
