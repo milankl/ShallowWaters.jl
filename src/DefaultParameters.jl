@@ -102,6 +102,7 @@
     init_starti::Int=-1                 # timestep to start from (-1 meaning last)
     get_id_mode::String="continue"      # How to determine the run id: "continue" or "fill"
     run_id::Int=-1                      # Output with a specific run id
+    init_interpolation::Bool=true       # Interpolate the initial conditions in case grids don't match?
 
     # ASSERT - CHECK THAT THE INPUT PARAMETERS MAKE SENSE
     @assert all((nx,Lx,L_ratio) .> 0.)  "nx, Lx, L_ratio have to be >0"
