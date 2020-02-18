@@ -61,8 +61,8 @@ function rhs_nonlinear!(u::AbstractMatrix,
     PVadvection!(Diag,S)
 
     # adding the terms
-    momentum_u!(Diag,S)
-    momentum_v!(Diag,S)
+    momentum_u!(Diag,S,t)
+    momentum_v!(Diag,S,t)
     continuity!(η,Diag,S,t)
 end
 
@@ -106,8 +106,8 @@ function rhs_linear!(   u::AbstractMatrix,
     fu!(qhu,f_v,u_v)
 
     # adding the terms
-    momentum_u!(Diag,S)
-    momentum_v!(Diag,S)
+    momentum_u!(Diag,S,t)
+    momentum_v!(Diag,S,t)
     continuity!(η,Diag,S,t)
 end
 
@@ -281,7 +281,9 @@ function fu!(   qhu::AbstractMatrix,
 end
 
 """Sum up the tendencies of the non-diffusive right-hand side for the u-component."""
-function momentum_u!(Diag::DiagnosticVars{T,Tprog},S::ModelSetup) where {T,Tprog}
+function momentum_u!(   Diag::DiagnosticVars{T,Tprog},
+                        S::ModelSetup,
+                        t::Int) where {T,Tprog}
 
     @unpack du = Diag.Tendencies
     @unpack qhv = Diag.Vorticity
@@ -294,15 +296,24 @@ function momentum_u!(Diag::DiagnosticVars{T,Tprog},S::ModelSetup) where {T,Tprog
     @boundscheck (m+2-ep,n+2) == size(dpdx) || throw(BoundsError())
     @boundscheck (m,n) == size(Fx) || throw(BoundsError())
 
+    if S.parameters.seasonal_wind_x
+        @unpack ωFx = S.constants
+        Fxt = Ftime(T,t,ωFx)
+    else
+        Fxt = one(T)
+    end
+
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            du[i+2,j+2] = Tprog(qhv[i,j]) - Tprog(dpdx[i+1-ep,j+1]) + Tprog(Fx[i,j])
+            du[i+2,j+2] = Tprog(qhv[i,j]) - Tprog(dpdx[i+1-ep,j+1]) + Tprog(Fxt*Fx[i,j])
         end
     end
 end
 
 """Sum up the tendencies of the non-diffusive right-hand side for the v-component."""
-function momentum_v!(Diag::DiagnosticVars{T,Tprog},S::ModelSetup) where {T,Tprog}
+function momentum_v!(   Diag::DiagnosticVars{T,Tprog},
+                        S::ModelSetup,
+                        t::Int) where {T,Tprog}
 
     @unpack dv = Diag.Tendencies
     @unpack qhu = Diag.Vorticity
@@ -314,9 +325,16 @@ function momentum_v!(Diag::DiagnosticVars{T,Tprog},S::ModelSetup) where {T,Tprog
     @boundscheck (m,n) == size(qhu) || throw(BoundsError())
     @boundscheck (m+2,n+2) == size(dpdy) || throw(BoundsError())
 
+    if S.parameters.seasonal_wind_y
+        @unpack ωFy = S.constants
+        Fyt = Ftime(T,t,ωFy)
+    else
+        Fyt = one(T)
+    end
+
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-             dv[i+2,j+2] = -Tprog(qhu[i,j]) - Tprog(dpdy[i+1,j+1]) + Tprog(Fy[i,j])
+             dv[i+2,j+2] = -Tprog(qhu[i,j]) - Tprog(dpdy[i+1,j+1]) + Tprog(Fyt*Fy[i,j])
         end
     end
 end

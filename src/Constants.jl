@@ -17,7 +17,9 @@ struct Constants{T<:AbstractFloat,Tprog<:AbstractFloat}
     rSST::T                 # tracer restoring timescale
     jSST::T                 # tracer consumption timescale
     SSTmin::T               # tracer minimum
-    ωyr::Float64            # frequency [1/s] of Kelvin pumping (including 2π)
+    ωFη::Float64            # frequency [1/s] of seasonal surface forcing incl 2π
+    ωFx::Float64            # frequency [1/s] of seasonal wind x incl 2π
+    ωFy::Float64            # frequency [1/2] of seasonal wind y incl 2π
 end
 
 """Generator function for the mutable struct Constants."""
@@ -54,8 +56,12 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
     jSST = T(G.dtadvint/(P.jSST*3600*24))    # tracer consumption [1]
     SSTmin = T(P.SSTmin)
 
-    # SURFACE FORCING
-    ωyr = -2π*P.ωyr/24/365.25/3600
+    # TIME DEPENDENT FORCING
+    ωFη = -2π*P.ωFη/24/365.25/3600
+    ωFx = 2π*P.ωFx/24/365.25/3600
+    ωFy = 2π*P.ωFy/24/365.25/3600
 
-    return Constants{T,Tprog}(RKaΔt,RKbΔt,one_minus_α,g,cD,rD,γ,cSmag,νB,rSST,jSST,SSTmin,ωyr)
+    return Constants{T,Tprog}(  RKaΔt,RKbΔt,one_minus_α,
+                                g,cD,rD,γ,cSmag,νB,rSST,
+                                jSST,SSTmin,ωFη,ωFx,ωFy)
 end

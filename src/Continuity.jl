@@ -38,12 +38,12 @@ function continuity_forcing!(   Diag::DiagnosticVars{T,Tprog},
     @boundscheck (m,n) == size(Fη) || throw(BoundsError())
 
     # avoid recomputation
-    @unpack ωyr = S.constants
-    Fηtt = Fηt(T,t,ωyr)
+    @unpack ωFη = S.constants
+    Fηt = Ftime(T,t,ωFη)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            dη[i+1,j+1] = -(Tprog(dUdx[i,j+1]) + Tprog(dVdy[i+1,j])) + Tprog(Fηtt*Fη[i,j])
+            dη[i+1,j+1] = -(Tprog(dUdx[i,j+1]) + Tprog(dVdy[i+1,j])) + Tprog(Fηt*Fη[i,j])
         end
     end
 end
