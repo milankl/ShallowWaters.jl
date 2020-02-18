@@ -211,7 +211,7 @@ function KelvinPump(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
     return T.(Fη)
 end
 
-"""Time evolution of surface forcing."""
-function Fηt(::Type{T},t::Int,ωyr::AbstractFloat) where {T<:AbstractFloat}
-    return T(sin(ωyr*t))
+"""Time evolution of forcing."""
+function Ftime(::Type{T},t::Int,ω::Real) where {T<:AbstractFloat}
+    return T(sin(ω*t))
 end

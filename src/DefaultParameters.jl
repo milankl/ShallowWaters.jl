@@ -23,6 +23,10 @@
     wind_forcing_y::String="constant"   # "channel", "double_gyre", "shear","constant" or "none"
     Fx0::Real=0.12                      # wind stress strength [Pa] in x-direction
     Fy0::Real=0.0                       # wind stress strength [Pa] in y-direction
+    seasonal_wind_x::Bool=false         # Change the wind stress with a sine of frequency ωFx,ωFy
+    seasonal_wind_y::Bool=false         # same for y-component
+    ωFx::Real=1.0                       # frequency [1/year] for x component
+    ωFy::Real=1.0                       # frequency [1/year] for y component
 
     # BOTTOM TOPOGRAPHY OPTIONS
     topography::String="ridge"          # "ridge", "seamount", "flat", "ridges", "bathtub"
@@ -37,7 +41,7 @@
 
     # SURFACE FORCING
     surface_forcing::Bool=false         # yes?
-    ωyr::Real=1.0                       # (annual) frequency [1/year]
+    ωFη::Real=1.0                       # frequency [1/year] for surfance forcing
     A::Real=3e-5                        # Amplitude [m/s]
     ϕk::Real=ϕ                          # Central latitude of Kelvin wave pumping
     wk::Real=10e3                       # width [m] in y of Gaussian used for surface forcing
@@ -114,7 +118,6 @@
     @assert topo_width > 0.0    "topo_width has to be >0, $topo_width given."
     @assert t_relax > 0.0       "t_relax has to be >0, $t_relax given."
     @assert η_refw > 0.0        "η_refw has to be >0, $η_refw given."
-    @assert ωyr > 0.0           "ωyr has to be >0, $ωyr given."
     @assert RKo in [3,4]        "RKo has to be 3 or 4, $RKo given."
     @assert Ndays > 0.0         "Ndays has to be >0, $Ndays given."
     @assert nstep_diff > 0      "nstep_diff has to be >0, $nstep_diff given."
@@ -144,7 +147,7 @@ Creates a Parameter struct with following options and default values
     T::DataType=Float32                 # number format
 
     Tprog::DataType=T                   # number format for prognostic variables
-    Tcomm::DataType=T                   # number format for ghost-point copies
+    Tcomm::DataType=Tprog               # number format for ghost-point copies
 
     # DOMAIN RESOLUTION AND RATIO
     nx::Int=100                         # number of grid cells in x-direction
@@ -155,7 +158,7 @@ Creates a Parameter struct with following options and default values
     g::Real=10.                         # gravitational acceleration [m/s]
     H::Real=500.                        # layer thickness at rest [m]
     ρ::Real=1e3                         # water density [kg/m^3]
-    ϕ::Real=45.                         # central latitue of the domain (for coriolis) [°]
+    ϕ::Real=45.                         # central latitude of the domain (for coriolis) [°]
     ω::Real=2π/(24*3600)                # Earth's angular frequency [s^-1]
     R::Real=6.371e6                     # Earth's radius [m]
 
@@ -164,6 +167,10 @@ Creates a Parameter struct with following options and default values
     wind_forcing_y::String="constant"   # "channel", "double_gyre", "shear","constant" or "none"
     Fx0::Real=0.12                      # wind stress strength [Pa] in x-direction
     Fy0::Real=0.0                       # wind stress strength [Pa] in y-direction
+    seasonal_wind_x::Bool=false         # Change the wind stress with a sine of frequency ωFx,ωFy
+    seasonal_wind_y::Bool=false         # same for y-component
+    ωFx::Real=1.0                       # frequency [1/year] for x component
+    ωFy::Real=1.0                       # frequency [1/year] for y component
 
     # BOTTOM TOPOGRAPHY OPTIONS
     topography::String="ridge"          # "ridge", "seamount", "flat", "ridges", "bathtub"
@@ -176,10 +183,12 @@ Creates a Parameter struct with following options and default values
     η_refh::Real=5.                     # height difference [m] of the interface relaxation profile
     η_refw::Real=50e3                   # width [m] of the tangent used for the interface relaxation
 
-    # SURFACE FORCING (Currently only Kelvin wave pumping at Eq.)
+    # SURFACE FORCING
     surface_forcing::Bool=false         # yes?
-    ωyr::Real=1.0                       # (annual) frequency [1/year]
+    ωFη::Real=1.0                       # (annual) frequency [1/year]
     A::Real=3e-5                        # Amplitude [m/s]
+    ϕk::Real=ϕ                          # Central latitude of Kelvin wave pumping
+    wk::Real=10e3                       # width [m] in y of Gaussian used for surface forcing
 
     # TIME STEPPING OPTIONS
     RKo::Int=4                          # Order of the RK time stepping scheme (3 or 4)
@@ -230,7 +239,7 @@ Creates a Parameter struct with following options and default values
 
     # OUTPUT OPTIONS
     output::Bool=false                  # netcdf output?
-    output_vars::Array{String,1}=["u","v","η","sst","q","ζ"]  # which variables to output?
+    output_vars::Array{String,1}=["u","v","η","sst","q","ζ"]  # which variables to output? "du","dv","dη" also allowed
     output_dt::Real=6                   # output time step [hours]
     outpath::String=pwd()               # path to output folder
 
@@ -240,5 +249,8 @@ Creates a Parameter struct with following options and default values
     init_run_id::Int=0                  # run id for restart from run number
     init_starti::Int=-1                 # timestep to start from (-1 meaning last)
     get_id_mode::String="continue"      # How to determine the run id: "continue" or "fill"
+    run_id::Int=-1                      # Output with a specific run id
+    init_interpolation::Bool=true       # Interpolate the initial conditions in case grids don't match?
+
 """
 Parameter
