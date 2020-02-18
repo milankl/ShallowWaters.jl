@@ -9,15 +9,33 @@
 # ShallowWaters.jl - A type-flexible 16bit shallow water model
 ![sst](figs/sst_posit16.png?raw=true "SST")
 
-A shallow water model with a focus on type-flexibility and 16bit number formats. ShallowWaters allows for Float64/32/16, BigFloat/[ArbFloat](https://github.com/JeffreySarnoff/ArbNumerics.jl), [Posit32/16](https://github.com/milankl/SoftPosit.jl), [BFloat16](https://github.com/JuliaComputing/BFloat16s.jl), [Sonum16](https://github.com/milankl/Sonums.jl) and in general every number format with arithmetics and conversions implemented.
+A shallow water model with a focus on type-flexibility and 16bit number formats. ShallowWaters allows for Float64/32/16, [BigFloat](https://docs.julialang.org/en/v1/base/numbers/#BigFloats-and-BigInts-1)/[ArbFloat](https://github.com/JeffreySarnoff/ArbNumerics.jl)/[DoubleFloats](https://github.com/JuliaMath/DoubleFloats.jl), [Posit32/16/8](https://github.com/milankl/SoftPosit.jl), [BFloat16](https://github.com/JuliaComputing/BFloat16s.jl), [Sonum16](https://github.com/milankl/Sonums.jl) and in general every number format with arithmetics and conversions implemented. ShallowWaters also allows for mixed-precision and reduced precision communication.
 
 ShallowWaters is fully-explicit with an energy and enstrophy conserving advection scheme and a Smagorinsky-like biharmonic diffusion operator. Tracer advection is implemented with a semi-Lagrangian advection scheme. Runge-Kutta 4th-order is used for pressure, advective and Coriolis terms and the continuity equation. Semi-implicit time stepping for diffusion and bottom friction. Boundary conditions are either periodic (only in x direction) or non-periodic super-slip, free-slip, partial-slip, or no-slip. Output via NetCDF.
 
 Please feel free to raise an [issue](https://github.com/milankl/ShallowWaters.jl/issues) if you discover bugs or have an idea how to improve ShallowWaters.
 
-## How to use
+### How to use
 
-You find the options and default parameters in `src/DefaultParameters.jl` (or by typing `?Parameter`). They can be changed with keyword arguments. Optionally, the number format `T` is defined as the first argument of `RunModel(T,...)`
+`RunModel` initialises the model, preallocates memory and starts the time integration. You find the options and default parameters in `src/DefaultParameters.jl` (or by typing `?Parameter`). 
+```julia
+help?> Parameter
+search: Parameter
+
+  Creates a Parameter struct with following options and default values
+
+  T::DataType=Float32                 # number format
+  
+  Tprog::DataType=T                   # number format for prognostic variables
+  Tcomm::DataType=Tprog               # number format for ghost-point copies
+  
+  # DOMAIN RESOLUTION AND RATIO
+  nx::Int=100                         # number of grid cells in x-direction
+  Lx::Real=2000e3                     # length of the domain in x-direction [m]
+  L_ratio::Real=2                     # Domain aspect ratio of Lx/Ly
+  ...
+```
+They can be changed with keyword arguments. The number format `T` is defined as the first (but optional) argument of `RunModel(T,...)`
 ```julia
 julia> Prog = RunModel(Float32,Ndays=10,g=10,H=500,Fx0=0.12);
 Starting ShallowWaters on Sun, 20 Oct 2019 19:58:25 without output.
@@ -28,8 +46,19 @@ or by creating a Parameter struct
 julia> P = Parameter(bc="nonperiodic",wind_forcing_x="double_gyre",L_ratio=1,nx=128);
 julia> Prog = RunModel(P);
 ```
+The number formats can be different (aka mixed-precision) for different parts of the model. `Tprog` is the number type for the prognostic variables, `Tcomm` is used for communication of boundary values.
 
-## Installation
+### (Some) Features
+
+- Interpolation of initial conditions from low resolution / high resolution runs.
+- Output of relative vorticity, potential vorticity and tendencies du,dv,deta
+- (Pretty accurate) duration estimate
+- Can be run in ensemble mode with ordered non-conflicting output files
+- Runs at CFL=1
+- Solving the tracer advection comes at basically no cost, thanks to semi-Lagrangian advection scheme
+- Also outputs the gradient operators ∂/∂x,∂/∂y and interpolations Ix, Iy for easier post-processing.
+
+### Installation
 
 ShallowWaters.jl is a registered package, so simply do
 
