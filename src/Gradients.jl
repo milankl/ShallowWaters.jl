@@ -40,6 +40,7 @@ function ∇²!(du::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
     end
 end
 
+"""∂x is the 2nd order centred Gradient-operator ∂/∂x with grid spacing Δ (default 1)."""
 function ∂x(u::Array{T,2},Δx::Real) where {T<:AbstractFloat}
 
     m,n = size(u)
@@ -57,7 +58,8 @@ function ∂x(u::Array{T,2},Δx::Real) where {T<:AbstractFloat}
     return dudx
 end
 
-function ∂y(u::Array{T,2},Δy::Real) where {T<:AbstractFloat}
+"""∂y is the 2nd order centred Gradient-operator ∂/∂y with grid spacing Δ (default 1)."""
+function ∂y(u::Array{T,2},Δy::Real=1) where {T<:AbstractFloat}
 
     m,n = size(u)
 
@@ -71,4 +73,21 @@ function ∂y(u::Array{T,2},Δy::Real) where {T<:AbstractFloat}
     end
 
     return dudy
+end
+
+""" ∇² is the 2nd order centred Laplace-operator ∂/∂x^2 + ∂/∂y^2 with grid spacing Δ (default 1)."""
+function ∇²(u::Array{T,2},Δ::Real=1) where {T<:AbstractFloat}
+    
+    m, n = size(u)
+    du = Array{T,2}(undef,m-2,n-2)
+    
+    minus_4 = T(-4.0)
+    one_over_dx² = T(1/Δ^2)
+
+    @inbounds for j ∈ 2:n-1
+        for i ∈ 2:m-1
+            du[i-1,j-1] = one_over_dx²*(minus_4*u[i,j] + u[i,j-1] + u[i,j+1] + u[i-1,j] + u[i+1,j])
+        end
+    end
+    return du
 end
