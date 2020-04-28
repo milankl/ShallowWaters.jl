@@ -185,7 +185,7 @@ Creates a Parameter struct with following options and default values
 
     # SURFACE FORCING
     surface_forcing::Bool=false         # yes?
-    ωFη::Real=1.0                       # (annual) frequency [1/year]
+    ωFη::Real=1.0                       # frequency [1/year] for surfance forcing
     A::Real=3e-5                        # Amplitude [m/s]
     ϕk::Real=ϕ                          # Central latitude of Kelvin wave pumping
     wk::Real=10e3                       # width [m] in y of Gaussian used for surface forcing

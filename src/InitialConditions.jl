@@ -53,15 +53,15 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
         end
 
         u = ncu.vars["u"][:,:,init_starti]
-        NetCDF.close(ncu)
+        # NetCDF.close(ncu)
 
         ncv = NetCDF.open(joinpath(inirunpath,"v.nc"))
         v = ncv.vars["v"][:,:,init_starti]
-        NetCDF.close(ncv)
+        # NetCDF.close(ncv)
 
         ncη = NetCDF.open(joinpath(inirunpath,"eta.nc"))
         η = ncη.vars["eta"][:,:,init_starti]
-        NetCDF.close(ncη)
+        # NetCDF.close(ncη)
 
         # remove singleton time dimension
         u = reshape(u,size(u)[1:2])
@@ -147,7 +147,7 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
     if initial_cond == "ncfile" && sst_initial == "restart"
         ncsst = NetCDF.open(joinpath(inirunpath,"sst.nc"))
         sst = ncsst.vars["sst"][:,:,init_starti]
-        NetCDF.close(ncsst)
+        # NetCDF.close(ncsst)
 
         sst = reshape(sst,size(sst)[1:2])
     end
@@ -164,11 +164,3 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
 
     return PrognosticVars{T}(u,v,η,sst)
 end
-
-# if injection_region == "south"
-#     sst_inj_region = sst_south
-# elseif injection_region == "west"
-#     sst_inj_region = sst_west
-# elseif injection_region == "rect"
-#     sst_inj_region = sst_rect
-# end

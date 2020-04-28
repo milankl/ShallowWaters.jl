@@ -15,9 +15,11 @@ ShallowWaters is fully-explicit with an energy and enstrophy conserving advectio
 
 Please feel free to raise an [issue](https://github.com/milankl/ShallowWaters.jl/issues) if you discover bugs or have an idea how to improve ShallowWaters.
 
+Requires: Julia 1.2
+
 ### How to use
 
-`RunModel` initialises the model, preallocates memory and starts the time integration. You find the options and default parameters in `src/DefaultParameters.jl` (or by typing `?Parameter`). 
+`RunModel` initialises the model, preallocates memory and starts the time integration. You find the options and default parameters in `src/DefaultParameters.jl` (or by typing `?Parameter`).
 ```julia
 help?> Parameter
 search: Parameter
@@ -25,10 +27,10 @@ search: Parameter
   Creates a Parameter struct with following options and default values
 
   T::DataType=Float32                 # number format
-  
+
   Tprog::DataType=T                   # number format for prognostic variables
   Tcomm::DataType=Tprog               # number format for ghost-point copies
-  
+
   # DOMAIN RESOLUTION AND RATIO
   nx::Int=100                         # number of grid cells in x-direction
   Lx::Real=2000e3                     # length of the domain in x-direction [m]
