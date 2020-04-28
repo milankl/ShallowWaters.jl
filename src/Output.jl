@@ -147,11 +147,11 @@ function output_close!(ncs::NcFiles,feedback::Feedback,S::ModelSetup)
     @unpack output = S.parameters
 
     if output
-        for nc in (ncs.u,ncs.v,ncs.η,ncs.sst,ncs.q,ncs.ζ,ncs.du,ncs.dv,ncs.dη)
-            if nc != nothing
-                NetCDF.close(nc)
-            end
-        end
+        # for nc in (ncs.u,ncs.v,ncs.η,ncs.sst,ncs.q,ncs.ζ,ncs.du,ncs.dv,ncs.dη)
+        #     if nc != nothing
+        #         NetCDF.close(nc)
+        #     end
+        # end
         println("All data stored.")
         write(feedback.progress_txt,"All data stored.")
         close(feedback.progress_txt)
