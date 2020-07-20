@@ -84,7 +84,6 @@ function output_nc!(i::Int,
         ncs.iout[1] = iout          # pack
 
         @unpack halo,haloη,halosstx,halossty = S.grid
-        @unpack q,dvdx,dudy = Diag.Vorticity
         @unpack f_q,ep,dtint = S.grid
 
         # CUT OFF HALOS
@@ -108,6 +107,7 @@ function output_nc!(i::Int,
             NetCDF.putvar(ncs.sst,"sst",sst,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.q != nothing
+            @views q = Float32.(Diag.Vorticity)
             NetCDF.putvar(ncs.q,"q",q,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.ζ != nothing

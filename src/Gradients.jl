@@ -32,7 +32,6 @@ function ∇²!(du::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
 
     minus_4 = T(-4.0)
 
-    #TODO @simd?
     @inbounds for i ∈ 1:n
         for j ∈ 1:m
             du[j,i] = minus_4*u[j+1,i+1] + u[j,i+1] + u[j+2,i+1] + u[j+1,i] + u[j+1,i+2]
@@ -77,10 +76,10 @@ end
 
 """ ∇² is the 2nd order centred Laplace-operator ∂/∂x^2 + ∂/∂y^2 with grid spacing Δ (default 1)."""
 function ∇²(u::Array{T,2},Δ::Real=1) where {T<:AbstractFloat}
-    
+
     m, n = size(u)
     du = Array{T,2}(undef,m-2,n-2)
-    
+
     minus_4 = T(-4.0)
     one_over_dx² = T(1/Δ^2)
 
