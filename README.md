@@ -65,6 +65,7 @@ julia> using PyPlot
 julia> pcolormesh(P.η')
 ```
 ![Figure_1](https://user-images.githubusercontent.com/25530332/90311163-1ee40a00-def0-11ea-8911-810d7762cd3f.png)
+
 Or let's calculate the speed of the currents
 ```julia
 julia> speed = sqrt.(Ix(P.u.^2)[:,2:end-1] + Iy(P.v.^2)[2:end-1,:])
@@ -74,6 +75,7 @@ julia> speed = sqrt.(Ix(P.u.^2)[:,2:end-1] + Iy(P.v.^2)[2:end-1,:])
 julia> pcolormesh(speed')
 ```
 ![Figure_2](https://user-images.githubusercontent.com/25530332/90311211-88fcaf00-def0-11ea-8308-b4f438495152.png)
+
 Such that the currents are strongest around the two eddies, as expected in this quasi-geostrophic setup.
 
 ## (Some) Features
