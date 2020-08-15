@@ -17,7 +17,7 @@ Please feel free to raise an [issue](https://github.com/milankl/ShallowWaters.jl
 
 Requires: Julia 1.2
 
-### How to use
+## How to use
 
 `RunModel` initialises the model, preallocates memory and starts the time integration. You find the options and default parameters in `src/DefaultParameters.jl` (or by typing `?Parameter`).
 ```julia
@@ -50,7 +50,33 @@ julia> Prog = RunModel(P);
 ```
 The number formats can be different (aka mixed-precision) for different parts of the model. `Tprog` is the number type for the prognostic variables, `Tcomm` is used for communication of boundary values.
 
-### (Some) Features
+## Double-gyre example
+
+You can for example run a double gyre simulation like this
+```julia
+julia> using ShallowWaters
+julia> P = RunModel(Ndays=100,nx=100,L_ratio=1,bc="nonperiodic",wind_forcing_x="double_gyre",topography="seamount");
+Starting ShallowWaters on Sat, 15 Aug 2020 11:59:21 without output.
+100% Integration done in 13.7s.
+```
+Sea surface height can be visualised via
+```julia
+julia> using PyPlot
+julia> pcolormesh(P.η')
+```
+![Figure_1](https://user-images.githubusercontent.com/25530332/90311163-1ee40a00-def0-11ea-8911-810d7762cd3f.png)
+Or let's calculate the speed of the currents
+```julia
+julia> speed = sqrt.(Ix(P.u.^2)[:,2:end-1] + Iy(P.v.^2)[2:end-1,:])
+```
+`P.u` and `P.v` are the u,v velocity components on the Arakawa C-grid. To add them, we need to interpolate them with `Ix,Iy` (which are exported by `ShallowWaters.jl` too), then chopping off the edges to get two arrays of the same size.
+```julia
+julia> pcolormesh(speed')
+```
+![Figure_2](https://user-images.githubusercontent.com/25530332/90311211-88fcaf00-def0-11ea-8308-b4f438495152.png)
+Such that the currents are strongest around the two eddies, as expected in this quasi-geostrophic setup.
+
+## (Some) Features
 
 - Interpolation of initial conditions from low resolution / high resolution runs.
 - Output of relative vorticity, potential vorticity and tendencies du,dv,deta
@@ -60,7 +86,7 @@ The number formats can be different (aka mixed-precision) for different parts of
 - Solving the tracer advection comes at basically no cost, thanks to semi-Lagrangian advection scheme
 - Also outputs the gradient operators ∂/∂x,∂/∂y and interpolations Ix, Iy for easier post-processing.
 
-### Installation
+## Installation
 
 ShallowWaters.jl is a registered package, so simply do
 
