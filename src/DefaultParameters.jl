@@ -1,9 +1,9 @@
 @with_kw struct Parameter
 
-    T::DataType=Float32                 # number format
+    T=Float32                 # number format
 
-    Tprog::DataType=T                   # number format for prognostic variables
-    Tcomm::DataType=Tprog               # number format for ghost-point copies
+    Tprog=T                   # number format for prognostic variables
+    Tcomm=Tprog               # number format for ghost-point copies
 
     # DOMAIN RESOLUTION AND RATIO
     nx::Int=100                         # number of grid cells in x-direction
