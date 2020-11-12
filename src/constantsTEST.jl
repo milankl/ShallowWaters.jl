@@ -25,12 +25,17 @@ end
 """Generator function for the mutable struct Constants."""
 function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<:AbstractFloat}
 
-    # Runge-Kutta 3rd/4th order coefficients including time step Δt
+    # Runge-Kutta 2nd/3rd/4th order coefficients including time step Δt
     # (which includes the grid spacing Δ too)
-    if P.RKo == 3     # version 2
+    # a are the coefficents to sum the rhs on the fly, such that sum=1
+    # b are the coefficents for the update that used for a new evaluation of the RHS
+    if P.RKo == 2     # Heun's method
+        RKaΔt = Tprog.([1/2,1/2]*G.dtint/G.Δ)
+        RKbΔt = Tprog.([1]*G.dtint/G.Δ)
+    elseif P.RKo == 3     # version 2 / Heun's 3rd order
         RKaΔt = Tprog.([1/4,0.,3/4]*G.dtint/G.Δ)
         RKbΔt = Tprog.([1/3,2/3]*G.dtint/G.Δ)
-    elseif P.RKo == 4
+    elseif P.RKo == 4 # THE Runge-Kutta 4th order
         RKaΔt = Tprog.([1/6,1/3,1/3,1/6]*G.dtint/G.Δ)
         RKbΔt = Tprog.([.5,.5,1.]*G.dtint/G.Δ)
     end

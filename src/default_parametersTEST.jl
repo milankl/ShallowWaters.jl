@@ -118,7 +118,7 @@
     @assert topo_width > 0.0    "topo_width has to be >0, $topo_width given."
     @assert t_relax > 0.0       "t_relax has to be >0, $t_relax given."
     @assert η_refw > 0.0        "η_refw has to be >0, $η_refw given."
-    @assert RKo in [3,4]        "RKo has to be 3 or 4, $RKo given."
+    @assert RKo in [2,3,4]        "RKo has to be 2, 3 or 4, $RKo given."
     @assert Ndays > 0.0         "Ndays has to be >0, $Ndays given."
     @assert nstep_diff > 0      "nstep_diff has to be >0, $nstep_diff given."
     @assert nstep_advcor >= 0   "nstep_advcor has to be >=0, $nstep_advcor given."
@@ -191,7 +191,7 @@ Creates a Parameter struct with following options and default values
     wk::Real=10e3                       # width [m] in y of Gaussian used for surface forcing
 
     # TIME STEPPING OPTIONS
-    RKo::Int=4                          # Order of the RK time stepping scheme (3 or 4)
+    RKo::Int=4                          # Order of the RK time stepping scheme (2, 3 or 4)
     cfl::Real=1.0                       # CFL number (1.0 recommended for RK4, 0.6 for RK3)
     Ndays::Real=10.0                    # number of days to integrate for
     nstep_diff::Int=1                   # diffusive part every nstep_diff time steps.
