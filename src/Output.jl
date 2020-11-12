@@ -65,7 +65,8 @@ function nc_create( x::Array{T,1},
     tvar = NcVar("t",tdim,t=Int32)
 
     nc = NetCDF.create(joinpath(path,name*".nc"),[var,tvar],mode=NC_NETCDF4)
-    NetCDF.putatt(nc,name,Dict("units"=>unit,"long_name"=>long_name))
+    # add missing_value although irrelevant for ncview compatibility
+    NetCDF.putatt(nc,name,Dict("units"=>unit,"long_name"=>long_name,"missing_value"=>-999999f0))
     return nc
 end
 
@@ -107,10 +108,12 @@ function output_nc!(i::Int,
             NetCDF.putvar(ncs.sst,"sst",sst,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.q != nothing
-            @views q = Float32.(Diag.Vorticity)
+            @views q = Float32.(Diag.Vorticity.q[haloη+1:end-haloη,haloη+1:end-haloη])
             NetCDF.putvar(ncs.q,"q",q,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.ζ != nothing
+            @unpack dvdx,dudy = Diag.Vorticity
+            @unpack f_q = S.grid
             @views ζ = Float32.((dvdx[2:end-1,2:end-1]-dudy[2+ep:end-1,2:end-1])./abs.(f_q))
             NetCDF.putvar(ncs.ζ,"relvort",ζ,start=[1,1,iout],count=[-1,-1,1])
         end

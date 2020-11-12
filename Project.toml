@@ -1,7 +1,7 @@
 name = "ShallowWaters"
 uuid = "56019723-2d87-4a65-81ff-59d5d8913e3c"
 authors = ["Milan Kloewer"]
-version = "0.3.0"
+version = "0.3.1"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
@@ -14,7 +14,7 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Interpolations = "^0.12"
 NetCDF = "^0.10"
 Parameters = "^0.12"
-julia = "1"
+julia = "^1.2"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
