@@ -5,7 +5,7 @@ export RunModel, Parameter, ∂x, ∂y, Ix, Iy, ∇²
 using NetCDF, Parameters, Printf, Dates, Interpolations
 
 include("default_parameters.jl")
-include("grid.jl")
+include("grids.jl")
 include("constants.jl")
 include("forcing.jl")
 include("model_setup.jl")
