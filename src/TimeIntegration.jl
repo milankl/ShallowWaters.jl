@@ -17,12 +17,17 @@ function time_integration(  Prog::PrognosticVars{Tprog},
     @unpack nt,dtint = S.grid
     @unpack nstep_advcor,nstep_diff,nadvstep,nadvstep_half = S.grid
 
-    # some precalculations
+    # calculate layer thicknesses for initial conditions
     thickness!(Diag.VolumeFluxes.h,η,S.forcing.H)
     Ix!(Diag.VolumeFluxes.h_u,Diag.VolumeFluxes.h)
     Iy!(Diag.VolumeFluxes.h_v,Diag.VolumeFluxes.h)
     Ixy!(Diag.Vorticity.h_q,Diag.VolumeFluxes.h)
-    advection_coriolis!(u,v,η,Diag,S)
+
+    # calculate PV terms for initial conditions
+    urhs = convert(Diag.PrognosticVarsRHS.u,u)
+    vrhs = convert(Diag.PrognosticVarsRHS.v,v)
+    ηrhs = convert(Diag.PrognosticVarsRHS.η,η)
+    advection_coriolis!(urhs,vrhs,ηrhs,Diag,S)
     PVadvection!(Diag,S)
 
     # propagate initial conditions
