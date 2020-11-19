@@ -69,14 +69,29 @@ end
 
 
 """Transit function to call the specified continuity function."""
-function continuity!(   η::AbstractMatrix,
+function continuity!(   u::AbstractMatrix,
+                        v::AbstractMatrix,
+                        η::AbstractMatrix,
                         Diag::DiagnosticVars,
                         S::ModelSetup,
                         t::Int)
+    
+    @unpack U,V,dUdx,dVdy = Diag.VolumeFluxes
+    @unpack nstep_advcor = S.grid
+    @unpack time_scheme,surface_relax,surface_forcing = S.parameters
 
-    if S.parameters.surface_relax
+    if nstep_advcor > 0 ||              # then UV wasn't calculated inside rhs!
+        time_scheme != "RK"             # then u,v changed before evaluating semi-implciti continuity
+        UVfluxes!(u,v,η,Diag,S)
+    end
+
+    # divergence of mass flux
+    ∂x!(dUdx,U)
+    ∂y!(dVdy,V)
+
+    if surface_relax
         continuity_surf_relax!(η,Diag,S,t)
-    elseif S.parameters.surface_forcing
+    elseif surface_forcing
         continuity_forcing!(Diag,S,t)
     else
         continuity_itself!(Diag,S,t)
