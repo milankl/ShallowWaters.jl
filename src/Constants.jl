@@ -1,8 +1,11 @@
 struct Constants{T<:AbstractFloat,Tprog<:AbstractFloat}
 
-    # RUNGE-KUTTA COEFFICIENTS 3rd/4th order including timestep Δt
+    # RUNGE-KUTTA COEFFICIENTS 2nd/3rd/4th order including timestep Δt
     RKaΔt::Array{Tprog,1}
     RKbΔt::Array{Tprog,1}
+    Δt_Δs::Tprog            # Δt/(s-1) wher s the number of stages
+    Δt_Δ::Tprog             # Δt/Δ - timestep divided by grid spacing
+    Δt_Δ_half::Tprog        # 1/2 * Δt/Δ
 
     # BOUNDARY CONDITIONS
     one_minus_α::Tprog      # tangential boundary condition for the ghost-point copy
@@ -39,6 +42,13 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
         RKbΔt = Tprog.([.5,.5,1.]*G.dtint/G.Δ)
     end
 
+    # Δt/(s-1) for SSPRK2
+    Δt_Δs = Tprog(G.dtint/G.Δ/(P.RKs-1))
+
+    # time step and half the time step including the grid spacing as this is not included in the RHS
+    Δt_Δ = Tprog(G.dtint/G.Δ)
+    Δt_Δ_half = Tprog(G.dtint/G.Δ/2)
+
     one_minus_α = Tprog(1-P.α)    # for the ghost point copy/tangential boundary conditions
     g = T(P.g)                # gravity - for Bernoulli potential
 
@@ -65,7 +75,8 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
     ωFx = 2π*P.ωFx/24/365.25/3600
     ωFy = 2π*P.ωFy/24/365.25/3600
 
-    return Constants{T,Tprog}(  RKaΔt,RKbΔt,one_minus_α,
+    return Constants{T,Tprog}(  RKaΔt,RKbΔt,Δt_Δs,Δt_Δ,Δt_Δ_half,
+                                one_minus_α,
                                 g,cD,rD,γ,cSmag,νB,rSST,
                                 jSST,SSTmin,ωFη,ωFx,ωFy)
 end

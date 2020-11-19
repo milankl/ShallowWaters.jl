@@ -1,4 +1,4 @@
-"""Transit function to call either the  rhs_linear or the rhs_nonlinear."""
+"""Transit function to call either the rhs_linear or the rhs_nonlinear."""
 function rhs!(  u::Array{T,2},
                 v::Array{T,2},
                 η::Array{T,2},
@@ -15,11 +15,10 @@ function rhs!(  u::Array{T,2},
     end
 end
 
-"""Tendencies du,dv,dη of
+"""Tendencies du,dv of
 
         ∂u/∂t = qhv - ∂(1/2*(u²+v²) + gη)/∂x + Fx
         ∂v/∂t = -qhu - ∂(1/2*(u²+v²) + gη)/∂y + Fy
-        ∂η/∂t =  -∂(uh)/∂x - ∂(vh)/∂y + γ(η_ref-η) + Fηt*Fη
 
 the nonlinear shallow water equations."""
 function rhs_nonlinear!(u::AbstractMatrix,
@@ -29,48 +28,32 @@ function rhs_nonlinear!(u::AbstractMatrix,
                         S::ModelSetup,
                         t::Int)
 
-    @unpack h,h_u,h_v,U,V,dUdx,dVdy = Diag.VolumeFluxes
+    @unpack h,h_u,h_v,U,V = Diag.VolumeFluxes
     @unpack H = S.forcing
     @unpack ep = S.grid
 
-    # layer thickness
-    thickness!(h,η,H)
-    Ix!(h_u,h)
-    Iy!(h_v,h)
-
-    # mass or volume flux U,V = uh,vh
-    Uflux!(U,u,h_u,ep)
-    Vflux!(V,v,h_v)
-
-    # divergence of mass flux
-    ∂x!(dUdx,U)
-    ∂y!(dVdy,V)
-
-    if S.grid.nstep_advcor == 0    # evaluate every RK substep
-        advection_coriolis!(u,v,η,Diag,S)
+    if S.grid.nstep_advcor == 0              # then evaluate every RK substep
+        UVfluxes!(u,v,η,Diag,S)              # U,V needed for PV advection and in the continuity equation
+        advection_coriolis!(u,v,η,Diag,S)    # PV and non-linear Bernoulli terms
+        PVadvection!(Diag,S)                 # advect the PV with u,v
     end
 
-    # Bernoulli potential - recalculate for new η, KEu,KEv are only updated outside
+    # Bernoulli potential - recalculate for new η, KEu,KEv are only updated in advection_coriolis
     @unpack p,KEu,KEv,dpdx,dpdy = Diag.Bernoulli
     @unpack g = S.constants
     bernoulli!(p,KEu,KEv,η,g,ep)
     ∂x!(dpdx,p)
     ∂y!(dpdy,p)
 
-    # Potential vorticity and advection thereof
-    PVadvection!(Diag,S)
-
     # adding the terms
     momentum_u!(Diag,S,t)
     momentum_v!(Diag,S,t)
-    continuity!(η,Diag,S,t)
 end
 
-"""Tendencies du,dv,dη of
+"""Tendencies du,dv of
 
-        ∂u/∂t = gv - g∂η/∂x + Fx
-        ∂v/∂t = -fu - g∂η/∂y
-        ∂η/∂t =  -∂(uH)/∂x - ∂(vH)/∂y + γ(η_ref-η) + Fηt*Fη,
+        ∂u/∂t = fv - g∂η/∂x + Fx
+        ∂v/∂t = -fu - g∂η/∂y + Fy
 
 the linear shallow water equations."""
 function rhs_linear!(   u::AbstractMatrix,
@@ -84,14 +67,6 @@ function rhs_linear!(   u::AbstractMatrix,
     @unpack g = S.constants
     @unpack ep = S.grid
 
-    # mass or volume flux U,V = uH,vH; h_u, h_v are actually H_u, H_v
-    Uflux!(U,u,h_u,ep)
-    Vflux!(V,v,h_v)
-
-    # divergence of mass flux
-    ∂x!(dUdx,U)
-    ∂y!(dVdy,V)
-
     # Pressure gradient
     @unpack dpdx,dpdy = Diag.Bernoulli
     ∂x!(dpdx,g*η)
@@ -99,16 +74,15 @@ function rhs_linear!(   u::AbstractMatrix,
 
     # Coriolis force
     @unpack qhv,qhu,v_u,u_v = Diag.Vorticity
-    @unpack f_u,f_v = G
+    @unpack f_u,f_v = S.grid
     Ixy!(v_u,v)
     Ixy!(u_v,u)
-    fv!(qhv,f_u,v_u)
-    fu!(qhu,f_v,u_v)
+    fv!(qhv,f_u,v_u,ep)
+    fu!(qhu,f_v,u_v,ep)
 
     # adding the terms
     momentum_u!(Diag,S,t)
     momentum_v!(Diag,S,t)
-    continuity!(η,Diag,S,t)
 end
 
 """ Update advective and Coriolis tendencies."""
@@ -119,14 +93,9 @@ function advection_coriolis!(   u::Array{T,2},
                                 S::ModelSetup{T,Tprog}) where {T,Tprog}
 
     @unpack h = Diag.VolumeFluxes
-    @unpack H = S.forcing
     @unpack h_q,dvdx,dudy = Diag.Vorticity
     @unpack u²,v²,KEu,KEv = Diag.Bernoulli
     @unpack ep,f_q = S.grid
-
-    if S.grid.nstep_advcor > 0
-        thickness!(h,η,H)
-    end
 
     Ixy!(h_q,h)
 
@@ -142,7 +111,8 @@ function advection_coriolis!(   u::Array{T,2},
     # Potential vorticity update
     PV!(Diag,S)
 
-    @unpack q = Diag.Vorticity
+    @unpack q = Diag.Vorticity          # now load what just has been calculated
+
     # Linear combinations of the potential vorticity q
     if S.parameters.adv_scheme == "Sadourny"
         @unpack q_u,q_v = Diag.Vorticity
@@ -166,36 +136,6 @@ function thickness!(h::AbstractMatrix,η::AbstractMatrix,H::AbstractMatrix)
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
             h[i,j] = η[i,j] + H[i,j]
-        end
-    end
-end
-
-"""Zonal mass flux U = uh."""
-function Uflux!(U::AbstractMatrix,
-                u::AbstractMatrix,
-                h_u::AbstractMatrix,
-                ep::Int)
-
-    m,n = size(U)
-    @boundscheck (m,n) == size(h_u) || throw(BoundsError())
-    @boundscheck (m+2+ep,n+2) == size(u) || throw(BoundsError())
-
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            U[i,j] = u[1+ep+i,1+j]*h_u[i,j]
-        end
-    end
-end
-
-"""Meridional mass flux V = vh."""
-function Vflux!(V::AbstractMatrix,v::AbstractMatrix,h_v::AbstractMatrix)
-    m,n = size(V)
-    @boundscheck (m,n) == size(h_v) || throw(BoundsError())
-    @boundscheck (m+2,n+2) == size(v) || throw(BoundsError())
-
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            V[i,j] = v[i+1,j+1]*h_v[i,j]
         end
     end
 end
@@ -337,4 +277,54 @@ function momentum_v!(   Diag::DiagnosticVars{T,Tprog},
              dv[i+2,j+2] = -Tprog(qhu[i,j]) - Tprog(dpdy[i+1,j+1]) + Tprog(Fyt*Fy[i,j])
         end
     end
+end
+
+"""Zonal mass flux U = uh."""
+function Uflux!(U::AbstractMatrix,
+                u::AbstractMatrix,
+                h_u::AbstractMatrix,
+                ep::Int)
+
+    m,n = size(U)
+    @boundscheck (m,n) == size(h_u) || throw(BoundsError())
+    @boundscheck (m+2+ep,n+2) == size(u) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            U[i,j] = u[1+ep+i,1+j]*h_u[i,j]
+        end
+    end
+end
+
+"""Meridional mass flux V = vh."""
+function Vflux!(V::AbstractMatrix,v::AbstractMatrix,h_v::AbstractMatrix)
+    m,n = size(V)
+    @boundscheck (m,n) == size(h_v) || throw(BoundsError())
+    @boundscheck (m+2,n+2) == size(v) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            V[i,j] = v[i+1,j+1]*h_v[i,j]
+        end
+    end
+end
+
+"""Calculate the mass/volume fluxes U,V from u,v,η."""
+function UVfluxes!( u::AbstractMatrix,
+                    v::AbstractMatrix,
+                    η::AbstractMatrix,
+                    Diag::DiagnosticVars,
+                    S::ModelSetup)
+    
+    @unpack h,h_u,h_v,U,V = Diag.VolumeFluxes
+    @unpack H = S.forcing
+    @unpack ep = S.grid
+
+    thickness!(h,η,H)
+    Ix!(h_u,h)
+    Iy!(h_v,h)
+
+    # mass or volume flux U,V = uh,vh
+    Uflux!(U,u,h_u,ep)
+    Vflux!(V,v,h_v)
 end

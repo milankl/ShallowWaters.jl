@@ -68,12 +68,10 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
         v = reshape(v,size(v)[1:2])
         η = reshape(η,size(η)[1:2])
 
-        # Interpolation in case the grids don't match?
-
         nx_old,ny_old = size(η)
 
         if (nx_old,ny_old) != (nx,ny)
-            if init_interpolation
+            if init_interpolation           # interpolation in case the grids don't match
 
                 # old grids
                 x_T = collect(0.5:nx_old-0.5)

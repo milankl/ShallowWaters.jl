@@ -47,7 +47,9 @@
     wk::Real=10e3                       # width [m] in y of Gaussian used for surface forcing
 
     # TIME STEPPING OPTIONS
-    RKo::Int=4                          # Order of the RK time stepping scheme (3 or 4)
+    time_scheme::String="RK"            # Runge-Kutta ("RK") or strong-stability preserving RK ("SSPRK2","SSPRK3")
+    RKo::Int=4                          # Order of the RK time stepping scheme (2, 3 or 4)
+    RKs::Int=2                          # Number of stages for SSPRK2
     cfl::Real=1.0                       # CFL number (1.0 recommended for RK4, 0.6 for RK3)
     Ndays::Real=10.0                    # number of days to integrate for
     nstep_diff::Int=1                   # diffusive part every nstep_diff time steps.
@@ -118,19 +120,21 @@
     @assert topo_width > 0.0    "topo_width has to be >0, $topo_width given."
     @assert t_relax > 0.0       "t_relax has to be >0, $t_relax given."
     @assert η_refw > 0.0        "η_refw has to be >0, $η_refw given."
-    @assert RKo in [2,3,4]        "RKo has to be 2,3 or 4, $RKo given."
+    @assert time_scheme in ["RK","SSPRK2","SSPRK3"] "Time scheme $time_scheme unsupported."
+    @assert RKo in [2,3,4]        "RKo has to be 2,3 or 4; $RKo given."
+    @assert RKs > 1               "RKs has to be >= 2; $RKs given."
     @assert Ndays > 0.0         "Ndays has to be >0, $Ndays given."
     @assert nstep_diff > 0      "nstep_diff has to be >0, $nstep_diff given."
     @assert nstep_advcor >= 0   "nstep_advcor has to be >=0, $nstep_advcor given."
     @assert bc in ["periodic","nonperiodic"]    "boundary condition '$bc' unsupported."
     @assert α >= 0.0 && α <= 2.0    "Tangential boundary condition α has to be in (0,2), $α given."
     @assert adv_scheme in ["Sadourny","ArakawaHsu"] "Advection scheme '$adv_scheme' unsupported"
-    @assert dynamics in ["linear","nonlinear"]  "Dynamics '$dynamics' unsupoorted."
+    @assert dynamics in ["linear","nonlinear"]  "Dynamics '$dynamics' unsupported."
     @assert bottom_drag in ["quadratic","linear","none"] "Bottom drag '$bottom_drag' unsupported."
     @assert cD >= 0.0    "Bottom drag coefficient cD has to be >=0, $cD given."
     @assert τD >= 0.0    "Bottom drag coefficient τD has to be >=0, $τD given."
-    @assert diffusion in ["Smagorinsky", "constant"] "Diffusion '$diffusion' unsupoorted."
-    @assert νB > 0.0     "Diffusion scaling constant νB has to be > 0, $νB given."
+    @assert diffusion in ["Smagorinsky", "constant"] "Diffusion '$diffusion' unsupported."
+    @assert νB > 0.0     "Diffusion scaling constant νB has to be >0, $νB given."
     @assert cSmag > 0.0  "Smagorinsky coefficient cSmag has to be >0, $cSmag given."
     @assert injection_region in ["west","south"] "Injection region '$injection_region' unsupported."
     @assert Uadv > 0.0   "Advection velocity scale Uadv has to be >0, $Uadv given."
