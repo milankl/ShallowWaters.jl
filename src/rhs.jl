@@ -32,12 +32,12 @@ function rhs_nonlinear!(u::AbstractMatrix,
     @unpack H = S.forcing
     @unpack ep = S.grid
 
-    if S.grid.nstep_advcor == 0              # then evaluate every RK substep
-        UVfluxes!(u,v,η,Diag,S)              # U,V needed for PV advection and in the continuity equation
+    UVfluxes!(u,v,η,Diag,S)              # U,V needed for PV advection and in the continuity equation
+    if S.grid.nstep_advcor == 0              # evaluate every RK substep
         advection_coriolis!(u,v,η,Diag,S)    # PV and non-linear Bernoulli terms
-        PVadvection!(Diag,S)                 # advect the PV with u,v
     end
-
+    PVadvection!(Diag,S)                 # advect the PV with U,V
+    
     # Bernoulli potential - recalculate for new η, KEu,KEv are only updated in advection_coriolis
     @unpack p,KEu,KEv,dpdx,dpdy = Diag.Bernoulli
     @unpack g = S.constants

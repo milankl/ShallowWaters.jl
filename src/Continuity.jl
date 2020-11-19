@@ -80,8 +80,7 @@ function continuity!(   u::AbstractMatrix,
     @unpack nstep_advcor = S.grid
     @unpack time_scheme,surface_relax,surface_forcing = S.parameters
 
-    if nstep_advcor > 0 ||              # then UV wasn't calculated inside rhs!
-        time_scheme != "RK"             # then u,v changed before evaluating semi-implciti continuity
+    if time_scheme != "RK"             # then u,v changed before evaluating semi-implicit continuity
         UVfluxes!(u,v,η,Diag,S)
     end
 
