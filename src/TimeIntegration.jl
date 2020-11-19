@@ -163,7 +163,6 @@ function time_integration(  Prog::PrognosticVars{Tprog},
         if dynamics == "nonlinear" && nstep_advcor > 0 && (i % nstep_advcor) == 0
             UVfluxes!(u0rhs,v0rhs,η0rhs,Diag,S)
             advection_coriolis!(u0rhs,v0rhs,η0rhs,Diag,S)
-            PVadvection!(Diag,S)
         end
 
         # DIFFUSIVE TERMS - SEMI-IMPLICIT EULER
