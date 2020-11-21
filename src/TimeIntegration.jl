@@ -81,8 +81,7 @@ function time_integration(  Prog::PrognosticVars{Tprog},
 
             for rki = 1:RKs
                 if rki > 1
-                    # TODO technically the ghost point copy for u1,v1 is redundant as done further down
-                    ghost_points!(u1,v1,η1,S)
+                    ghost_points_η!(η1,S)
                 end
 
                 # type conversion for mixed precision
@@ -90,14 +89,14 @@ function time_integration(  Prog::PrognosticVars{Tprog},
                 v1rhs = convert(Diag.PrognosticVarsRHS.v,v1)
                 η1rhs = convert(Diag.PrognosticVarsRHS.η,η1)
 
-                rhs!(u1rhs,v1rhs,η1rhs,Diag,S,t)
+                rhs!(u1rhs,v1rhs,η1rhs,Diag,S,t)        # momentum only
 
                 # the update step
                 axb!(u1,Δt_Δs,du)       # u1 = u1 + Δt/(s-1)*RHS(u1)
                 axb!(v1,Δt_Δs,dv)
 
-                # semi-implicit for continuity equation, use u1,v1 to calcualte dη
-                ghost_points!(u1,v1,S)
+                # semi-implicit for continuity equation, use new u1,v1 to calcualte dη
+                ghost_points_uv!(u1,v1,S)
                 u1rhs = convert(Diag.PrognosticVarsRHS.u,u1)
                 v1rhs = convert(Diag.PrognosticVarsRHS.v,v1)
                 continuity!(u1rhs,v1rhs,η1rhs,Diag,S,t)
@@ -109,8 +108,54 @@ function time_integration(  Prog::PrognosticVars{Tprog},
             cxayb!(u0,a,u,b,u1)
             cxayb!(v0,a,v,b,v1)
             cxayb!(η0,a,η,b,η1)
+        
+        elseif time_scheme == "SSPRK3"  # s-stage 3rd order SSPRK
+
+            @unpack s,kn,mn,kna,knb,Δt_Δnc,Δt_Δn = S.constants.SSPRK3c
+
+            for rki = 1:s       # number of stages
+                if rki > 1
+                    ghost_points_η!(η1,S)
+                end
+
+                # type conversion for mixed precision
+                u1rhs = convert(Diag.PrognosticVarsRHS.u,u1)
+                v1rhs = convert(Diag.PrognosticVarsRHS.v,v1)
+                η1rhs = convert(Diag.PrognosticVarsRHS.η,η1)
+
+                rhs!(u1rhs,v1rhs,η1rhs,Diag,S,t)
+
+                if rki == kn    # special case combining more previous stages  
+                    dxaybzc!(u1,kna,u1,knb,u0,Δt_Δnc,du)
+                    dxaybzc!(v1,kna,v1,knb,v0,Δt_Δnc,dv)
+                else                                # normal update case
+                    axb!(u1,Δt_Δn,du)   
+                    axb!(v1,Δt_Δn,dv)
+                end
+
+                # semi-implicit for continuity equation, use new u1,v1 to calcualte dη
+                ghost_points_uv!(u1,v1,S)
+                u1rhs = convert(Diag.PrognosticVarsRHS.u,u1)
+                v1rhs = convert(Diag.PrognosticVarsRHS.v,v1)
+                continuity!(u1rhs,v1rhs,η1rhs,Diag,S,t)
+
+                if rki == kn
+                    dxaybzc!(η1,kna,η1,knb,η0,Δt_Δnc,dη)
+                else
+                    axb!(η1,Δt_Δn,dη)
+                end
+
+                # special stage that is needed later for the kn-th stage, store in u0,v0,η0 therefore
+                # or for the last step, as u0,v0,η0 is used as the last step's result of any RK scheme.
+                if rki == mn || rki == s
+                    copyto!(u0,u1)
+                    copyto!(v0,v1)
+                    ghost_points_η!(η1,S)
+                    copyto!(η0,η1)
+                end
+            end
             
-        elseif time_scheme == "SSPRK3"   # 4-stage SSPRK3
+        elseif time_scheme == "4SSPRK3"   # 4-stage SSPRK3
         
             for rki = 1:4
                 if rki > 1
@@ -130,7 +175,7 @@ function time_integration(  Prog::PrognosticVars{Tprog},
                 cxab!(v1,1/2,v1,v0)         # same
 
                 # semi-implicit for continuity equation, use u1,v1 to calcualte dη
-                ghost_points!(u1,v1,S)
+                ghost_points_uv!(u1,v1,S)
                 u1rhs = convert(Diag.PrognosticVarsRHS.u,u1)
                 v1rhs = convert(Diag.PrognosticVarsRHS.v,v1)
                 continuity!(u1rhs,v1rhs,η1rhs,Diag,S,t)
@@ -172,7 +217,7 @@ function time_integration(  Prog::PrognosticVars{Tprog},
             bottom_drag!(u0rhs,v0rhs,η0rhs,Diag,S)
             diffusion!(u0rhs,v0rhs,Diag,S)
             add_drag_diff_tendencies!(u0,v0,Diag,S)
-            ghost_points!(u0,v0,S)
+            ghost_points_uv!(u0,v0,S)
         end
 
         t += dtint
@@ -244,7 +289,7 @@ function cxab!(c::Array{T,2},x::Real,a::Array{T,2},b::Array{T,2}) where {T<:Abst
     end
 end
 
-"""c equals add x multiplied to a plus b. c = x*(a+b) """
+"""c = x*a + y*b"""
 function cxayb!(c::Array{T,2},x::Real,a::Array{T,2},y::Real,b::Array{T,2}) where {T<:AbstractFloat}
     m,n = size(a)
     @boundscheck (m,n) == size(b) || throw(BoundsError())
@@ -255,6 +300,27 @@ function cxayb!(c::Array{T,2},x::Real,a::Array{T,2},y::Real,b::Array{T,2}) where
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
            c[i,j] = xT*a[i,j] + yT*b[i,j]
+        end
+    end
+end
+
+"""d = x*a + y*b + z*c"""
+function dxaybzc!(  d::Array{T,2},
+                    x::Real,a::Array{T,2},
+                    y::Real,b::Array{T,2},
+                    z::Real,c::Array{T,2}) where {T<:AbstractFloat}
+    m,n = size(a)
+    @boundscheck (m,n) == size(b) || throw(BoundsError())
+    @boundscheck (m,n) == size(c) || throw(BoundsError())
+    @boundscheck (m,n) == size(d) || throw(BoundsError())
+
+    xT = T(x)       # convert to type T
+    yT = T(y)
+    zT = T(z)
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+           d[i,j] = xT*a[i,j] + yT*b[i,j] + zT*c[i,j]
         end
     end
 end
