@@ -1,4 +1,4 @@
-# using ShallowWaters
+using ShallowWaters
 using Test
 
 @testset "No Forcing" begin
