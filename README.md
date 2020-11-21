@@ -9,13 +9,22 @@
 # ShallowWaters.jl - A type-flexible 16bit shallow water model
 ![sst](figs/sst_posit16.png?raw=true "SST")
 
-A shallow water model with a focus on type-flexibility and 16bit number formats. ShallowWaters allows for Float64/32/16, [BigFloat](https://docs.julialang.org/en/v1/base/numbers/#BigFloats-and-BigInts-1)/[ArbFloat](https://github.com/JeffreySarnoff/ArbNumerics.jl)/[DoubleFloats](https://github.com/JuliaMath/DoubleFloats.jl), [Posit32/16/8](https://github.com/milankl/SoftPosit.jl), [BFloat16](https://github.com/JuliaComputing/BFloat16s.jl), [Sonum16](https://github.com/milankl/Sonums.jl) and in general every number format with arithmetics and conversions implemented. ShallowWaters also allows for mixed-precision and reduced precision communication.
+A shallow water model with a focus on type-flexibility and 16-bit number formats. ShallowWaters allows for Float64/32/16, 
+[Posit32/16/8](https://github.com/milankl/SoftPosit.jl), [BFloat16](https://github.com/JuliaComputing/BFloat16s.jl), 
+[LogFixPoint16](https://github.com/milankl/LogFixPoint16s.jl), [Sonum16](https://github.com/milankl/Sonums.jl), 
+[Float32/16 & BFloat16 with stochastic rounding](https://github.com/milankl/StochasticRounding.jl) and in 
+general every number format with arithmetics and conversions implemented. ShallowWaters also allows for
+mixed-precision and reduced precision communication.
 
-ShallowWaters is fully-explicit with an energy and enstrophy conserving advection scheme and a Smagorinsky-like biharmonic diffusion operator. Tracer advection is implemented with a semi-Lagrangian advection scheme. Runge-Kutta 4th-order is used for pressure, advective and Coriolis terms and the continuity equation. Semi-implicit time stepping for diffusion and bottom friction. Boundary conditions are either periodic (only in x direction) or non-periodic super-slip, free-slip, partial-slip, or no-slip. Output via [NetCDF](https://github.com/JuliaGeo/NetCDF.jl).
+ShallowWaters uses an energy and enstrophy conserving advection scheme and a Smagorinsky-like biharmonic diffusion operator. 
+Tracer advection is implemented with a semi-Lagrangian advection scheme. Strong stability-preserving Runge-Kutta schemes of
+various orders and stages are used with a semi-implicit treatment of the continuity equation. Boundary conditions are either 
+periodic (only in x direction) or non-periodic super-slip, free-slip, partial-slip, or no-slip.
+Output via [NetCDF](https://github.com/JuliaGeo/NetCDF.jl).
 
 Please feel free to raise an [issue](https://github.com/milankl/ShallowWaters.jl/issues) if you discover bugs or have an idea how to improve ShallowWaters.
 
-Requires: Julia 1.2
+Requires: Julia 1.2 or higher
 
 ## How to use
 
@@ -84,7 +93,7 @@ Such that the currents are strongest around the two eddies, as expected in this 
 - Output of relative vorticity, potential vorticity and tendencies du,dv,deta
 - (Pretty accurate) duration estimate
 - Can be run in ensemble mode with ordered non-conflicting output files
-- Runs at CFL=1
+- Runs at CFL=1 (RK4), and more with the strong stability-preserving Runge-Kutta methods
 - Solving the tracer advection comes at basically no cost, thanks to semi-Lagrangian advection scheme
 - Also outputs the gradient operators ∂/∂x,∂/∂y and interpolations Ix, Iy for easier post-processing.
 
@@ -115,5 +124,3 @@ The linear shallow water model equivalent is
           ∂ϕ/∂t = -u⃗⋅∇ϕ                                           (4)
 
 ShallowWaters.jl discretises the equation on an equi-distant Arakawa C-grid, with 2nd order finite-difference operators. Boundary conditions are implemented via a ghost-point copy and each variable has a halo of variable size to account for different stencil sizes of various operators.
-
-ShallowWaters.jl splits the time steps for various terms: Runge Kutta 4th order scheme for the fast varying terms. The diffusive terms (bottom friction and diffusion) are solved semi-implicitly every n-th time step. The tracer equation is solved with a semi-Lagrangian scheme that uses much larger time steps.
