@@ -177,7 +177,7 @@ function ghost_points!( u::AbstractMatrix,
 end
 
 """Decide on boundary condition P.bc which ghost point function to execute."""
-function ghost_points!( u::AbstractMatrix,
+function ghost_points_uv!( u::AbstractMatrix,
                         v::AbstractMatrix,
                         S::ModelSetup)
 
@@ -191,6 +191,20 @@ function ghost_points!( u::AbstractMatrix,
     else
         ghost_points_u_nonperiodic!(C,u)
         ghost_points_v_nonperiodic!(C,v)
+    end
+end
+
+"""Decide on boundary condition P.bc which ghost point function to execute."""
+function ghost_points_η!(   η::AbstractMatrix,
+                            S::ModelSetup)
+
+    @unpack bc = S.parameters
+
+    if bc == "periodic"
+        @unpack Tcomm = S.parameters
+        ghost_points_η_periodic!(Tcomm,η)
+    else
+        ghost_points_η_nonperiodic!(η)
     end
 end
 

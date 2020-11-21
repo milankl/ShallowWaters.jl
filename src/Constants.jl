@@ -1,3 +1,31 @@
+"""Coefficients for strong stability-preserving Runge-Kutta 3rd order.
+From: KETCHESON, LOĆZI, AND PARSANI, 2014. INTERNAL ERROR PROPAGATION IN EXPLICIT RUNGE–KUTTA METHODS, 
+SIAM J NUMER ANAL 52/5. DOI:10.1137/130936245"""
+struct SSPRK3coeff{T<:AbstractFloat}
+    n::Int
+    s::Int
+    kn::Int
+    mn::Int
+    Δt_Δn::T
+    kna::T
+    knb::T
+    Δt_Δnc::T
+end
+
+"""Generator function for a SSPRK3coeff struct."""
+function SSPRK3coeff{T}(P::Parameter,Δt_Δ::T) where T
+    n = P.RKn
+    s = n^2
+    kn = n*(n+1) ÷ 2 + 1
+    mn = (n-1)*(n-2) ÷ 2 + 1
+    Δt_Δn = T(Δt_Δ/(n^2-n))
+    kna = T((n-1)/(2n-1))
+    knb = T(n/(2n-1))
+    Δt_Δnc = T(Δt_Δ/(n*(2n-1)))
+
+    return SSPRK3coeff{T}(n,s,kn,mn,Δt_Δn,kna,knb,Δt_Δnc)
+end
+
 struct Constants{T<:AbstractFloat,Tprog<:AbstractFloat}
 
     # RUNGE-KUTTA COEFFICIENTS 2nd/3rd/4th order including timestep Δt
@@ -6,6 +34,7 @@ struct Constants{T<:AbstractFloat,Tprog<:AbstractFloat}
     Δt_Δs::Tprog            # Δt/(s-1) wher s the number of stages
     Δt_Δ::Tprog             # Δt/Δ - timestep divided by grid spacing
     Δt_Δ_half::Tprog        # 1/2 * Δt/Δ
+    SSPRK3c::SSPRK3coeff    # struct containing all coefficients for SSPRK3
 
     # BOUNDARY CONDITIONS
     one_minus_α::Tprog      # tangential boundary condition for the ghost-point copy
@@ -49,8 +78,12 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
     Δt_Δ = Tprog(G.dtint/G.Δ)
     Δt_Δ_half = Tprog(G.dtint/G.Δ/2)
 
-    one_minus_α = Tprog(1-P.α)    # for the ghost point copy/tangential boundary conditions
-    g = T(P.g)                # gravity - for Bernoulli potential
+    # coefficients for SSPRK3
+    SSPRK3c = SSPRK3coeff{Tprog}(P,Δt_Δ)
+
+    # BOUNDARY CONDITIONS AND PHYSICS
+    one_minus_α = Tprog(1-P.α)      # for the ghost point copy/tangential boundary conditions
+    g = T(P.g)                      # gravity - for Bernoulli potential
 
     # BOTTOM FRICTION COEFFICENTS
     # incl grid spacing Δ for non-dimensional gradients
@@ -76,7 +109,7 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
     ωFy = 2π*P.ωFy/24/365.25/3600
 
     return Constants{T,Tprog}(  RKaΔt,RKbΔt,Δt_Δs,Δt_Δ,Δt_Δ_half,
-                                one_minus_α,
+                                SSPRK3c,one_minus_α,
                                 g,cD,rD,γ,cSmag,νB,rSST,
                                 jSST,SSTmin,ωFη,ωFx,ωFy)
 end
