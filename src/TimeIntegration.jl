@@ -113,8 +113,8 @@ function time_integration(  Prog::PrognosticVars{Tprog},
 
             @unpack s,kn,mn,kna,knb,Δt_Δnc,Δt_Δn = S.constants.SSPRK3c
 
-            for rki = 1:s       # number of stages
-                if rki > 1
+            for rki = 2:s+1       # number of stages (from 2:s+1 to match Ketcheson et al 2014)
+                if rki > 2
                     ghost_points_η!(η1,S)
                 end
 
@@ -147,7 +147,7 @@ function time_integration(  Prog::PrognosticVars{Tprog},
 
                 # special stage that is needed later for the kn-th stage, store in u0,v0,η0 therefore
                 # or for the last step, as u0,v0,η0 is used as the last step's result of any RK scheme.
-                if rki == mn || rki == s
+                if rki == mn || rki == s+1
                     copyto!(u0,u1)
                     copyto!(v0,v1)
                     ghost_points_η!(η1,S)
