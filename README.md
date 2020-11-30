@@ -105,6 +105,15 @@ ShallowWaters.jl is a registered package, so simply do
 julia> ] add ShallowWaters
 ```
 
+## References
+
+ShallowWaters.jl was used in is described in more detail in  
+
+Klöwer M, Düben PD, Palmer TN. Number formats, error mitigation and scope for 16-bit arithmetics in weather and climate modelling analysed with a shallow water model. Journal of Advances in Modeling Earth Systems. doi: [10.1029/2020MS002246](https://dx.doi.org/10.1029/2020MS002246)
+
+Klöwer M, Düben PD, Palmer TN. Posits as an alternative to floats for weather and climate models. In: Proceedings of the Conference for Next Generation Arithmetic 2019. doi: [10.1145/3316279.3316281](https://dx.doi.org/10.1145/3316279.3316281)
+
+
 ## The equations
 
 The non-linear shallow water model plus tracer equation is
