@@ -44,114 +44,137 @@ function remove_halo(   u::Array{T,2},
 end
 
 """ Copy ghost points for u from inside to the halo in the nonperiodic case. """
-function ghost_points_u_nonperiodic!(C::Constants,u::AbstractMatrix)
-
-    @unpack one_minus_α = C
+function ghost_points_u_nonperiodic!(u::AbstractMatrix{T},one_minus_α::T) where T
+    n,m = size(u)
 
     # tangential boundary condition
-    @views @inbounds u[:,1] .= one_minus_α*u[:,4]
-    @views @inbounds u[:,2] .= one_minus_α*u[:,3]
-    @views @inbounds u[:,end-1] .= one_minus_α*u[:,end-2]
-    @views @inbounds u[:,end] .= one_minus_α*u[:,end-3]
+    @inbounds for i in 1:n
+        u[i,1] = one_minus_α*u[i,4]
+        u[i,2] = one_minus_α*u[i,3]
+        u[i,end-1] = one_minus_α*u[i,end-2]
+        u[i,end] = one_minus_α*u[i,end-3]
+    end
 end
 
 """ Copy ghost points for u from inside to the halo in the periodic case. """
-function ghost_points_u_periodic!(::Type{Tcomm},u::Array{T,2},C::Constants) where {Tcomm,T}
+function ghost_points_u_periodic!(::Type{Tcomm},u::AbstractMatrix{T},one_minus_α::T) where {Tcomm,T}
+    n,m = size(u)
 
-    @unpack one_minus_α = C
-
-    # periodic bc   - mimic MPI communication with (reduced precision) type Tcomm
-    @views @inbounds u[1,:] .= T.(Tcomm.(u[end-3,:]))
-    @views @inbounds u[2,:] .= T.(Tcomm.(u[end-2,:]))
-    @views @inbounds u[end-1,:] .= T.(Tcomm.(u[3,:]))
-    @views @inbounds u[end,:] .= T.(Tcomm.(u[4,:]))
+    # periodic bc - mimic MPI communication with (reduced precision) type Tcomm
+    @inbounds for j in 1:m
+        u[1,j] = T(Tcomm(u[end-3,j]))
+        u[2,j] = T(Tcomm(u[end-2,j]))
+        u[end-1,j] = T(Tcomm(u[3,j]))
+        u[end,j] = T(Tcomm(u[4,j]))
+    end
 
     # tangential bc
-    @views @inbounds u[:,1] .= one_minus_α*u[:,4]
-    @views @inbounds u[:,2] .= one_minus_α*u[:,3]
-    @views @inbounds u[:,end-1] .= one_minus_α*u[:,end-2]
-    @views @inbounds u[:,end] .= one_minus_α*u[:,end-3]
-
+    # ghost_points_u_nonperiodic!(u,one_minus_α)
 end
 
 """ Copy ghost points for v from inside to the halo in the nonperiodic case. """
-function ghost_points_v_nonperiodic!(C::Constants,v::AbstractMatrix)
-
-    @unpack one_minus_α = C
+function ghost_points_v_nonperiodic!(v::AbstractMatrix{T},one_minus_α::T) where T
+    n,m = size(v)
 
     # tangential boundary condition
-    @views @inbounds v[1,:] .= one_minus_α*v[4,:]
-    @views @inbounds v[2,:] .= one_minus_α*v[3,:]
-    @views @inbounds v[end-1,:] .= one_minus_α*v[end-2,:]
-    @views @inbounds v[end,:] .= one_minus_α*v[end-3,:]
+    @inbounds for j in 1:m
+        v[1,j] = one_minus_α*v[4,j]
+        v[2,j] = one_minus_α*v[3,j]
+        v[end-1,j] = one_minus_α*v[end-2,j]
+        v[end,j] = one_minus_α*v[end-3,j]
+    end
 end
 
 """ Copy ghost points for v from inside to the halo in the periodic case. """
 function ghost_points_v_periodic!(::Type{Tcomm},v::Array{T,2}) where {Tcomm,T}
+    n,m = size(v)
 
-    # tangential boundary condition - mimic MPI communication with (reduced precision) type Tcomm
-    @views @inbounds v[1,:] .= T.(Tcomm.(v[end-3,:]))
-    @views @inbounds v[2,:] .= T.(Tcomm.(v[end-2,:]))
-    @views @inbounds v[end-1,:] .= T.(Tcomm.(v[3,:]))
-    @views @inbounds v[end,:] .= T.(Tcomm.(v[4,:]))
+    # mimic MPI communication with (reduced precision) type Tcomm
+    @inbounds for j in 1:m
+        v[1,j] = T(Tcomm(v[end-3,j]))
+        v[2,j] = T(Tcomm(v[end-2,j]))
+        v[end-1,j] = T(Tcomm(v[3,j]))
+        v[end,j] = T(Tcomm(v[4,j]))
+    end
 end
 
 """ Copy ghost points for η from inside to the halo in the nonperiodic case. """
 function ghost_points_η_nonperiodic!(η::AbstractMatrix)
+    n,m = size(η)
 
     # assume no gradients of η across solid boundaries
     # the 4 corner points are copied twice, but it's faster!
-    @views @inbounds η[1,:] .= η[2,:]
-    @views @inbounds η[end,:] .= η[end-1,:]
+    @inbounds for j in 1:m
+        η[1,j] = η[2,j]
+        η[end,j] = η[end-1,j]
+    end
 
-    @views @inbounds η[:,1] .= η[:,2]
-    @views @inbounds η[:,end] .= η[:,end-1]
+    @inbounds for i in 1:n
+        η[i,1] = η[i,2]
+        η[i,end] = η[i,end-1]
+    end
 end
 
 """ Copy ghost points for η from inside to the halo in the periodic case. """
 function ghost_points_η_periodic!(::Type{Tcomm},η::Array{T,2}) where {Tcomm,T}
+    n,m = size(η)
 
     # corner points are copied twice, but it's faster!
     # mimic MPI communication with (reduced precision) type Tcomm
-    @views @inbounds η[1,:] .= T.(Tcomm.(η[end-1,:]))
-    @views @inbounds η[end,:] .= T.(Tcomm.(η[2,:]))
+    @inbounds for j in 1:m
+        η[1,j] = T(Tcomm(η[end-1,j]))
+        η[end,j] = T(Tcomm(η[2,j]))
+    end
 
-    @views @inbounds η[:,1] .= η[:,2]
-    @views @inbounds η[:,end] .= η[:,end-1]
+    @inbounds for i in 1:n
+        η[i,1] = η[i,2]
+        η[i,end] = η[i,end-1]
+    end
 end
 
 """ Copy ghost points for η from inside to the halo in the nonperiodic case. """
-function ghost_points_sst_nonperiodic!(G::Grid,sst::AbstractMatrix)
-
-    @unpack halosstx,halossty = G
+function ghost_points_sst_nonperiodic!(sst::AbstractMatrix,
+                                        halosstx::Int,
+                                        halossty::Int)
+    n,m = size(sst)
 
     # assume no gradients of η across solid boundaries
     # the 4 corner points are copied twice, but it's faster!
-    for i ∈ 1:halosstx
-        @views @inbounds sst[i,:] .= sst[halosstx+1,:]
-        @views @inbounds sst[end-i+1,:] .= sst[end-halosstx,:]
+    @inbounds for j in 1:m
+        for i ∈ 1:halosstx
+            sst[i,j] = sst[halosstx+1,j]
+            sst[end-i+1,j] = sst[end-halosstx,j]
+        end
     end
 
-    for j ∈ 1:halossty
-        @views @inbounds sst[:,j] .= sst[:,halossty+1]
-        @views @inbounds sst[:,end-j+1] .= sst[:,end-halossty]
+    @inbounds for j ∈ 1:halossty
+        for i in 1:n
+            sst[i,j] = sst[i,halossty+1]
+            sst[i,end-j+1] = sst[i,end-halossty]
+        end
     end
 end
 
 """ Copy ghost points for η from inside to the halo in the periodic case. """
-function ghost_points_sst_periodic!(::Type{Tcomm},sst::Array{T,2},G::Grid) where {Tcomm,T}
-
-    @unpack halosstx,halossty = G
+function ghost_points_sst_periodic!(::Type{Tcomm},
+                                    sst::Array{T,2},
+                                    halosstx::Int,
+                                    halossty::Int) where {Tcomm,T}
+    n,m = size(sst)
 
     # corner points are copied twice, but it's faster!
-    for i ∈ 1:halosstx
-        @views @inbounds sst[i,:] .= T.(Tcomm.(sst[end-2*halosstx+i,:]))
-        @views @inbounds sst[end-halosstx+i,:] .= T.(Tcomm.(sst[halosstx+i,:]))
+    @inbounds for j in 1:m
+        for i ∈ 1:halosstx
+            sst[i,j] = T(Tcomm(sst[end-2*halosstx+i,j]))
+            sst[end-halosstx+i,j] = T(Tcomm(sst[halosstx+i,j]))
+        end
     end
 
-    for j ∈ 1:halossty
-        @views @inbounds sst[:,j] .= sst[:,halossty+1]
-        @views @inbounds sst[:,end-j+1] .= sst[:,end-halossty]
+    @inbounds for j ∈ 1:halossty
+        for i in 1:n
+            sst[i,j] = sst[i,halossty+1]
+            sst[i,end-j+1] = sst[i,end-halossty]
+        end
     end
 end
 
@@ -161,17 +184,16 @@ function ghost_points!( u::AbstractMatrix,
                         η::AbstractMatrix,
                         S::ModelSetup)
 
-    @unpack bc = S.parameters
-    C = S.constants
+    @unpack bc,Tcomm = S.parameters
+    @unpack one_minus_α = S.constants
 
     if bc == "periodic"
-        @unpack Tcomm = S.parameters
-        ghost_points_u_periodic!(Tcomm,u,C)
+        ghost_points_u_periodic!(Tcomm,u,one_minus_α)
         ghost_points_v_periodic!(Tcomm,v)
         ghost_points_η_periodic!(Tcomm,η)
     else
-        ghost_points_u_nonperiodic!(C,u)
-        ghost_points_v_nonperiodic!(C,v)
+        ghost_points_u_nonperiodic!(u,one_minus_α)
+        ghost_points_v_nonperiodic!(v,one_minus_α)
         ghost_points_η_nonperiodic!(η)
     end
 end
@@ -181,16 +203,15 @@ function ghost_points_uv!( u::AbstractMatrix,
                         v::AbstractMatrix,
                         S::ModelSetup)
 
-    @unpack bc = S.parameters
-    C = S.constants
+    @unpack bc,Tcomm = S.parameters
+    @unpack one_minus_α = S.constants
 
     if bc == "periodic"
-        @unpack Tcomm = S.parameters
-        ghost_points_u_periodic!(Tcomm,u,C)
+        ghost_points_u_periodic!(Tcomm,u,one_minus_α)
         ghost_points_v_periodic!(Tcomm,v)
     else
-        ghost_points_u_nonperiodic!(C,u)
-        ghost_points_v_nonperiodic!(C,v)
+        ghost_points_u_nonperiodic!(u,one_minus_α)
+        ghost_points_v_nonperiodic!(v,one_minus_α)
     end
 end
 
@@ -198,10 +219,9 @@ end
 function ghost_points_η!(   η::AbstractMatrix,
                             S::ModelSetup)
 
-    @unpack bc = S.parameters
+    @unpack bc, Tcomm = S.parameters
 
     if bc == "periodic"
-        @unpack Tcomm = S.parameters
         ghost_points_η_periodic!(Tcomm,η)
     else
         ghost_points_η_nonperiodic!(η)
@@ -211,13 +231,12 @@ end
 """Decide on boundary condition P.bc which ghost point function to execute."""
 function ghost_points_sst!(sst::AbstractMatrix,S::ModelSetup)
 
-    @unpack bc = S.parameters
-    G = S.grid
+    @unpack bc,Tcomm = S.parameters
+    @unpack halosstx,halossty = S.grid
 
     if bc == "periodic"
-        @unpack Tcomm = S.parameters
-        ghost_points_sst_periodic!(Tcomm,sst,G)
+        ghost_points_sst_periodic!(Tcomm,sst,halosstx,halossty)
     else
-        ghost_points_sst_nonperiodic!(G,sst)
+        ghost_points_sst_nonperiodic!(sst,halosstx,halossty)
     end
 end
