@@ -1,12 +1,12 @@
 """Calculates the 2nd order centred gradient in x-direction on any grid (u,v,T or q).
 The size of dudx must be m-1,n compared to m,n = size(u)"""
-function ∂x!(dudx::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
-    m,n = size(dudx)
+function ∂x!(∂ₓu::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
+    m,n = size(∂ₓu)
     @boundscheck (m+1,n) == size(u) || throw(BoundsError())
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            dudx[i,j] = u[i+1,j] - u[i,j]
+            ∂ₓu[i,j] = u[i+1,j] - u[i,j]
         end
     end
 end
@@ -30,11 +30,13 @@ function ∇²!(du::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
     m, n = size(du)
     @boundscheck (m+2,n+2) == size(u) || throw(BoundsError())
 
-    minus_4 = T(-4.0)
-
-    @inbounds for i ∈ 1:n
-        for j ∈ 1:m
-            du[j,i] = minus_4*u[j+1,i+1] + u[j,i+1] + u[j+2,i+1] + u[j+1,i] + u[j+1,i+2]
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            #        1
+            # the 1 -4 1  -stencil in low-precision resilient form
+            #        1
+            ui1j1 = u[i+1,j+1]
+            du[i,j] = ((u[i,j+1] - ui1j1) + (u[i+2,j+1] - ui1j1)) + ((u[i+1,j] - ui1j1) + (u[i+1,j+2] - ui1j1))
         end
     end
 end
