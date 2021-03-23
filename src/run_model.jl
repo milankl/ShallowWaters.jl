@@ -1,28 +1,28 @@
 """
 
-    u,v,η,sst = RunModel()
+    u,v,η,sst = run_model()
 
 runs ShallowWaters with default parameters as defined in src/DefaultParameters.jl
 
 # Examples
 ```jldoc
-julia> u,v,η,sst = RunModel(Float64,nx=200,output=true)
+julia> u,v,η,sst = run_model(Float64,nx=200,output=true)
 ```
 """
-function RunModel(::Type{T}=Float32;     # number format
+function run_model(::Type{T}=Float32;     # number format
     kwargs...                            # all additional parameters
     ) where {T<:AbstractFloat}
 
     P = Parameter(T=T;kwargs...)
-    return RunModel(T,P)
+    return run_model(T,P)
 end
 
-function RunModel(P::Parameter)
+function run_model(P::Parameter)
     @unpack T = P
-    return RunModel(T,P)
+    return run_model(T,P)
 end
 
-function RunModel(::Type{T},P::Parameter) where {T<:AbstractFloat}
+function run_model(::Type{T},P::Parameter) where {T<:AbstractFloat}
 
     @unpack Tprog = P
 

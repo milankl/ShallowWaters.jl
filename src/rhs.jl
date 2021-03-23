@@ -133,10 +133,8 @@ function thickness!(h::AbstractMatrix,η::AbstractMatrix,H::AbstractMatrix)
     @boundscheck (m,n) == size(η) || throw(BoundsError())
     @boundscheck (m,n) == size(H) || throw(BoundsError())
 
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            h[i,j] = η[i,j] + H[i,j]
-        end
+    @inbounds for i in eachindex(η)
+        h[i] = η[i] + H[i]
     end
 end
 
@@ -148,19 +146,15 @@ function speed!(u²::AbstractMatrix,
     m,n = size(u²)
     @boundscheck (m,n) == size(u) || throw(BoundsError())
 
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            u²[i,j] = u[i,j]^2
-        end
+    @inbounds for i in eachindex(u)
+        u²[i] = u[i]^2
     end
 
     m,n = size(v²)
     @boundscheck (m,n) == size(v) || throw(BoundsError())
 
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            v²[i,j] = v[i,j]^2
-        end
+    @inbounds for i in eachindex(v)
+        v²[i] = v[i]^2
     end
 end
 
@@ -245,7 +239,7 @@ function momentum_u!(   Diag::DiagnosticVars{T,Tprog},
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            du[i+2,j+2] = Tprog(qhv[i,j]) - Tprog(dpdx[i+1-ep,j+1]) + Tprog(Fxt*Fx[i,j])
+            du[i+2,j+2] = (Tprog(qhv[i,j]) - Tprog(dpdx[i+1-ep,j+1])) + Tprog(Fxt*Fx[i,j])
         end
     end
 end
@@ -274,7 +268,7 @@ function momentum_v!(   Diag::DiagnosticVars{T,Tprog},
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-             dv[i+2,j+2] = -Tprog(qhu[i,j]) - Tprog(dpdy[i+1,j+1]) + Tprog(Fyt*Fy[i,j])
+             dv[i+2,j+2] = -(Tprog(qhu[i,j]) + Tprog(dpdy[i+1,j+1])) + Tprog(Fyt*Fy[i,j])
         end
     end
 end

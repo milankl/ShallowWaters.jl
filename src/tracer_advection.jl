@@ -40,6 +40,7 @@ function tracer!(   i::Integer,
         # copy back to sst, and convert to type Tprog if necessary
         copyto!(sst,ssti)
     end
+    return nothing
 end
 
 

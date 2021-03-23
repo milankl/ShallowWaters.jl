@@ -215,7 +215,7 @@ Creates a Parameter struct with following options and default values
     dynamics::String="nonlinear"        # "linear" or "nonlinear"
 
     # BOTTOM FRICTION OPTIONS
-    bottom_drag::String="quadratic"     # "linear", "quadratic" or "none"
+    bottom_drag::String="none"          # "linear", "quadratic" or "none"
     cD::Real=1e-5                       # bottom drag coefficient [dimensionless] for quadratic
     τD::Real=300.                       # bottom drag coefficient [days] for linear
 

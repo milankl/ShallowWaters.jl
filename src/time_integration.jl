@@ -332,7 +332,7 @@ function Base.convert(X2::Array{T2,N},X1::Array{T1,N}) where {T1,T2,N}
     @boundscheck size(X2) == size(X1) || throw(BoundsError())
 
     @inbounds for i in eachindex(X1)
-            X2[i] = T2(X1[i])
+            X2[i] = convert(T2,X1[i])
     end
 
     return X2

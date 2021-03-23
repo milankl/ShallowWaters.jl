@@ -1,12 +1,5 @@
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://img.shields.io/badge/repo_status-active-brightgreen?style=flat-square)](https://www.repostatus.org/#active)
-[![Travis](https://img.shields.io/travis/com/milankl/ShallowWaters.jl?label=Linux%20%26%20osx&logo=travis&style=flat-square)](https://travis-ci.com/milankl/ShallowWaters.jl)
-[![AppVeyor](https://img.shields.io/appveyor/ci/milankl/ShallowWaters-jl?label=Windows&logo=appveyor&logoColor=white&style=flat-square)](https://ci.appveyor.com/project/milankl/ShallowWaters-jl)
-[![Cirrus CI](https://img.shields.io/cirrus/github/milankl/ShallowWaters.jl?label=FreeBSD&logo=cirrus-ci&logoColor=white&style=flat-square)](https://cirrus-ci.com/github/milankl/ShallowWaters.jl)
-
-[![DOI](https://zenodo.org/badge/132787050.svg)](https://zenodo.org/badge/latestdoi/132787050)
-
-
 # ShallowWaters.jl - A type-flexible 16bit shallow water model
+[![DOI](https://zenodo.org/badge/132787050.svg)](https://zenodo.org/badge/latestdoi/132787050)
 ![sst](figs/sst_posit16.png?raw=true "SST")
 
 A shallow water model with a focus on type-flexibility and 16-bit number formats. ShallowWaters allows for Float64/32/16, 
@@ -48,14 +41,14 @@ search: Parameter
 ```
 They can be changed with keyword arguments. The number format `T` is defined as the first (but optional) argument of `RunModel(T,...)`
 ```julia
-julia> Prog = RunModel(Float32,Ndays=10,g=10,H=500,Fx0=0.12);
+julia> Prog = run_model(Float32,Ndays=10,g=10,H=500,Fx0=0.12);
 Starting ShallowWaters on Sun, 20 Oct 2019 19:58:25 without output.
 100% Integration done in 4.65s.
 ```
 or by creating a Parameter struct
 ```julia
 julia> P = Parameter(bc="nonperiodic",wind_forcing_x="double_gyre",L_ratio=1,nx=128);
-julia> Prog = RunModel(P);
+julia> Prog = run_model(P);
 ```
 The number formats can be different (aka mixed-precision) for different parts of the model. `Tprog` is the number type for the prognostic variables, `Tcomm` is used for communication of boundary values.
 
@@ -64,7 +57,7 @@ The number formats can be different (aka mixed-precision) for different parts of
 You can for example run a double gyre simulation like this
 ```julia
 julia> using ShallowWaters
-julia> P = RunModel(Ndays=100,nx=100,L_ratio=1,bc="nonperiodic",wind_forcing_x="double_gyre",topography="seamount");
+julia> P = run_model(Ndays=100,nx=100,L_ratio=1,bc="nonperiodic",wind_forcing_x="double_gyre",topography="seamount");
 Starting ShallowWaters on Sat, 15 Aug 2020 11:59:21 without output.
 100% Integration done in 13.7s.
 ```
@@ -107,12 +100,11 @@ julia> ] add ShallowWaters
 
 ## References
 
-ShallowWaters.jl was used in is described in more detail in  
+ShallowWaters.jl was used and is described in more detail in  
 
 Klöwer M, Düben PD, Palmer TN. Number formats, error mitigation and scope for 16-bit arithmetics in weather and climate modelling analysed with a shallow water model. Journal of Advances in Modeling Earth Systems. doi: [10.1029/2020MS002246](https://dx.doi.org/10.1029/2020MS002246)
 
 Klöwer M, Düben PD, Palmer TN. Posits as an alternative to floats for weather and climate models. In: Proceedings of the Conference for Next Generation Arithmetic 2019. doi: [10.1145/3316279.3316281](https://dx.doi.org/10.1145/3316279.3316281)
-
 
 ## The equations
 

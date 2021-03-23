@@ -16,7 +16,7 @@ function bottom_drag!(  u::AbstractMatrix,
     end
 end
 
-"""Quadratic bottom drag Bu,Bv = cD/h * | u⃗ | * u⃗"""
+"""Quadratic bottom drag Bu,Bv = cD/h * | uv | * uv"""
 function bottom_drag_quadratic!(u::AbstractMatrix,
                                 v::AbstractMatrix,
                                 η::AbstractMatrix,
