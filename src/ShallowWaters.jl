@@ -1,30 +1,30 @@
 module ShallowWaters
 
-export RunModel, Parameter, ∂x, ∂y, Ix, Iy, ∇²
+    export run_model, Parameter, ∂x, ∂y, Ix, Iy, ∇²
 
-using NetCDF, Parameters, Printf, Dates, Interpolations
+    using NetCDF, Parameters, Printf, Dates, Interpolations
 
-include("DefaultParameters.jl")
-include("Grid.jl")
-include("Constants.jl")
-include("Forcing.jl")
-include("ModelSetup.jl")
-include("InitialConditions.jl")
-include("Preallocate.jl")
+    include("default_parameters.jl")
+    include("grid.jl")
+    include("constants.jl")
+    include("forcing.jl")
+    include("model_setup.jl")
+    include("initial_conditions.jl")
+    include("preallocate.jl")
 
-include("TimeIntegration.jl")
-include("GhostPoints.jl")
-include("rhs.jl")
-include("Gradients.jl")
-include("Interpolations.jl")
-include("PVadvection.jl")
-include("Continuity.jl")
-include("Bottomdrag.jl")
-include("Diffusion.jl")
-include("TracerAdvection.jl")
+    include("time_integration.jl")
+    include("ghost_points.jl")
+    include("rhs.jl")
+    include("gradients.jl")
+    include("interpolations.jl")
+    include("PV_advection.jl")
+    include("continuity.jl")
+    include("bottom_drag.jl")
+    include("diffusion.jl")
+    include("tracer_advection.jl")
 
-include("Feedback.jl")
-include("Output.jl")
-include("RunModel.jl")
+    include("feedback.jl")
+    include("output.jl")
+    include("run_model.jl")
 
 end

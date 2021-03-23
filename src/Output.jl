@@ -133,7 +133,6 @@ function output_nc!(i::Int,
             NetCDF.putvar(ncs.dη,"deta",dη,start=[1,1,iout],count=[-1,-1,1])
         end
 
-
         # WRITING THE TIME
         for nc in (ncs.u,ncs.v,ncs.η,ncs.sst,ncs.q,ncs.ζ,ncs.du,ncs.dv,ncs.dη)
             if nc != nothing
@@ -150,11 +149,6 @@ function output_close!(ncs::NcFiles,feedback::Feedback,S::ModelSetup)
     @unpack output = S.parameters
 
     if output
-        # for nc in (ncs.u,ncs.v,ncs.η,ncs.sst,ncs.q,ncs.ζ,ncs.du,ncs.dv,ncs.dη)
-        #     if nc != nothing
-        #         NetCDF.close(nc)
-        #     end
-        # end
         println("All data stored.")
         write(feedback.progress_txt,"All data stored.")
         close(feedback.progress_txt)

@@ -4,7 +4,7 @@ function Ix!(ux::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
     m, n = size(ux)
     @boundscheck (m+1,n) == size(u) || throw(BoundsError())
 
-    one_half = T(0.5)
+    one_half = convert(T,0.5)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
@@ -19,7 +19,7 @@ function Iy!(uy::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
     m,n = size(uy)
     @boundscheck (m,n+1) == size(u) || throw(BoundsError())
 
-    one_half = T(0.5)
+    one_half = convert(T,0.5)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
@@ -34,11 +34,12 @@ function Ixy!(uxy::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
     m,n = size(uxy)
     @boundscheck (m+1,n+1) == size(u) || throw(BoundsError())
 
-    one_quarter = T(0.25)
+    one_quarter = convert(T,0.25)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            uxy[i,j] = one_quarter*(u[i,j] + u[i+1,j] + u[i,j+1] + u[i+1,j+1])
+            uxy[i,j] = one_quarter*(u[i,j] + u[i+1,j]) + 
+                    one_quarter*(u[i,j+1] + u[i+1,j+1])
         end
     end
 end
