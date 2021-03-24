@@ -1,4 +1,5 @@
-# ShallowWaters.jl - A type-flexible 16bit shallow water model
+# ShallowWaters.jl - A type-flexible 16-bit shallow water model
+[![CI](https://github.com/milankl/ShallowWaters.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/milankl/ShallowWaters.jl/actions/workflows/CI.yml)
 [![DOI](https://zenodo.org/badge/132787050.svg)](https://zenodo.org/badge/latestdoi/132787050)
 ![sst](figs/sst_posit16.png?raw=true "SST")
 
