@@ -38,9 +38,8 @@ end
 function duration_estimate(feedback::Feedback,S::ModelSetup)
 
     @unpack t1,i,nt,output,progress_txt = feedback
-    @unpack nadvstep = S.grid
 
-    time_per_step = (time()-t1) / (i-nadvstep)
+    time_per_step = (time()-t1) / (i-1)
     time_total = Int(round(time_per_step*nt))
     time_to_go = Int(round(time_per_step*(nt-i)))
 
@@ -119,14 +118,12 @@ end
 """Feedback function that calls duration estimate, nan_detection and progress."""
 function feedback!(Prog::PrognosticVars,feedback::Feedback,S::ModelSetup)
 
-    @unpack nadvstep = S.grid
     @unpack i = feedback
 
     if feedback.output
-        if i == nadvstep # measure time after tracer advection executed once
+        if i == 1       # start the clock after first time step
             feedback.t1 = time()
-        elseif i == 2*nadvstep
-            # after the tracer advection executed twice or at least 50 steps
+        elseif i == 6   # estimate time after 5 time steps
             duration_estimate(feedback,S)
         end
     end
@@ -147,9 +144,7 @@ function feedback!(Prog::PrognosticVars,feedback::Feedback,S::ModelSetup)
         end
     end
 
-    if feedback.i > 100      # show percentage only after duration is estimated
-        progress!(feedback)
-    end
+    progress!(feedback)
 end
 
 """Finalises the progress txt file."""
