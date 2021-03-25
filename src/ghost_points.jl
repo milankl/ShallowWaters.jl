@@ -21,6 +21,11 @@ function add_halo(  u::Array{T,2},
     sst = cat(zeros(T,halosstx,ny),sst,zeros(T,halosstx,ny),dims=1)
     sst = cat(zeros(T,nx+2*halosstx,halossty),sst,zeros(T,nx+2*halosstx,halossty),dims=2)
 
+    # SCALING
+    @unpack scale = S.constants
+    u *= scale
+    v *= scale
+
     ghost_points!(u,v,η,S)
     ghost_points_sst!(sst,S)
     return u,v,η,sst
@@ -34,13 +39,14 @@ function remove_halo(   u::Array{T,2},
                         S::ModelSetup) where {T<:AbstractFloat}
 
     @unpack halo,haloη,halosstx,halossty = S.grid
+    @unpack scale_inv = S.constants
 
-    uview = u[halo+1:end-halo,halo+1:end-halo]
-    vview = v[halo+1:end-halo,halo+1:end-halo]
-    ηview = η[haloη+1:end-haloη,haloη+1:end-haloη]
-    sstview = sst[halosstx+1:end-halosstx,halossty+1:end-halossty]
+    ucut = scale_inv*u[halo+1:end-halo,halo+1:end-halo]
+    vcut = scale_inv*v[halo+1:end-halo,halo+1:end-halo]
+    ηcut = η[haloη+1:end-haloη,haloη+1:end-haloη]
+    sstcut = sst[halosstx+1:end-halosstx,halossty+1:end-halossty]
 
-    return uview,vview,ηview,sstview
+    return ucut,vcut,ηcut,sstcut
 end
 
 """ Copy ghost points for u from inside to the halo in the nonperiodic case. """

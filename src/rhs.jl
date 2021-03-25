@@ -40,8 +40,9 @@ function rhs_nonlinear!(u::AbstractMatrix,
     
     # Bernoulli potential - recalculate for new η, KEu,KEv are only updated in advection_coriolis
     @unpack p,KEu,KEv,dpdx,dpdy = Diag.Bernoulli
-    @unpack g = S.constants
-    bernoulli!(p,KEu,KEv,η,g,ep)
+    @unpack g,scale,scale_inv = S.constants
+    g_scale = g*scale
+    bernoulli!(p,KEu,KEv,η,g_scale,ep,scale_inv)
     ∂x!(dpdx,p)
     ∂y!(dpdy,p)
 
@@ -64,13 +65,14 @@ function rhs_linear!(   u::AbstractMatrix,
                         t::Int)
 
     @unpack h,h_u,h_v,U,V,dUdx,dVdy = Diag.VolumeFluxes
-    @unpack g = S.constants
+    @unpack g,scale = S.constants
     @unpack ep = S.grid
 
     # Pressure gradient
     @unpack dpdx,dpdy = Diag.Bernoulli
-    ∂x!(dpdx,g*η)
-    ∂y!(dpdy,g*η)
+    g_scale = g*scale
+    ∂x!(dpdx,g_scale*η)
+    ∂y!(dpdy,g_scale*η)
 
     # Coriolis force
     @unpack qhv,qhu,v_u,u_v = Diag.Vorticity
@@ -164,17 +166,19 @@ function bernoulli!(p::Array{T,2},
                     KEv::Array{T,2},
                     η::Array{T,2},
                     g::T,
-                    ep::Int) where {T<:AbstractFloat}
+                    ep::Int,
+                    scale_inv::T) where {T<:AbstractFloat}
+
     m,n = size(p)
     @boundscheck (m+ep,n+2) == size(KEu) || throw(BoundsError())
     @boundscheck (m+2,n) == size(KEv) || throw(BoundsError())
     @boundscheck (m,n) == size(η) || throw(BoundsError())
 
-    one_half = T(0.5)
+    one_half_scale_inv = convert(T,0.5)*scale_inv
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            p[i,j] = one_half*(KEu[i+ep,j+1] + KEv[i+1,j]) + g*η[i,j]
+            p[i,j] = one_half_scale_inv*(KEu[i+ep,j+1] + KEv[i+1,j]) + g*η[i,j]
         end
     end
 end
@@ -274,10 +278,11 @@ function momentum_v!(   Diag::DiagnosticVars{T,Tprog},
 end
 
 """Zonal mass flux U = uh."""
-function Uflux!(U::AbstractMatrix,
-                u::AbstractMatrix,
-                h_u::AbstractMatrix,
-                ep::Int)
+function Uflux!(U::AbstractMatrix{T},
+                u::AbstractMatrix{T},
+                h_u::AbstractMatrix{T},
+                ep::Int,
+                scale_inv::T) where {T<:AbstractFloat}
 
     m,n = size(U)
     @boundscheck (m,n) == size(h_u) || throw(BoundsError())
@@ -285,20 +290,24 @@ function Uflux!(U::AbstractMatrix,
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            U[i,j] = u[1+ep+i,1+j]*h_u[i,j]
+            U[i,j] = u[1+ep+i,1+j]*h_u[i,j]*scale_inv
         end
     end
 end
 
 """Meridional mass flux V = vh."""
-function Vflux!(V::AbstractMatrix,v::AbstractMatrix,h_v::AbstractMatrix)
+function Vflux!(V::AbstractMatrix{T},
+                v::AbstractMatrix{T},
+                h_v::AbstractMatrix{T},
+                scale_inv::T) where {T<:AbstractFloat}
+
     m,n = size(V)
     @boundscheck (m,n) == size(h_v) || throw(BoundsError())
     @boundscheck (m+2,n+2) == size(v) || throw(BoundsError())
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-            V[i,j] = v[i+1,j+1]*h_v[i,j]
+            V[i,j] = v[i+1,j+1]*h_v[i,j]*scale_inv
         end
     end
 end
@@ -313,12 +322,13 @@ function UVfluxes!( u::AbstractMatrix,
     @unpack h,h_u,h_v,U,V = Diag.VolumeFluxes
     @unpack H = S.forcing
     @unpack ep = S.grid
+    @unpack scale_inv = S.constants
 
     thickness!(h,η,H)
     Ix!(h_u,h)
     Iy!(h_v,h)
 
     # mass or volume flux U,V = uh,vh
-    Uflux!(U,u,h_u,ep)
-    Vflux!(V,v,h_v)
+    Uflux!(U,u,h_u,ep,scale_inv)
+    Vflux!(V,v,h_v,scale_inv)
 end

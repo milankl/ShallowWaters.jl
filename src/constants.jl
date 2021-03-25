@@ -52,6 +52,10 @@ struct Constants{T<:AbstractFloat,Tprog<:AbstractFloat}
     ωFη::Float64            # frequency [1/s] of seasonal surface forcing incl 2π
     ωFx::Float64            # frequency [1/s] of seasonal wind x incl 2π
     ωFy::Float64            # frequency [1/2] of seasonal wind y incl 2π
+
+    # SCALING
+    scale::T                # multiplicative constant for low-precision arithmetics
+    scale_inv::T            # and it's inverse
 end
 
 """Generator function for the mutable struct Constants."""
@@ -87,7 +91,8 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
 
     # BOTTOM FRICTION COEFFICENTS
     # incl grid spacing Δ for non-dimensional gradients
-    cD = T(-G.Δ*P.cD)             # quadratic drag [m]
+    # include scale for quadratic cD only to unscale the scale^2 in u^2
+    cD = T(-G.Δ*P.cD/P.scale)     # quadratic drag [m]
     rD = T(-G.Δ/(P.τD*24*3600))   # linear drag [m/s]
 
     # INTERFACE RELAXATION FREQUENCY
@@ -95,8 +100,9 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
     γ = T(G.Δ/(P.t_relax*3600*24))    # [m/s]
 
     # BIHARMONIC DIFFUSION
-    cSmag = T(-P.cSmag)   # Smagorinsky coefficient
-    νB = T(-P.νB/30000)   # linear scaling based on 540m^s/s at Δ=30km
+    # undo scaling here as smagorinksy diffusion contains scale^2 due to ~u^2
+    cSmag = T(-P.cSmag/P.scale)   # Smagorinsky coefficient
+    νB = T(-P.νB/30000)           # linear scaling based on 540m^s/s at Δ=30km
 
     # TRACER ADVECTION
     rSST = T(G.dtadvint/(P.τSST*3600*24))    # tracer restoring [1]
@@ -108,8 +114,13 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
     ωFx = 2π*P.ωFx/24/365.25/3600
     ωFy = 2π*P.ωFy/24/365.25/3600
 
+    # SCALING
+    scale = T(P.scale)
+    scale_inv = T(1/P.scale)
+
     return Constants{T,Tprog}(  RKaΔt,RKbΔt,Δt_Δs,Δt_Δ,Δt_Δ_half,
                                 SSPRK3c,one_minus_α,
                                 g,cD,rD,γ,cSmag,νB,rSST,
-                                jSST,SSTmin,ωFη,ωFx,ωFy)
+                                jSST,SSTmin,ωFη,ωFx,ωFy,
+                                scale,scale_inv)
 end
