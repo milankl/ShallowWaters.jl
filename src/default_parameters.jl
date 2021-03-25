@@ -7,16 +7,19 @@
 
     # DOMAIN RESOLUTION AND RATIO
     nx::Int=100                         # number of grid cells in x-direction
-    Lx::Real=2000e3                     # length of the domain in x-direction [m]
+    Lx::Real=4000e3                     # length of the domain in x-direction [m]
     L_ratio::Real=2                     # Domain aspect ratio of Lx/Ly
 
     # PHYSICAL CONSTANTS
-    g::Real=10.                         # gravitational acceleration [m/s]
+    g::Real=0.1                         # gravitational acceleration [m/s]
     H::Real=500.                        # layer thickness at rest [m]
     ρ::Real=1e3                         # water density [kg/m^3]
     ϕ::Real=45.                         # central latitude of the domain (for coriolis) [°]
     ω::Real=2π/(24*3600)                # Earth's angular frequency [s^-1]
     R::Real=6.371e6                     # Earth's radius [m]
+
+    # SCALE
+    scale::Real=1                       # multiplicative scale for the momentum equations u,v
 
     # WIND FORCING OPTIONS
     wind_forcing_x::String="channel"    # "channel", "double_gyre", "shear","constant" or "none"
@@ -29,8 +32,8 @@
     ωFy::Real=1.0                       # frequency [1/year] for y component
 
     # BOTTOM TOPOGRAPHY OPTIONS
-    topography::String="ridge"          # "ridge", "seamount", "flat", "ridges", "bathtub"
-    topo_height::Real=50.               # height of seamount [m]
+    topography::String="ridges"         # "ridge", "seamount", "flat", "ridges", "bathtub"
+    topo_height::Real=100.               # height of seamount [m]
     topo_width::Real=300e3              # horizontal scale [m] of the seamount
 
     # SURFACE RELAXATION
@@ -47,13 +50,13 @@
     wk::Real=10e3                       # width [m] in y of Gaussian used for surface forcing
 
     # TIME STEPPING OPTIONS
-    time_scheme::String="RK"            # Runge-Kutta ("RK") or strong-stability preserving RK
+    time_scheme::String="SSPRK3"        # Runge-Kutta ("RK") or strong-stability preserving RK
                                         # "SSPRK2","SSPRK3","4SSPRK3"
     RKo::Int=4                          # Order of the RK time stepping scheme (2, 3 or 4)
     RKs::Int=3                          # Number of stages for SSPRK2
-    RKn::Int=2                          # n^2 = s = Number of stages  for SSPRK3
-    cfl::Real=1.0                       # CFL number (1.0 recommended for RK4, 0.6 for RK3)
-    Ndays::Real=10.0                    # number of days to integrate for
+    RKn::Int=5                          # n^2 = s = Number of stages  for SSPRK3
+    cfl::Real=4.0                       # CFL number (1.0 recommended for RK4, 0.6 for RK3)
+    Ndays::Real=200.0                   # number of days to integrate for
     nstep_diff::Int=1                   # diffusive part every nstep_diff time steps.
     nstep_advcor::Int=0                 # advection and coriolis update every nstep_advcor time steps.
                                         # 0 means it is included in every RK4 substep
@@ -68,7 +71,7 @@
     dynamics::String="nonlinear"        # "linear" or "nonlinear"
 
     # BOTTOM FRICTION OPTIONS
-    bottom_drag::String="quadratic"     # "linear", "quadratic" or "none"
+    bottom_drag::String="none"          # "linear", "quadratic" or "none"
     cD::Real=1e-5                       # bottom drag coefficient [dimensionless] for quadratic
     τD::Real=300.                       # bottom drag coefficient [days] for linear
 
@@ -86,21 +89,21 @@
     sst_initial::String="south"         # "west", "south", "rect", "flat" or "restart"
     sst_rect_coords::Array{Float64,1}=[0.,0.15,0.,1.0]
                                         # (x0,x1,y0,y1) are the size of the rectangle in [0,1]
-    Uadv::Real=0.25                     # Velocity scale [m/s] for tracer advection
+    Uadv::Real=0.2                      # Velocity scale [m/s] for tracer advection
     SSTmax::Real=1.                     # tracer (sea surface temperature) max for restoring
-    SSTmin::Real=0.                     # tracer (sea surface temperature) min for restoring
+    SSTmin::Real=-1.                    # tracer (sea surface temperature) min for restoring
     τSST::Real=500.                     # tracer restoring time scale [days]
     jSST::Real=365.                     # tracer consumption [days]
     SST_λ0::Real=222e3                  # [m] transition position of relaxation timescale
     SST_λs::Real=111e3                  # [m] transition width of relaxation timescale
     SST_γ0::Real=8.35                   # [days] injection time scale
-    SSTw::Real=5e3                      # width [m] of the tangent used for the IC and interface relaxation
+    SSTw::Real=5e5                      # width [m] of the tangent used for the IC and interface relaxation
     SSTϕ::Real=0.5                      # latitude/longitude fraction ∈ [0,1] of sst edge
 
     # OUTPUT OPTIONS
     output::Bool=false                  # netcdf output?
     output_vars::Array{String,1}=["u","v","η","sst"]  # which variables to output? "du","dv","dη" also allowed
-    output_dt::Real=6                   # output time step [hours]
+    output_dt::Real=24                  # output time step [hours]
     outpath::String=pwd()               # path to output folder
 
     # INITIAL CONDITIONS
@@ -151,21 +154,25 @@ end
 Creates a Parameter struct with following options and default values
 
     T=Float32                 # number format
+
     Tprog=T                   # number format for prognostic variables
     Tcomm=Tprog               # number format for ghost-point copies
 
     # DOMAIN RESOLUTION AND RATIO
     nx::Int=100                         # number of grid cells in x-direction
-    Lx::Real=2000e3                     # length of the domain in x-direction [m]
+    Lx::Real=4000e3                     # length of the domain in x-direction [m]
     L_ratio::Real=2                     # Domain aspect ratio of Lx/Ly
 
     # PHYSICAL CONSTANTS
-    g::Real=10.                         # gravitational acceleration [m/s]
+    g::Real=0.1                         # gravitational acceleration [m/s]
     H::Real=500.                        # layer thickness at rest [m]
     ρ::Real=1e3                         # water density [kg/m^3]
     ϕ::Real=45.                         # central latitude of the domain (for coriolis) [°]
     ω::Real=2π/(24*3600)                # Earth's angular frequency [s^-1]
     R::Real=6.371e6                     # Earth's radius [m]
+
+    # SCALE
+    scale::Real=1                       # multiplicative scale for the momentum equations u,v
 
     # WIND FORCING OPTIONS
     wind_forcing_x::String="channel"    # "channel", "double_gyre", "shear","constant" or "none"
@@ -178,8 +185,8 @@ Creates a Parameter struct with following options and default values
     ωFy::Real=1.0                       # frequency [1/year] for y component
 
     # BOTTOM TOPOGRAPHY OPTIONS
-    topography::String="ridge"          # "ridge", "seamount", "flat", "ridges", "bathtub"
-    topo_height::Real=50.               # height of seamount [m]
+    topography::String="ridges"         # "ridge", "seamount", "flat", "ridges", "bathtub"
+    topo_height::Real=100.               # height of seamount [m]
     topo_width::Real=300e3              # horizontal scale [m] of the seamount
 
     # SURFACE RELAXATION
@@ -196,11 +203,13 @@ Creates a Parameter struct with following options and default values
     wk::Real=10e3                       # width [m] in y of Gaussian used for surface forcing
 
     # TIME STEPPING OPTIONS
-    time_scheme::String="RK"            # Runge-Kutta ("RK") or strong-stability preserving RK ("SSPRK2","SSPRK3")
+    time_scheme::String="SSPRK3"        # Runge-Kutta ("RK") or strong-stability preserving RK
+                                        # "SSPRK2","SSPRK3","4SSPRK3"
     RKo::Int=4                          # Order of the RK time stepping scheme (2, 3 or 4)
-    RKs::Int=2                          # Number of stages for SSPRK2
-    cfl::Real=1.0                       # CFL number (1.0 recommended for RK4, 0.6 for RK3)
-    Ndays::Real=10.0                    # number of days to integrate for
+    RKs::Int=3                          # Number of stages for SSPRK2
+    RKn::Int=5                          # n^2 = s = Number of stages  for SSPRK3
+    cfl::Real=4.0                       # CFL number (1.0 recommended for RK4, 0.6 for RK3)
+    Ndays::Real=200.0                   # number of days to integrate for
     nstep_diff::Int=1                   # diffusive part every nstep_diff time steps.
     nstep_advcor::Int=0                 # advection and coriolis update every nstep_advcor time steps.
                                         # 0 means it is included in every RK4 substep
@@ -233,21 +242,21 @@ Creates a Parameter struct with following options and default values
     sst_initial::String="south"         # "west", "south", "rect", "flat" or "restart"
     sst_rect_coords::Array{Float64,1}=[0.,0.15,0.,1.0]
                                         # (x0,x1,y0,y1) are the size of the rectangle in [0,1]
-    Uadv::Real=0.25                     # Velocity scale [m/s] for tracer advection
+    Uadv::Real=0.2                      # Velocity scale [m/s] for tracer advection
     SSTmax::Real=1.                     # tracer (sea surface temperature) max for restoring
-    SSTmin::Real=0.                     # tracer (sea surface temperature) min for restoring
+    SSTmin::Real=-1.                    # tracer (sea surface temperature) min for restoring
     τSST::Real=500.                     # tracer restoring time scale [days]
     jSST::Real=365.                     # tracer consumption [days]
     SST_λ0::Real=222e3                  # [m] transition position of relaxation timescale
     SST_λs::Real=111e3                  # [m] transition width of relaxation timescale
     SST_γ0::Real=8.35                   # [days] injection time scale
-    SSTw::Real=5e3                      # width [m] of the tangent used for the IC and interface relaxation
+    SSTw::Real=5e5                      # width [m] of the tangent used for the IC and interface relaxation
     SSTϕ::Real=0.5                      # latitude/longitude fraction ∈ [0,1] of sst edge
 
     # OUTPUT OPTIONS
     output::Bool=false                  # netcdf output?
     output_vars::Array{String,1}=["u","v","η","sst"]  # which variables to output? "du","dv","dη" also allowed
-    output_dt::Real=6                   # output time step [hours]
+    output_dt::Real=24                  # output time step [hours]
     outpath::String=pwd()               # path to output folder
 
     # INITIAL CONDITIONS
@@ -258,6 +267,5 @@ Creates a Parameter struct with following options and default values
     get_id_mode::String="continue"      # How to determine the run id: "continue" or "fill"
     run_id::Int=-1                      # Output with a specific run id
     init_interpolation::Bool=true       # Interpolate the initial conditions in case grids don't match?
-
 """
 Parameter
