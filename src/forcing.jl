@@ -57,12 +57,12 @@ as a cosine with strongest forcing in the middle and vanishing forcing at bounda
 function ChannelWind(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     @unpack Δ,x_u,y_u,Lx,Ly = G
-    @unpack Fx0,Fy0,H,ρ = P
+    @unpack Fx0,Fy0,H,ρ,scale = P
 
     # for non-dimensional gradients the wind forcing needs to contain the grid spacing Δ
     xx_u,yy_u = meshgrid(x_u,y_u)
-    Fx = (Δ*Fx0/ρ/H)*cos.(π*(yy_u/Ly .- 1/2)).^2
-    Fy = (Δ*Fy0/ρ/H)*cos.(π*(xx_u/Lx .- 1/2)).^2
+    Fx = (scale*Δ*Fx0/ρ/H)*cos.(π*(yy_u/Ly .- 1/2)).^2
+    Fy = (scale*Δ*Fy0/ρ/H)*cos.(π*(xx_u/Lx .- 1/2)).^2
 
     return T.(Fx),T.(Fy)
 end
@@ -72,12 +72,12 @@ as a hyperbolic tangent with strongest shear in the middle."""
 function ShearWind(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     @unpack Δ,x_u,y_u,Lx,Ly = G
-    @unpack Fx0,Fy0,H,ρ = P
+    @unpack Fx0,Fy0,H,ρ,scale = P
 
     # for non-dimensional gradients the wind forcing needs to contain the grid spacing Δ
     xx_u,yy_u = meshgrid(x_u,y_u)
-    Fx = (Δ*Fx0/ρ/H)*tanh.(2π*(yy_u/Ly .- 1/2))
-    Fy = (Δ*Fy0/ρ/H)*tanh.(2π*(xx_u/Lx .- 1/2))
+    Fx = (scale*Δ*Fx0/ρ/H)*tanh.(2π*(yy_u/Ly .- 1/2))
+    Fy = (scale*Δ*Fy0/ρ/H)*tanh.(2π*(xx_u/Lx .- 1/2))
 
     return T.(Fx),T.(Fy)
 end
@@ -88,12 +88,12 @@ See Cooper&Zanna 2015 or Kloewer et al 2018."""
 function DoubleGyreWind(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     @unpack Δ,x_u,y_u,Lx,Ly = G
-    @unpack Fx0,Fy0,H,ρ = P
+    @unpack Fx0,Fy0,H,ρ,scale = P
 
     # for non-dimensional gradients the wind forcing needs to contain the grid spacing Δ
     xx_u,yy_u = meshgrid(x_u,y_u)
-    Fx = (Δ*Fx0/ρ/H)*(cos.(2π*(yy_u/Ly .- 1/2)) + 2*sin.(π*(yy_u/Ly .- 1/2)))
-    Fy = (Δ*Fy0/ρ/H)*(cos.(2π*(xx_u/Lx .- 1/2)) + 2*sin.(π*(xx_u/Lx .- 1/2)))
+    Fx = (scale*Δ*Fx0/ρ/H)*(cos.(2π*(yy_u/Ly .- 1/2)) + 2*sin.(π*(yy_u/Ly .- 1/2)))
+    Fy = (scale*Δ*Fy0/ρ/H)*(cos.(2π*(xx_u/Lx .- 1/2)) + 2*sin.(π*(xx_u/Lx .- 1/2)))
     return T.(Fx),T.(Fy)
 end
 
@@ -101,11 +101,11 @@ end
 function ConstantWind(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     @unpack Δ,nux,nuy,nvx,nvy = G
-    @unpack Fx0,Fy0,H,ρ = P
+    @unpack Fx0,Fy0,H,ρ,scale = P
 
     # for non-dimensional gradients the wind forcing needs to contain the grid spacing Δ
-    Fx = T.(Δ*Fx0/ρ/H)*ones(T,nux,nuy)
-    Fy = T.(Δ*Fy0/ρ/H)*ones(T,nvx,nvy)
+    Fx = T.(scale*Δ*Fx0/ρ/H)*ones(T,nux,nuy)
+    Fy = T.(scale*Δ*Fy0/ρ/H)*ones(T,nvx,nvy)
 
     return Fx,Fy
 end

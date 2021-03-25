@@ -86,17 +86,18 @@ function output_nc!(i::Int,
 
         @unpack halo,haloη,halosstx,halossty = S.grid
         @unpack f_q,ep,dtint = S.grid
+        @unpack scale,scale_inv = S.constants
 
         # CUT OFF HALOS
         # As output is before copyto!(u,u0), take u0,v0,η0
         # Tendencies calculate from the last time step, du = u_n+1-u_n etc
         # WRITING THE VARIABLES
         if ncs.u != nothing
-            @views u = Float32.(Diag.RungeKutta.u0[halo+1:end-halo,halo+1:end-halo])
+            @views u = Float32.(scale_inv*Diag.RungeKutta.u0[halo+1:end-halo,halo+1:end-halo])
             NetCDF.putvar(ncs.u,"u",u,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.v != nothing
-            @views v = Float32.(Diag.RungeKutta.v0[halo+1:end-halo,halo+1:end-halo])
+            @views v = Float32.(scale_inv*Diag.RungeKutta.v0[halo+1:end-halo,halo+1:end-halo])
             NetCDF.putvar(ncs.v,"v",v,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.η != nothing
@@ -108,7 +109,7 @@ function output_nc!(i::Int,
             NetCDF.putvar(ncs.sst,"sst",sst,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.q != nothing
-            @views q = Float32.(Diag.Vorticity.q[haloη+1:end-haloη,haloη+1:end-haloη])
+            @views q = Float32.(scale_inv*Diag.Vorticity.q[haloη+1:end-haloη,haloη+1:end-haloη])
             NetCDF.putvar(ncs.q,"q",q,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.ζ != nothing
@@ -118,13 +119,13 @@ function output_nc!(i::Int,
             NetCDF.putvar(ncs.ζ,"relvort",ζ,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.du != nothing
-            @views u = Float32.(Diag.RungeKutta.u0[halo+1:end-halo,halo+1:end-halo])
-            @views du = u-Float32.(Prog.u[halo+1:end-halo,halo+1:end-halo])
+            @views u = Float32.(scale_inv*Diag.RungeKutta.u0[halo+1:end-halo,halo+1:end-halo])
+            @views du = u-Float32.(scale_inv*Prog.u[halo+1:end-halo,halo+1:end-halo])
             NetCDF.putvar(ncs.du,"du",du,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.dv != nothing
-            @views v = Float32.(Diag.RungeKutta.v0[halo+1:end-halo,halo+1:end-halo])
-            @views dv = v-Float32.(Prog.v[halo+1:end-halo,halo+1:end-halo])
+            @views v = Float32.(scale_inv*Diag.RungeKutta.v0[halo+1:end-halo,halo+1:end-halo])
+            @views dv = v-Float32.(scale_inv*Prog.v[halo+1:end-halo,halo+1:end-halo])
             NetCDF.putvar(ncs.dv,"dv",dv,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.dη != nothing

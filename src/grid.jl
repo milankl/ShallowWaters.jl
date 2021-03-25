@@ -16,6 +16,7 @@
     ω::Real                             # Earth's angular frequency [s^-1]
     ϕ::Real                             # central latitue of the domain (for coriolis) [°]
     R::Real                             # Earth's radius [m]
+    scale::Real                         # multiplicative scale for momentum equations [1]
 
     # DOMAIN SIZES
     Δ::Real=Lx / nx                         # grid spacing
@@ -77,22 +78,25 @@
     nadvstep::Int = max(1,Int(floor(Δ/Uadv/dtint)))         # advection each n time steps
     nadvstep_half::Int = nadvstep ÷ 2                       # nadvstep ÷ 2
     dtadvint::Int = nadvstep*dtint                          # advection time step [s]
-    dtadvu::T = T(dtadvint*nx/Lx)                           # Rescaled advection time step for u [s/m]
-    dtadvv::T = T(dtadvint*ny/Ly)                           # Rescaled advection time step for v [s/m]
-    half_dtadvu::T = T(dtadvint*nx/Lx/2)                    # dtadvu/2
-    half_dtadvv::T = T(dtadvint*ny/Ly/2)                    # dtadvv/2
+    # divide by scale here to undo the scaling in u,v for tracer advection
+    dtadvu::T = T(dtadvint*nx/Lx/scale)                     # Rescaled advection time step for u [s/m]
+    dtadvv::T = T(dtadvint*ny/Ly/scale)                     # Rescaled advection time step for v [s/m]
+    half_dtadvu::T = T(dtadvint*nx/Lx/2/scale)              # dtadvu/2
+    half_dtadvv::T = T(dtadvint*ny/Ly/2/scale)              # dtadvv/2
 
     # N TIME STEPS FOR OUTPUT
-    nout::Int = Int(floor(output_dt*3600/dtint))            # output every n time steps
+    nout::Int = max(1,Int(floor(output_dt*3600/dtint)))     # output every n time steps
     nout_total::Int = (nt ÷ nout)+1                         # total number of output time steps
     t_vec::AbstractVector = Array(0:nout_total-1)*dtint     # time vector
 
     # CORIOLIS
     f₀::Float64 = coriolis_at_lat(ω,ϕ)                      # Coriolis parameter
     β::Float64 = β_at_lat(ω,R,ϕ)                            # Derivate of Coriolis parameter wrt latitude
+    # scale only f_q as it's used for non-linear advection
+    f_q::Array{T,2} = T.(scale*Δ*(f₀ .+ β*(yy_q(bc,x_q_halo,y_q_halo) .- Ly/2)))  # same on the q-grid
+    # f_u, f_v are only used for linear dynamics (scaling implicit)
     f_u::Array{T,2} = T.(Δ*(f₀ .+ β*(meshgrid(x_u,y_u)[2] .- Ly/2)))        # f = f₀ + βy on the u-grid
     f_v::Array{T,2} = T.(Δ*(f₀ .+ β*(meshgrid(x_v,y_v)[2] .- Ly/2)))        # same on the v-grid
-    f_q::Array{T,2} = T.(Δ*(f₀ .+ β*(yy_q(bc,x_q_halo,y_q_halo) .- Ly/2)))  # same on the q-grid
 end
 
 """Helper function to create yy_q based on the boundary condition bc."""
@@ -114,11 +118,11 @@ function Grid{T,Tprog}(P::Parameter) where {T<:AbstractFloat,Tprog<:AbstractFloa
     @unpack bc,g,H,cfl = P
     @unpack Ndays,nstep_diff,nstep_advcor = P
     @unpack Uadv,output_dt = P
-    @unpack ϕ,ω,R = P
+    @unpack ϕ,ω,R,scale = P
 
     return Grid{T,Tprog}(nx=nx,Lx=Lx,L_ratio=L_ratio,bc=bc,g=g,H=H,cfl=cfl,Ndays=Ndays,
                 nstep_diff=nstep_diff,nstep_advcor=nstep_advcor,Uadv=Uadv,output_dt=output_dt,
-                ϕ=ϕ,ω=ω,R=R)
+                ϕ=ϕ,ω=ω,R=R,scale=scale)
 end
 
 """Meter per 1 degree of latitude (or longitude at the equator)."""
