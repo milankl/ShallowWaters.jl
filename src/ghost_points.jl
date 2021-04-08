@@ -25,6 +25,7 @@ function add_halo(  u::Array{T,2},
     @unpack scale = S.constants
     u *= scale
     v *= scale
+    sst *= scale
 
     ghost_points!(u,v,η,S)
     ghost_points_sst!(sst,S)

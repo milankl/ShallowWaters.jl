@@ -1,6 +1,6 @@
 """Linear interpolation of a variable u in the x-direction.
 m,n = size(ux) must be m+1,n = size(u)."""
-function Ix!(ux::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
+function Ix!(ux::Matrix{T},u::Matrix{T}) where {T<:AbstractFloat}
     m, n = size(ux)
     @boundscheck (m+1,n) == size(u) || throw(BoundsError())
 
@@ -15,7 +15,7 @@ end
 
 """ Linear interpolation a variable u in the y-direction.
     m,n = size(uy) must be m,n+1 = size(u)."""
-function Iy!(uy::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
+function Iy!(uy::Matrix{T},u::Matrix{2}) where {T<:AbstractFloat}
     m,n = size(uy)
     @boundscheck (m,n+1) == size(u) || throw(BoundsError())
 
@@ -36,11 +36,9 @@ function Ixy!(uxy::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
 
     one_quarter = convert(T,0.25)
 
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            uxy[i,j] = one_quarter*(u[i,j] + u[i+1,j]) + 
-                    one_quarter*(u[i,j+1] + u[i+1,j+1])
-        end
+    @inbounds for j in 1:n, i in 1:m
+        uxy[i,j] = one_quarter*(u[i,j] + u[i+1,j]) + 
+                one_quarter*(u[i,j+1] + u[i+1,j+1])
     end
 end
 
