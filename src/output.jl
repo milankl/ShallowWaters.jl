@@ -105,7 +105,7 @@ function output_nc!(i::Int,
             NetCDF.putvar(ncs.η,"eta",η,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.sst != nothing
-            @views sst = Float32.(Prog.sst[halosstx+1:end-halosstx,halossty+1:end-halossty])
+            @views sst = Float32.(scale_inv*Prog.sst[halosstx+1:end-halosstx,halossty+1:end-halossty])
             NetCDF.putvar(ncs.sst,"sst",sst,start=[1,1,iout],count=[-1,-1,1])
         end
         if ncs.q != nothing

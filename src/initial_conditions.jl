@@ -26,9 +26,9 @@ end
 function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
 
     ## PROGNOSTIC VARIABLES U,V,η
-
     @unpack nux,nuy,nvx,nvy,nx,ny = S.grid
     @unpack initial_cond = S.parameters
+    @unpack Tini = S.parameters
 
     if initial_cond == "rest"
 
@@ -53,15 +53,12 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
         end
 
         u = ncu.vars["u"][:,:,init_starti]
-        # NetCDF.close(ncu)
 
         ncv = NetCDF.open(joinpath(inirunpath,"v.nc"))
         v = ncv.vars["v"][:,:,init_starti]
-        # NetCDF.close(ncv)
 
         ncη = NetCDF.open(joinpath(inirunpath,"eta.nc"))
         η = ncη.vars["eta"][:,:,init_starti]
-        # NetCDF.close(ncη)
 
         # remove singleton time dimension
         u = reshape(u,size(u)[1:2])
@@ -122,7 +119,7 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
     ## SST
 
     @unpack SSTmin, SSTmax, SSTw, SSTϕ = S.parameters
-    @unpack sst_initial = S.parameters
+    @unpack sst_initial,scale = S.parameters
     @unpack x_T,y_T,Lx,Ly = S.grid
 
     xx_T,yy_T = meshgrid(x_T,y_T)
@@ -145,19 +142,18 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
     if initial_cond == "ncfile" && sst_initial == "restart"
         ncsst = NetCDF.open(joinpath(inirunpath,"sst.nc"))
         sst = ncsst.vars["sst"][:,:,init_starti]
-        # NetCDF.close(ncsst)
 
         sst = reshape(sst,size(sst)[1:2])
     end
 
     # Convert to number format T
-    sst = T.(sst)
-    u = T.(u)
-    v = T.(v)
-    η = T.(η)
+    # allow for comparable initial conditions via Tini
+    sst = T.(Tini.(sst))
+    u = T.(Tini.(u))
+    v = T.(Tini.(v))
+    η = T.(Tini.(η))
 
     #TODO SST INTERPOLATION
-
     u,v,η,sst = add_halo(u,v,η,sst,S)
 
     return PrognosticVars{T}(u,v,η,sst)
