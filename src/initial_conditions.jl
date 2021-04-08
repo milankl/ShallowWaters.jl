@@ -28,6 +28,7 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
     ## PROGNOSTIC VARIABLES U,V,η
     @unpack nux,nuy,nvx,nvy,nx,ny = S.grid
     @unpack initial_cond = S.parameters
+    @unpack Tini = S.parameters
 
     if initial_cond == "rest"
 
@@ -146,10 +147,11 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
     end
 
     # Convert to number format T
-    sst = T.(sst)
-    u = T.(u)
-    v = T.(v)
-    η = T.(η)
+    # allow for comparable initial conditions via Tini
+    sst = T.(Tini.(sst))
+    u = T.(Tini.(u))
+    v = T.(Tini.(v))
+    η = T.(Tini.(η))
 
     #TODO SST INTERPOLATION
     u,v,η,sst = add_halo(u,v,η,sst,S)

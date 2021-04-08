@@ -4,6 +4,7 @@
 
     Tprog=T                   # number format for prognostic variables
     Tcomm=Tprog               # number format for ghost-point copies
+    Tini=Tprog                # number format to reduce precision for initial conditions
 
     # DOMAIN RESOLUTION AND RATIO
     nx::Int=100                         # number of grid cells in x-direction
@@ -157,6 +158,7 @@ Creates a Parameter struct with following options and default values
 
     Tprog=T                   # number format for prognostic variables
     Tcomm=Tprog               # number format for ghost-point copies
+    Tini=Tprog                # number format to reduce precision for initial conditions
 
     # DOMAIN RESOLUTION AND RATIO
     nx::Int=100                         # number of grid cells in x-direction
