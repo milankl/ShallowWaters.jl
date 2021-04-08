@@ -106,6 +106,7 @@
     output_vars::Array{String,1}=["u","v","η","sst"]  # which variables to output? "du","dv","dη" also allowed
     output_dt::Real=24                  # output time step [hours]
     outpath::String=pwd()               # path to output folder
+    compression_level::Int=3            # compression level
 
     # INITIAL CONDITIONS
     initial_cond::String="rest"         # "rest" or "ncfile" for restart from file
