@@ -1,7 +1,7 @@
 # ShallowWaters.jl - A type-flexible 16-bit shallow water model
 [![CI](https://github.com/milankl/ShallowWaters.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/milankl/ShallowWaters.jl/actions/workflows/CI.yml)
 [![DOI](https://zenodo.org/badge/132787050.svg)](https://zenodo.org/badge/latestdoi/132787050)
-![sst](figs/sst_posit16.png?raw=true "SST")
+![sst](figs/isambard_float16.png?raw=true "Float16 simulation with ShallowWaters.jl on Isambard's A64FX")
 
 A shallow water model with a focus on type-flexibility and 16-bit number formats. ShallowWaters allows for Float64/32/16, 
 [Posit32/16/8](https://github.com/milankl/SoftPosit.jl), [BFloat16](https://github.com/JuliaComputing/BFloat16s.jl), 

@@ -15,7 +15,7 @@ end
 
 """ Linear interpolation a variable u in the y-direction.
     m,n = size(uy) must be m,n+1 = size(u)."""
-function Iy!(uy::Matrix{T},u::Matrix{2}) where {T<:AbstractFloat}
+function Iy!(uy::Matrix{T},u::Matrix{T}) where {T<:AbstractFloat}
     m,n = size(uy)
     @boundscheck (m,n+1) == size(u) || throw(BoundsError())
 
