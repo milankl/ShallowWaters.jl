@@ -19,21 +19,22 @@ function NcFiles(feedback::Feedback,S::ModelSetup)
 
     if S.parameters.output
 
-        @unpack output_vars = S.parameters
+        @unpack output_vars,compression_level = S.parameters
+        P = S.parameters
         @unpack x_u,x_v,x_T,x_q = S.grid
         @unpack y_u,y_v,y_T,y_q = S.grid
 
         @unpack run_id,runpath = feedback
 
-        ncu = if "u" in output_vars nc_create(x_u,y_u,"u",runpath,"m/s","zonal velocity") else nothing end
-        ncv = if "v" in output_vars nc_create(x_v,y_v,"v",runpath,"m/s","meridional velocity") else nothing end
-        ncη = if "η" in output_vars nc_create(x_T,y_T,"eta",runpath,"m","sea surface height") else nothing end
-        ncsst = if "sst" in output_vars nc_create(x_T,y_T,"sst",runpath,"1","sea surface temperature") else nothing end
-        ncq = if "q" in output_vars nc_create(x_q,y_q,"q",runpath,"1/(ms)","potential vorticity") else nothing end
-        ncζ = if "ζ" in output_vars nc_create(x_q,y_q,"relvort",runpath,"1","relative vorticity") else nothing end
-        ncdu = if "du" in output_vars nc_create(x_u,y_u,"du",runpath,"m^2/s^2","zonal velocity tendency") else nothing end
-        ncdv = if "dv" in output_vars nc_create(x_v,y_v,"dv",runpath,"m^2/s^2","meridional velocity tendency") else nothing end
-        ncdη = if "dη" in output_vars nc_create(x_T,y_T,"deta",runpath,"m^2/s","sea surface height tendency") else nothing end
+        ncu = if "u" in output_vars nc_create(x_u,y_u,"u",runpath,"m/s","zonal velocity",P) else nothing end
+        ncv = if "v" in output_vars nc_create(x_v,y_v,"v",runpath,"m/s","meridional velocity",P) else nothing end
+        ncη = if "η" in output_vars nc_create(x_T,y_T,"eta",runpath,"m","sea surface height",P) else nothing end
+        ncsst = if "sst" in output_vars nc_create(x_T,y_T,"sst",runpath,"1","sea surface temperature",P) else nothing end
+        ncq = if "q" in output_vars nc_create(x_q,y_q,"q",runpath,"1/(ms)","potential vorticity",P) else nothing end
+        ncζ = if "ζ" in output_vars nc_create(x_q,y_q,"relvort",runpath,"1","relative vorticity",P) else nothing end
+        ncdu = if "du" in output_vars nc_create(x_u,y_u,"du",runpath,"m^2/s^2","zonal velocity tendency",P) else nothing end
+        ncdv = if "dv" in output_vars nc_create(x_v,y_v,"dv",runpath,"m^2/s^2","meridional velocity tendency",P) else nothing end
+        ncdη = if "dη" in output_vars nc_create(x_T,y_T,"deta",runpath,"m^2/s","sea surface height tendency",P) else nothing end
 
         for nc in (ncu,ncv,ncη,ncsst,ncq,ncζ,ncdu,ncdv,ncdη)
             if nc != nothing
@@ -55,13 +56,16 @@ function nc_create( x::Array{T,1},
                     name::String,
                     path::String,
                     unit::String,
-                    long_name::String) where {T<:Real}
+                    long_name::String,
+                    P::Parameter) where {T<:Real}
+
+    @unpack compression_level = P
 
     xdim = NcDim("x",length(x),values=x)
     ydim = NcDim("y",length(y),values=y)
     tdim = NcDim("t",0,unlimited=true)
 
-    var = NcVar(name,[xdim,ydim,tdim],t=Float32)
+    var = NcVar(name,[xdim,ydim,tdim],t=Float32,compress=compression_level)
     tvar = NcVar("t",tdim,t=Int32)
 
     nc = NetCDF.create(joinpath(path,name*".nc"),[var,tvar],mode=NC_NETCDF4)
