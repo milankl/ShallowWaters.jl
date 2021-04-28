@@ -35,6 +35,9 @@ function time_integration(  Prog::PrognosticVars{Tprog},
     copyto!(v0,v)
     copyto!(η0,η)
 
+    # store initial conditions of sst for relaxation
+    copyto!(Diag.SemiLagrange.sst_ref,sst)
+
     # feedback, output initialisation and storing initial conditions
     feedback = feedback_init(S)
     netCDFfiles = NcFiles(feedback,S)

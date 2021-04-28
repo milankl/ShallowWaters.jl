@@ -22,10 +22,10 @@ function add_halo(  u::Array{T,2},
     sst = cat(zeros(T,nx+2*halosstx,halossty),sst,zeros(T,nx+2*halosstx,halossty),dims=2)
 
     # SCALING
-    @unpack scale = S.constants
+    @unpack scale,scale_sst = S.constants
     u *= scale
     v *= scale
-    sst *= scale
+    sst *= scale_sst
 
     ghost_points!(u,v,η,S)
     ghost_points_sst!(sst,S)
@@ -40,13 +40,13 @@ function remove_halo(   u::Array{T,2},
                         S::ModelSetup) where {T<:AbstractFloat}
 
     @unpack halo,haloη,halosstx,halossty = S.grid
-    @unpack scale_inv = S.constants
+    @unpack scale_inv,scale_sst_inv = S.constants
 
     # undo scaling as well
     ucut = scale_inv*u[halo+1:end-halo,halo+1:end-halo]
     vcut = scale_inv*v[halo+1:end-halo,halo+1:end-halo]
     ηcut = η[haloη+1:end-haloη,haloη+1:end-haloη]
-    sstcut = scale_inv*sst[halosstx+1:end-halosstx,halossty+1:end-halossty]
+    sstcut = scale_sst_inv*sst[halosstx+1:end-halosstx,halossty+1:end-halossty]
 
     return ucut,vcut,ηcut,sstcut
 end

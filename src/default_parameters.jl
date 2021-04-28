@@ -20,20 +20,22 @@
     R::Real=6.371e6                     # Earth's radius [m]
 
     # SCALE
-    scale::Real=1                       # multiplicative scale for the momentum equations u,v
+    scale::Real=2^6                     # multiplicative scale for the momentum equations u,v
+    scale_sst::Real=2^15                # multiplicative scale for sst
 
     # WIND FORCING OPTIONS
-    wind_forcing_x::String="channel"    # "channel", "double_gyre", "shear","constant" or "none"
+    wind_forcing_x::String="shear"      # "channel", "double_gyre", "shear","constant" or "none"
     wind_forcing_y::String="constant"   # "channel", "double_gyre", "shear","constant" or "none"
     Fx0::Real=0.12                      # wind stress strength [Pa] in x-direction
     Fy0::Real=0.0                       # wind stress strength [Pa] in y-direction
-    seasonal_wind_x::Bool=false         # Change the wind stress with a sine of frequency ωFx,ωFy
+    seasonal_wind_x::Bool=true          # Change the wind stress with a sine of frequency ωFx,ωFy
     seasonal_wind_y::Bool=false         # same for y-component
-    ωFx::Real=1.0                       # frequency [1/year] for x component
-    ωFy::Real=1.0                       # frequency [1/year] for y component
+    ωFx::Real=2                         # frequency [1/year] for x component
+    ωFy::Real=2                         # frequency [1/year] for y component
 
     # BOTTOM TOPOGRAPHY OPTIONS
     topography::String="ridges"         # "ridge", "seamount", "flat", "ridges", "bathtub"
+    topo_ridges_positions::Vector = [0.05,0.25,0.45,0.9]
     topo_height::Real=100.               # height of seamount [m]
     topo_width::Real=300e3              # horizontal scale [m] of the seamount
 
@@ -83,23 +85,21 @@
 
     # TRACER ADVECTION
     tracer_advection::Bool=true         # yes?
-    tracer_relaxation::Bool=false       # yes?
+    tracer_relaxation::Bool=true        # yes?
     tracer_consumption::Bool=false      # yes?
-    tracer_pumping::Bool=false          # yes?
-    injection_region::String="west"     # "west", "south", "rect" or "flat"
-    sst_initial::String="south"         # "west", "south", "rect", "flat" or "restart"
+    sst_initial::String="waves"         # "west", "south", "linear", "waves","rect", "flat" or "restart"
     sst_rect_coords::Array{Float64,1}=[0.,0.15,0.,1.0]
                                         # (x0,x1,y0,y1) are the size of the rectangle in [0,1]
     Uadv::Real=0.2                      # Velocity scale [m/s] for tracer advection
-    SSTmax::Real=1.                     # tracer (sea surface temperature) max for restoring
-    SSTmin::Real=-1.                    # tracer (sea surface temperature) min for restoring
-    τSST::Real=500.                     # tracer restoring time scale [days]
-    jSST::Real=365.                     # tracer consumption [days]
-    SST_λ0::Real=222e3                  # [m] transition position of relaxation timescale
-    SST_λs::Real=111e3                  # [m] transition width of relaxation timescale
-    SST_γ0::Real=8.35                   # [days] injection time scale
+    SSTmax::Real=1.                     # tracer (sea surface temperature) max for initial conditions
+    SSTmin::Real=-1.                    # tracer (sea surface temperature) min for initial conditions
+    τSST::Real=100                      # tracer restoring time scale [days]
+    jSST::Real=365                      # tracer consumption [days]
     SSTw::Real=5e5                      # width [m] of the tangent used for the IC and interface relaxation
     SSTϕ::Real=0.5                      # latitude/longitude fraction ∈ [0,1] of sst edge
+    SSTwaves_ny::Real=4                 # wave crests/troughs in y
+    SSTwaves_nx::Real=SSTwaves_ny*L_ratio  # wave crests/troughs in x
+    SSTwaves_p::Real=1/2                # power for rectangles (p<1)/smootheness(p>=1) of waves
 
     # OUTPUT OPTIONS
     output::Bool=false                  # netcdf output?
@@ -143,7 +143,6 @@
     @assert diffusion in ["Smagorinsky", "constant"] "Diffusion '$diffusion' unsupported."
     @assert νB > 0.0     "Diffusion scaling constant νB has to be >0, $νB given."
     @assert cSmag > 0.0  "Smagorinsky coefficient cSmag has to be >0, $cSmag given."
-    @assert injection_region in ["west","south"] "Injection region '$injection_region' unsupported."
     @assert Uadv > 0.0   "Advection velocity scale Uadv has to be >0, $Uadv given."
     @assert output_dt > 0   "Output time step has to be >0, $output_dt given."
     @assert initial_cond in ["rest", "ncfile"] "Initial conditions '$initial_cond' unsupported."
@@ -175,20 +174,22 @@ Creates a Parameter struct with following options and default values
     R::Real=6.371e6                     # Earth's radius [m]
 
     # SCALE
-    scale::Real=1                       # multiplicative scale for the momentum equations u,v
+    scale::Real=2^6                     # multiplicative scale for the momentum equations u,v
+    scale_sst::Real=2^15                # multiplicative scale for sst
 
     # WIND FORCING OPTIONS
-    wind_forcing_x::String="channel"    # "channel", "double_gyre", "shear","constant" or "none"
+    wind_forcing_x::String="shear"      # "channel", "double_gyre", "shear","constant" or "none"
     wind_forcing_y::String="constant"   # "channel", "double_gyre", "shear","constant" or "none"
     Fx0::Real=0.12                      # wind stress strength [Pa] in x-direction
     Fy0::Real=0.0                       # wind stress strength [Pa] in y-direction
-    seasonal_wind_x::Bool=false         # Change the wind stress with a sine of frequency ωFx,ωFy
+    seasonal_wind_x::Bool=true          # Change the wind stress with a sine of frequency ωFx,ωFy
     seasonal_wind_y::Bool=false         # same for y-component
-    ωFx::Real=1.0                       # frequency [1/year] for x component
-    ωFy::Real=1.0                       # frequency [1/year] for y component
+    ωFx::Real=2                         # frequency [1/year] for x component
+    ωFy::Real=2                         # frequency [1/year] for y component
 
     # BOTTOM TOPOGRAPHY OPTIONS
     topography::String="ridges"         # "ridge", "seamount", "flat", "ridges", "bathtub"
+    topo_ridges_positions::Vector = [0.05,0.25,0.45,0.9]
     topo_height::Real=100.               # height of seamount [m]
     topo_width::Real=300e3              # horizontal scale [m] of the seamount
 
@@ -238,29 +239,28 @@ Creates a Parameter struct with following options and default values
 
     # TRACER ADVECTION
     tracer_advection::Bool=true         # yes?
-    tracer_relaxation::Bool=false       # yes?
+    tracer_relaxation::Bool=true        # yes?
     tracer_consumption::Bool=false      # yes?
-    tracer_pumping::Bool=false          # yes?
-    injection_region::String="west"     # "west", "south", "rect" or "flat"
-    sst_initial::String="south"         # "west", "south", "rect", "flat" or "restart"
+    sst_initial::String="waves"         # "west", "south", "linear", "waves","rect", "flat" or "restart"
     sst_rect_coords::Array{Float64,1}=[0.,0.15,0.,1.0]
                                         # (x0,x1,y0,y1) are the size of the rectangle in [0,1]
     Uadv::Real=0.2                      # Velocity scale [m/s] for tracer advection
-    SSTmax::Real=1.                     # tracer (sea surface temperature) max for restoring
-    SSTmin::Real=-1.                    # tracer (sea surface temperature) min for restoring
-    τSST::Real=500.                     # tracer restoring time scale [days]
-    jSST::Real=365.                     # tracer consumption [days]
-    SST_λ0::Real=222e3                  # [m] transition position of relaxation timescale
-    SST_λs::Real=111e3                  # [m] transition width of relaxation timescale
-    SST_γ0::Real=8.35                   # [days] injection time scale
+    SSTmax::Real=1.                     # tracer (sea surface temperature) max for initial conditions
+    SSTmin::Real=-1.                    # tracer (sea surface temperature) min for initial conditions
+    τSST::Real=100                      # tracer restoring time scale [days]
+    jSST::Real=365                      # tracer consumption [days]
     SSTw::Real=5e5                      # width [m] of the tangent used for the IC and interface relaxation
     SSTϕ::Real=0.5                      # latitude/longitude fraction ∈ [0,1] of sst edge
+    SSTwaves_ny::Real=4                 # wave crests/troughs in y
+    SSTwaves_nx::Real=SSTwaves_ny*L_ratio  # wave crests/troughs in x
+    SSTwaves_p::Real=1/2                # power for rectangles (p<1)/smootheness(p>=1) of waves
 
     # OUTPUT OPTIONS
     output::Bool=false                  # netcdf output?
     output_vars::Array{String,1}=["u","v","η","sst"]  # which variables to output? "du","dv","dη" also allowed
     output_dt::Real=24                  # output time step [hours]
     outpath::String=pwd()               # path to output folder
+    compression_level::Int=3            # compression level
 
     # INITIAL CONDITIONS
     initial_cond::String="rest"         # "rest" or "ncfile" for restart from file

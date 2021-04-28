@@ -56,15 +56,25 @@ function duration_estimate(feedback::Feedback,S::ModelSetup)
     end
 end
 
+"""Returns the number of NaNs in an array."""
+function countnans(A::AbstractArray)
+    n_nan = 0
+    for a in A
+        n_nan += isnan(a) ? 1 : 0
+    end
+    return n_nan
+end
+
 """Returns a boolean whether the prognostic variables contains a NaN."""
 function nan_detection!(Prog::PrognosticVars,feedback::Feedback)
 
-    #TODO include a check for Posits
-    #TODO include check for sst
-
     @unpack u,v,η,sst = Prog
 
-    n_nan = sum(isnan.(u)) + sum(isnan.(v)) + sum(isnan.(η)) + sum(isnan.(sst))
+    n_nan = countnans(u)
+    n_nan += countnans(v)
+    n_nan += countnans(η)
+    n_nan += countnans(sst)
+
     if n_nan > 0
         feedback.nans_detected = true
     end

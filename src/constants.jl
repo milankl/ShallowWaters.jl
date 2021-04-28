@@ -46,16 +46,17 @@ struct Constants{T<:AbstractFloat,Tprog<:AbstractFloat}
     γ::T                    # frequency of interface relaxation
     cSmag::T                # Smagorinsky constant
     νB::T                   # biharmonic diffusion coefficient
-    rSST::T                 # tracer restoring timescale
+    τSST::T                 # tracer restoring timescale
     jSST::T                 # tracer consumption timescale
-    SSTmin::T               # tracer minimum
     ωFη::Float64            # frequency [1/s] of seasonal surface forcing incl 2π
     ωFx::Float64            # frequency [1/s] of seasonal wind x incl 2π
     ωFy::Float64            # frequency [1/2] of seasonal wind y incl 2π
 
     # SCALING
     scale::T                # multiplicative constant for low-precision arithmetics
-    scale_inv::T            # and it's inverse
+    scale_inv::T            # and its inverse
+    scale_sst::T            # scale for sst
+    scale_sst_inv::T        # and its inverse
 end
 
 """Generator function for the mutable struct Constants."""
@@ -105,9 +106,8 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
     νB = T(-P.νB/30000)           # linear scaling based on 540m^s/s at Δ=30km
 
     # TRACER ADVECTION
-    rSST = T(G.dtadvint/(P.τSST*3600*24))    # tracer restoring [1]
+    τSST = T(G.dtadvint/(P.τSST*3600*24))    # tracer restoring [1]
     jSST = T(G.dtadvint/(P.jSST*3600*24))    # tracer consumption [1]
-    SSTmin = T(P.SSTmin)
 
     # TIME DEPENDENT FORCING
     ωFη = -2π*P.ωFη/24/365.25/3600
@@ -115,12 +115,15 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
     ωFy = 2π*P.ωFy/24/365.25/3600
 
     # SCALING
-    scale = T(P.scale)
-    scale_inv = T(1/P.scale)
+    scale = convert(T,P.scale)
+    scale_inv = convert(T,1/P.scale)
+    scale_sst = convert(T,P.scale_sst)
+    scale_sst_inv = convert(T,1/P.scale_sst)
 
     return Constants{T,Tprog}(  RKaΔt,RKbΔt,Δt_Δs,Δt_Δ,Δt_Δ_half,
                                 SSPRK3c,one_minus_α,
-                                g,cD,rD,γ,cSmag,νB,rSST,
-                                jSST,SSTmin,ωFη,ωFx,ωFy,
-                                scale,scale_inv)
+                                g,cD,rD,γ,cSmag,νB,τSST,jSST,
+                                ωFη,ωFx,ωFy,
+                                scale,scale_inv,
+                                scale_sst,scale_sst_inv)
 end

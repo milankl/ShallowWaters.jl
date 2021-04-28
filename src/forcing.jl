@@ -167,24 +167,24 @@ function Ridge(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
     return T.(Hx),T.(Hy)
 end
 
-"""Same as Ridge() but for 3 ridges at 1/4,1/2,3/4 of the domain."""
+"""Same as Ridge() but for n ridges at various x positions."""
 function Ridges(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     @unpack x_T_halo,y_T_halo,Lx,Ly = G
     @unpack topo_width,topo_height,H = P
+    @unpack topo_ridges_positions = P
+    n_ridges = length(topo_ridges_positions)
 
     xx_T,yy_T = meshgrid(x_T_halo,y_T_halo)
 
-    # bumps in x direction
-    # shift slightly left/right to avoid a symmetric solution
-    b0x = exp.(-(xx_T.^2)/(2*topo_width^2))
-    b1x = exp.(-((xx_T .- 0.99*Lx/4).^2)/(2*topo_width^2))
-    b2x = exp.(-((xx_T .- 1.01*Lx/2).^2)/(2*topo_width^2))
-    b3x = exp.(-((xx_T .- 0.99*3*Lx/4).^2)/(2*topo_width^2))
-    b4x = exp.(-((xx_T .- Lx).^2)/(2*topo_width^2))
+    # loop over bumps in x direction
+    R = zero(xx_T) .+ H
 
-    th = topo_height    # for convenience
-    return T.(H .- th*b0x .- th*b1x .- th*b2x .- th*b3x .- th*b4x)
+    for i in 1:n_ridges
+        R .-= topo_height*exp.(-((xx_T .- topo_ridges_positions[i]*Lx).^2)/(2*topo_width^2))
+    end
+
+    return T.(R)
 end
 
 """Returns a matrix of constant water depth H."""
@@ -213,5 +213,5 @@ end
 
 """Time evolution of forcing."""
 function Ftime(::Type{T},t::Int,ω::Real) where {T<:AbstractFloat}
-    return T(sin(ω*t))
+    return convert(T,sin(ω*t))
 end

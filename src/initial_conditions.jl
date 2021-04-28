@@ -119,6 +119,7 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
     ## SST
 
     @unpack SSTmin, SSTmax, SSTw, SSTϕ = S.parameters
+    @unpack SSTwaves_nx,SSTwaves_ny,SSTwaves_p = S.parameters
     @unpack sst_initial,scale = S.parameters
     @unpack x_T,y_T,Lx,Ly = S.grid
 
@@ -128,6 +129,10 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
         sst = (SSTmin+SSTmax)/2 .+ tanh.(2π*(Ly/(4*SSTw))*(yy_T/Ly .- SSTϕ))*(SSTmin-SSTmax)/2
     elseif sst_initial == "west"
         sst = (SSTmin+SSTmax)/2 .+ tanh.(2π*(Lx/(4*SSTw))*(xx_T/Lx .- SSTϕ))*(SSTmin-SSTmax)/2
+    elseif sst_initial == "linear"
+        sst = SSTmin .+ yy_T/Ly*(SSTmax-SSTmin)
+    elseif sst_initial == "waves"
+        sst = waves(xx_T/Lx,yy_T/Ly,SSTwaves_nx,SSTwaves_ny,SSTwaves_p)
     elseif sst_initial == "flat"
         sst = fill(SSTmin,size(xx_T))
     elseif sst_initial == "rect"
@@ -157,4 +162,14 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
     u,v,η,sst = add_halo(u,v,η,sst,S)
 
     return PrognosticVars{T}(u,v,η,sst)
+end
+
+"""Create a wave-checkerboard pattern over xx,yy like a nx x ny checkerboard.
+p is the power to which the waves are raised. Choose p<1 for rectangles, and
+p > 1 for more smootheness."""
+function waves(xx::AbstractMatrix,yy::AbstractMatrix,nx::Real,ny::Real,p::Real)
+    @boundscheck size(xx) == size(yy) || throw(BoundsError())
+    w = sin.(nx*π*xx) .* sin.(ny*π*yy)
+    s = sign.(w)
+    return s.*abs.(w).^p
 end

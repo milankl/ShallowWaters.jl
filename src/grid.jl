@@ -148,8 +148,8 @@ function meshgrid(x::AbstractVector,y::AbstractVector)
     m,n = length(x),length(y)
 
     # preallocate preserving the data type of x,y
-    xx = zeros(typeof(x[1]),m,n)
-    yy = zeros(typeof(y[1]),m,n)
+    xx = zeros(eltype(x),m,n)
+    yy = zeros(eltype(y),m,n)
 
     for i in 1:m
         xx[i,:] .= x[i]
