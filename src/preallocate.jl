@@ -421,6 +421,7 @@ end
     vinterp::Array{T,2} = zeros(T,nx,ny)                    # v interpolated on mid-point xd,yd
 
     ssti::Array{T,2} = zeros(T,nx+2*halosstx,ny+2*halossty) # sst interpolated on departure points
+    sst_ref::Array{T,2} = zeros(T,nx+2*halosstx,ny+2*halossty) # sst initial conditions for relaxation
 end
 
 """Generator function for SemiLagrange VarCollection."""

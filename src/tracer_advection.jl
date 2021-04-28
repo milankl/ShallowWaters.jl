@@ -6,6 +6,7 @@ function tracer!(   i::Integer,
                     S::ModelSetup)
 
     @unpack tracer_advection, tracer_consumption = S.parameters
+    @unpack tracer_relaxation = S.parameters
     @unpack nadvstep_half,nadvstep = S.grid
 
     # mid point (in time) velocity for the advective time step
@@ -19,7 +20,7 @@ function tracer!(   i::Integer,
     if tracer_advection && (i % nadvstep) == 0
 
         @unpack sst = Prog
-        @unpack ssti = Diag.SemiLagrange
+        @unpack ssti,sst_ref = Diag.SemiLagrange
 
         # convert to type T for mixed precision
         sstrhs = convert(Diag.PrognosticVarsRHS.sst,sst)
@@ -27,9 +28,9 @@ function tracer!(   i::Integer,
         departure!(u,v,Diag,S)
         adv_sst!(sstrhs,Diag,S)
 
-        # if tracer_relaxation
-        #     tracer_relax!(ssti,sst_ref,SSTγ)
-        # end
+        if tracer_relaxation
+            tracer_relax!(ssti,sst_ref,S)
+        end
 
         if tracer_consumption
             tracer_consumption!(ssti,S)
@@ -245,44 +246,35 @@ function bilin(f00::T,f10::T,f01::T,f11::T,x::T,y::T) where {T<:AbstractFloat}
     return f00*(oone-x)*(oone-y) + f10*x*(oone-y) + f01*(oone-x)*y + f11*x*y
 end
 
-# """Tracer relaxation."""
-# function tracer_relax!(sst::AbstractMatrix,sst_ref::AbstractMatrix,SSTγ::AbstractMatrix)
-#     m,n = size(sst)
-#     @boundscheck (m-2*halosstx,n-2*halossty) == size(sst_ref) || throw(BoundsError())
-#     @boundscheck (m-2*halosstx,n-2*halossty) == size(SSTγ) || throw(BoundsError())
-#
-#     @inbounds for j ∈ 1+halossty:n-halossty
-#         for i ∈ 1+halosstx:m-halosstx
-#             sst[i,j] += SSTγ[i-halosstx,j-halossty]*(sst_ref[i-halosstx,j-halossty] - sst[i,j])
-#         end
-#     end
-# end
-
-"""Tracer consumption via relaxation back to ."""
-function tracer_consumption!(   sst::Array{T,2},
-                                S::ModelSetup) where {T<:AbstractFloat}
-
-    @unpack jSST,SSTmin = S.constants
+"""Tracer relaxation."""
+function tracer_relax!( sst::AbstractMatrix,
+                        sst_ref::AbstractMatrix,
+                        S::ModelSetup)
+    @unpack τSST = S.constants
     @unpack halosstx,halossty = S.grid
 
     m,n = size(sst)
-
-    @inbounds for j ∈ 1+halossty:n-halossty
+    @boundscheck size(sst) == size(sst_ref) || throw(BoundsError())
+    
+    for j ∈ 1+halossty:n-halossty
         for i ∈ 1+halosstx:m-halosstx
-            sst[i,j] += jSST*(SSTmin - sst[i,j])
+            sst[i,j] += τSST*(sst_ref[i,j] - sst[i,j])
         end
     end
 end
 
-# """Spatially dependent relaxation time scale."""
-# function sst_γ(x::AbstractVector,y::AbstractVector)
-#     xx,yy = meshgrid(x,y)
-#
-#     # convert from days to one over 1/s and include adv time step
-#     γ0 = dtadvint/(SST_γ0*3600*24)
-#
-#     x10E = 10*m_per_lat()   # assume Equator: lat/lon equivalence
-#     γ = γ0/2 .* (1 .- tanh.((xx.-SST_λ0)./SST_λs))
-#     γ[xx .> x10E] .= 0.0
-#     return Numtype.(γ)
-# end
+"""Tracer consumption via relaxation back to 0."""
+function tracer_consumption!(   sst::Array{T,2},
+                                S::ModelSetup) where {T<:AbstractFloat}
+
+    @unpack jSST = S.constants
+    @unpack halosstx,halossty = S.grid
+
+    m,n = size(sst)
+
+    for j ∈ 1+halossty:n-halossty
+        for i ∈ 1+halosstx:m-halosstx
+            sst[i,j] -= jSST*sst[i,j]
+        end
+    end
+end
