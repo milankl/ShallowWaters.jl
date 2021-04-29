@@ -56,7 +56,6 @@ struct Constants{T<:AbstractFloat,Tprog<:AbstractFloat}
     scale::T                # multiplicative constant for low-precision arithmetics
     scale_inv::T            # and its inverse
     scale_sst::T            # scale for sst
-    scale_sst_inv::T        # and its inverse
 end
 
 """Generator function for the mutable struct Constants."""
@@ -118,12 +117,10 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
     scale = convert(T,P.scale)
     scale_inv = convert(T,1/P.scale)
     scale_sst = convert(T,P.scale_sst)
-    scale_sst_inv = convert(T,1/P.scale_sst)
 
     return Constants{T,Tprog}(  RKaΔt,RKbΔt,Δt_Δs,Δt_Δ,Δt_Δ_half,
                                 SSPRK3c,one_minus_α,
                                 g,cD,rD,γ,cSmag,νB,τSST,jSST,
                                 ωFη,ωFx,ωFy,
-                                scale,scale_inv,
-                                scale_sst,scale_sst_inv)
+                                scale,scale_inv,scale_sst)
 end
