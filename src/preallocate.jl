@@ -60,6 +60,16 @@ end
     du::Array{T,2} = zeros(T,nux+2*halo,nuy+2*halo)     # tendency of u without time step
     dv::Array{T,2} = zeros(T,nvx+2*halo,nvy+2*halo)     # tendency of v without time step
     dη::Array{T,2} = zeros(T,nx+2*haloη,ny+2*haloη)     # tendency of η without time step
+
+    # sum of tendencies (incl time step) over all sub-steps
+    du_sum::Array{T,2} = zeros(T,nux+2*halo,nuy+2*halo) 
+    dv_sum::Array{T,2} = zeros(T,nvx+2*halo,nvy+2*halo)
+    dη_sum::Array{T,2} = zeros(T,nx+2*haloη,ny+2*haloη)
+
+    # compensation for tendencies (variant of Kahan summation)
+    du_comp::Array{T,2} = zeros(T,nux+2*halo,nuy+2*halo) 
+    dv_comp::Array{T,2} = zeros(T,nvx+2*halo,nvy+2*halo)
+    dη_comp::Array{T,2} = zeros(T,nx+2*haloη,ny+2*haloη)
 end
 
 """Generator function for Tendencies VarCollection."""
@@ -422,6 +432,9 @@ end
 
     ssti::Array{T,2} = zeros(T,nx+2*halosstx,ny+2*halossty) # sst interpolated on departure points
     sst_ref::Array{T,2} = zeros(T,nx+2*halosstx,ny+2*halossty) # sst initial conditions for relaxation
+
+    # compensated summation
+    dsst_comp::Array{T,2} = zeros(T,nx+2*halosstx,ny+2*halossty)
 end
 
 """Generator function for SemiLagrange VarCollection."""

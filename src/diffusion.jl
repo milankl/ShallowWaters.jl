@@ -218,23 +218,36 @@ function viscous_tensor_constant!(  Diag::DiagnosticVars,
 end
 
 """Update u with bottom friction tendency (Bu,Bv) and biharmonic viscosity."""
-function add_drag_diff_tendencies!( u::Array{Tprog,2},
-                                    v::Array{Tprog,2},
+function add_drag_diff_tendencies!( u::Matrix{Tprog},
+                                    v::Matrix{Tprog},
                                     Diag::DiagnosticVars{T,Tprog},
                                     S::ModelSetup{T,Tprog}) where {T,Tprog}
 
     @unpack Bu,Bv = Diag.Bottomdrag
     @unpack LLu1,LLu2,LLv1,LLv2 = Diag.Smagorinsky
     @unpack halo,ep,Δt_diff = S.grid
+    @unpack compensated = S.parameters
+    @unpack du_comp,dv_comp = Diag.Tendencies
 
     m,n = size(u) .- (2*halo,2*halo)
     @boundscheck (m+2-ep,n+2) == size(Bu) || throw(BoundsError())
     @boundscheck (m,n+2) == size(LLu1) || throw(BoundsError())
     @boundscheck (m+2-ep,n) == size(LLu2) || throw(BoundsError())
 
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            u[i+2,j+2] += Δt_diff*(Tprog(Bu[i+1-ep,j+1]) + Tprog(LLu1[i,j+1]) + Tprog(LLu2[i+1-ep,j]))
+    if compensated
+        @inbounds for j ∈ 1:n
+            for i ∈ 1:m
+                du = Δt_diff*convert(Tprog,Bu[i+1-ep,j+1] + LLu1[i,j+1] + LLu2[i+1-ep,j]) - du_comp[i+2,j+2]
+                u_new = u[i+2,j+2] + du
+                du_comp[i+2,j+2] = (u_new - u[i+2,j+2]) - du
+                u[i+2,j+2] = u_new
+            end
+        end
+    else
+        @inbounds for j ∈ 1:n
+            for i ∈ 1:m
+                u[i+2,j+2] += Δt_diff*(Tprog(Bu[i+1-ep,j+1]) + Tprog(LLu1[i,j+1]) + Tprog(LLu2[i+1-ep,j]))
+            end
         end
     end
 
@@ -243,9 +256,20 @@ function add_drag_diff_tendencies!( u::Array{Tprog,2},
     @boundscheck (m,n+2) == size(LLv1) || throw(BoundsError())
     @boundscheck (m+2,n) == size(LLv2) || throw(BoundsError())
 
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-             v[i+2,j+2] += Δt_diff*(Tprog(Bv[i+1,j+1]) + Tprog(LLv1[i,j+1]) + Tprog(LLv2[i+1,j]))
+    if compensated
+        @inbounds for j ∈ 1:n
+            for i ∈ 1:m 
+                dv = Δt_diff*convert(Tprog,Bv[i+1,j+1] + LLv1[i,j+1] + LLv2[i+1,j]) - dv_comp[i+2,j+2]
+                v_new = v[i+2,j+2] + dv
+                dv_comp[i+2,j+2] = (v_new - v[i+2,j+2]) - dv
+                v[i+2,j+2] = v_new
+            end
+        end
+    else
+        @inbounds for j ∈ 1:n
+            for i ∈ 1:m
+                v[i+2,j+2] += Δt_diff*(Tprog(Bv[i+1,j+1]) + Tprog(LLv1[i,j+1]) + Tprog(LLv2[i+1,j]))
+            end
         end
     end
 end

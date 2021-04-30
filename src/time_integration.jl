@@ -7,10 +7,13 @@ function time_integration(  Prog::PrognosticVars{Tprog},
     @unpack u0,v0,η0 = Diag.RungeKutta
     @unpack u1,v1,η1 = Diag.RungeKutta
     @unpack du,dv,dη = Diag.Tendencies
+    @unpack du_sum,dv_sum,dη_sum = Diag.Tendencies
+    @unpack du_comp,dv_comp,dη_comp = Diag.Tendencies
+
     @unpack um,vm = Diag.SemiLagrange
 
     @unpack dynamics,RKo,RKs,tracer_advection = S.parameters
-    @unpack time_scheme = S.parameters
+    @unpack time_scheme,compensated = S.parameters
     @unpack RKaΔt,RKbΔt = S.constants
     @unpack Δt_Δ,Δt_Δs = S.constants
 
@@ -55,6 +58,12 @@ function time_integration(  Prog::PrognosticVars{Tprog},
 
         if time_scheme == "RK"   # classic RK4,3 or 2
 
+            if compensated
+                fill!(du_sum,zero(Tprog))
+                fill!(dv_sum,zero(Tprog))
+                fill!(dη_sum,zero(Tprog))
+            end
+
             for rki = 1:RKo
                 if rki > 1
                     ghost_points!(u1,v1,η1,S)
@@ -74,10 +83,30 @@ function time_integration(  Prog::PrognosticVars{Tprog},
                     caxb!(η1,η,RKbΔt[rki],dη)   #η1 .= η .+ RKb[rki]*Δt*dη
                 end
 
-                # sum RK-substeps on the go
-                axb!(u0,RKaΔt[rki],du)          #u0 .+= RKa[rki]*Δt*du
-                axb!(v0,RKaΔt[rki],dv)          #v0 .+= RKa[rki]*Δt*dv
-                axb!(η0,RKaΔt[rki],dη)          #η0 .+= RKa[rki]*Δt*dη
+                if compensated      # accumulate tendencies
+                    axb!(du_sum,RKaΔt[rki],du)   
+                    axb!(dv_sum,RKaΔt[rki],dv)
+                    axb!(dη_sum,RKaΔt[rki],dη)
+                else    # sum RK-substeps on the go
+                    axb!(u0,RKaΔt[rki],du)          #u0 .+= RKa[rki]*Δt*du
+                    axb!(v0,RKaΔt[rki],dv)          #v0 .+= RKa[rki]*Δt*dv
+                    axb!(η0,RKaΔt[rki],dη)          #η0 .+= RKa[rki]*Δt*dη
+                end
+            end
+
+            if compensated
+                # add compensation term to total tendency
+                axb!(du_sum,-1,du_comp)             
+                axb!(dv_sum,-1,dv_comp)
+                axb!(dη_sum,-1,dη_comp)
+
+                axb!(u0,1,du_sum)   # update prognostic variable with total tendency
+                axb!(v0,1,dv_sum)
+                axb!(η0,1,dη_sum)
+                
+                dambmc!(du_comp,u0,u,du_sum)    # compute new compensation
+                dambmc!(dv_comp,v0,v,dv_sum)
+                dambmc!(dη_comp,η0,η,dη_sum)
             end
 
         elseif time_scheme == "SSPRK2"  # s-stage 2nd order SSPRK
@@ -116,6 +145,12 @@ function time_integration(  Prog::PrognosticVars{Tprog},
 
             @unpack s,kn,mn,kna,knb,Δt_Δnc,Δt_Δn = S.constants.SSPRK3c
 
+            # if compensated
+            #     fill!(du_sum,zero(Tprog))
+            #     fill!(dv_sum,zero(Tprog))
+            #     fill!(dη_sum,zero(Tprog))
+            # end
+
             for rki = 2:s+1       # number of stages (from 2:s+1 to match Ketcheson et al 2014)
                 if rki > 2
                     ghost_points_η!(η1,S)
@@ -134,6 +169,11 @@ function time_integration(  Prog::PrognosticVars{Tprog},
                 else                                # normal update case
                     axb!(u1,Δt_Δn,du)   
                     axb!(v1,Δt_Δn,dv)
+
+                    # if compensated
+                    #     axb!(du_sum,Δt_Δn,du)   
+                    #     axb!(dv_sum,Δt_Δn,dv)
+                    # end
                 end
 
                 # semi-implicit for continuity equation, use new u1,v1 to calcualte dη
@@ -146,6 +186,9 @@ function time_integration(  Prog::PrognosticVars{Tprog},
                     dxaybzc!(η1,kna,η1,knb,η0,Δt_Δnc,dη)
                 else
                     axb!(η1,Δt_Δn,dη)
+                    # if compensated
+                    #     axb!(dη_sum,Δt_Δn,dη)
+                    # end
                 end
 
                 # special stage that is needed later for the kn-th stage, store in u0,v0,η0 therefore
@@ -253,14 +296,15 @@ function time_integration(  Prog::PrognosticVars{Tprog},
 end
 
 """Add to a x multiplied with b. a += x*b """
-function axb!(a::Array{T,2},x::T,b::Array{T,2}) where {T<:AbstractFloat}
+function axb!(a::Matrix{T},x::Real,b::Matrix{T}) where {T<:AbstractFloat}
     m,n = size(a)
     @boundscheck (m,n) == size(b) || throw(BoundsError())
 
-    #TODO @simd?
+    xT = convert(T,x)
+
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
-           a[i,j] += x*b[i,j]
+           a[i,j] += xT*b[i,j]
         end
     end
 end
@@ -278,13 +322,28 @@ function caxb!(c::Array{T,2},a::Array{T,2},x::T,b::Array{T,2}) where {T<:Abstrac
     end
 end
 
+"""d equals add a minus b minus c. c = (a - b) - c."""
+function dambmc!(d::Matrix{T},a::Matrix{T},b::Matrix{T},c::Matrix{T}) where {T<:AbstractFloat}
+    m,n = size(a)
+    @boundscheck (m,n) == size(b) || throw(BoundsError())
+    @boundscheck (m,n) == size(c) || throw(BoundsError())
+    @boundscheck (m,n) == size(d) || throw(BoundsError())
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+           d[i,j] = (a[i,j] - b[i,j]) - c[i,j]
+        end
+    end
+end
+
 """c equals add x multiplied to a plus b. c = x*(a+b) """
 function cxab!(c::Array{T,2},x::Real,a::Array{T,2},b::Array{T,2}) where {T<:AbstractFloat}
     m,n = size(a)
     @boundscheck (m,n) == size(b) || throw(BoundsError())
     @boundscheck (m,n) == size(c) || throw(BoundsError())
 
-    xT = T(x)
+    xT = convert(T,x)
+
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
            c[i,j] = xT*(a[i,j] + b[i,j])
@@ -298,8 +357,9 @@ function cxayb!(c::Array{T,2},x::Real,a::Array{T,2},y::Real,b::Array{T,2}) where
     @boundscheck (m,n) == size(b) || throw(BoundsError())
     @boundscheck (m,n) == size(c) || throw(BoundsError())
 
-    xT = T(x)
-    yT = T(y)
+    xT = convert(T,x)
+    yT = convert(T,y)
+
     @inbounds for j ∈ 1:n
         for i ∈ 1:m
            c[i,j] = xT*a[i,j] + yT*b[i,j]
@@ -317,9 +377,9 @@ function dxaybzc!(  d::Array{T,2},
     @boundscheck (m,n) == size(c) || throw(BoundsError())
     @boundscheck (m,n) == size(d) || throw(BoundsError())
 
-    xT = T(x)       # convert to type T
-    yT = T(y)
-    zT = T(z)
+    xT = convert(T,x)
+    yT = convert(T,y)
+    zT = convert(T,z)
 
     @inbounds for j ∈ 1:n
         for i ∈ 1:m

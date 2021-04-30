@@ -18,10 +18,10 @@ function SSPRK3coeff{T}(P::Parameter,Δt_Δ::T) where T
     s = n^2
     kn = n*(n+1) ÷ 2 + 1
     mn = (n-1)*(n-2) ÷ 2 + 1
-    Δt_Δn = T(Δt_Δ/(n^2-n))
-    kna = T((n-1)/(2n-1))
-    knb = T(n/(2n-1))
-    Δt_Δnc = T(Δt_Δ/(n*(2n-1)))
+    Δt_Δn = convert(T,Δt_Δ/(n^2-n))
+    kna = convert(T,(n-1)/(2n-1))
+    knb = convert(T,n/(2n-1))
+    Δt_Δnc = convert(T,Δt_Δ/(n*(2n-1)))
 
     return SSPRK3coeff{T}(n,s,kn,mn,Δt_Δn,kna,knb,Δt_Δnc)
 end
@@ -76,37 +76,41 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
     end
 
     # Δt/(s-1) for SSPRK2
-    Δt_Δs = Tprog(G.dtint/G.Δ/(P.RKs-1))
+    Δt_Δs = convert(Tprog,G.dtint/G.Δ/(P.RKs-1))
 
     # time step and half the time step including the grid spacing as this is not included in the RHS
-    Δt_Δ = Tprog(G.dtint/G.Δ)
-    Δt_Δ_half = Tprog(G.dtint/G.Δ/2)
+    Δt_Δ = convert(Tprog,G.dtint/G.Δ)
+    Δt_Δ_half = convert(Tprog,G.dtint/G.Δ/2)
 
     # coefficients for SSPRK3
     SSPRK3c = SSPRK3coeff{Tprog}(P,Δt_Δ)
 
     # BOUNDARY CONDITIONS AND PHYSICS
-    one_minus_α = Tprog(1-P.α)      # for the ghost point copy/tangential boundary conditions
-    g = T(P.g)                      # gravity - for Bernoulli potential
+    one_minus_α = convert(Tprog,1-P.α)      # for the ghost point copy/tangential boundary conditions
+    g = convert(T,P.g)                      # gravity - for Bernoulli potential
 
-    # BOTTOM FRICTION COEFFICENTS
+    # BOTTOM FRICTION COEFFICIENTS
     # incl grid spacing Δ for non-dimensional gradients
     # include scale for quadratic cD only to unscale the scale^2 in u^2
-    cD = T(-G.Δ*P.cD/P.scale)     # quadratic drag [m]
-    rD = T(-G.Δ/(P.τD*24*3600))   # linear drag [m/s]
+    cD = convert(T,-G.Δ*P.cD/P.scale)     # quadratic drag [m]
+    rD = convert(T,-G.Δ/(P.τD*24*3600))   # linear drag [m/s]
 
     # INTERFACE RELAXATION FREQUENCY
     # incl grid spacing Δ for non-dimensional gradients
-    γ = T(G.Δ/(P.t_relax*3600*24))    # [m/s]
+    γ = convert(T,G.Δ/(P.t_relax*3600*24))    # [m/s]
 
     # BIHARMONIC DIFFUSION
     # undo scaling here as smagorinksy diffusion contains scale^2 due to ~u^2
-    cSmag = T(-P.cSmag/P.scale)   # Smagorinsky coefficient
-    νB = T(-P.νB/30000)           # linear scaling based on 540m^s/s at Δ=30km
+    cSmag = convert(T,-P.cSmag/P.scale)   # Smagorinsky coefficient
+    νB = convert(T,-P.νB/30000)           # linear scaling based on 540m^s/s at Δ=30km
 
     # TRACER ADVECTION
-    τSST = T(G.dtadvint/(P.τSST*3600*24))    # tracer restoring [1]
-    jSST = T(G.dtadvint/(P.jSST*3600*24))    # tracer consumption [1]
+    τSST = convert(T,G.dtadvint/(P.τSST*3600*24))   # tracer restoring [1]
+    jSST = convert(T,G.dtadvint/(P.jSST*3600*24))   # tracer consumption [1]
+
+    @unpack tracer_relaxation, tracer_consumption = P
+    τSST = tracer_relaxation ? τSST : zero(T)       # set zero as τ,j will be added   
+    jSST = tracer_consumption ? jSST : zero(T)      # and executed in one loop
 
     # TIME DEPENDENT FORCING
     ωFη = -2π*P.ωFη/24/365.25/3600

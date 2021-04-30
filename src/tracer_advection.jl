@@ -20,7 +20,7 @@ function tracer!(   i::Integer,
     if tracer_advection && (i % nadvstep) == 0
 
         @unpack sst = Prog
-        @unpack ssti,sst_ref = Diag.SemiLagrange
+        @unpack ssti,sst_ref,dsst_comp = Diag.SemiLagrange
 
         # convert to type T for mixed precision
         sstrhs = convert(Diag.PrognosticVarsRHS.sst,sst)
@@ -28,12 +28,8 @@ function tracer!(   i::Integer,
         departure!(u,v,Diag,S)
         adv_sst!(sstrhs,Diag,S)
 
-        if tracer_relaxation
-            tracer_relax!(ssti,sst_ref,S)
-        end
-
-        if tracer_consumption
-            tracer_consumption!(ssti,S)
+        if tracer_relaxation || tracer_consumption
+            tracer_relax_consumption!(ssti,sst_ref,dsst_comp,S)
         end
 
         ghost_points_sst!(ssti,S)
@@ -242,39 +238,42 @@ end
 """Bilinear interpolation on (x,y) in the unit square [0,1]x[0,1].
 The values at the corners are f00 = f(0,0), f01 = f(0,1), etc."""
 function bilin(f00::T,f10::T,f01::T,f11::T,x::T,y::T) where {T<:AbstractFloat}
-    oone = one(T)
-    return f00*(oone-x)*(oone-y) + f10*x*(oone-y) + f01*(oone-x)*y + f11*x*y
+    # old version (more computations and larger rounding error)
+    # oone = one(T)
+    # return f00*(oone-x)*(oone-y) + f10*x*(oone-y) + f01*(oone-x)*y + f11*x*y
+
+    # new version
+    return x*(f10 - y*(f10-f11)) + (1-x)*(f00 - y*(f00 - f01))
 end
 
 """Tracer relaxation."""
-function tracer_relax!( sst::AbstractMatrix,
-                        sst_ref::AbstractMatrix,
-                        S::ModelSetup)
-    @unpack τSST = S.constants
+function tracer_relax_consumption!( sst::AbstractMatrix,
+                                    sst_ref::AbstractMatrix,
+                                    dsst_comp::AbstractMatrix,
+                                    S::ModelSetup)
+    @unpack τSST,jSST = S.constants
     @unpack halosstx,halossty = S.grid
+    @unpack compensated = S.parameters
+
+    τj = -(τSST+jSST)
 
     m,n = size(sst)
     @boundscheck size(sst) == size(sst_ref) || throw(BoundsError())
     
-    for j ∈ 1+halossty:n-halossty
-        for i ∈ 1+halosstx:m-halosstx
-            sst[i,j] += τSST*(sst_ref[i,j] - sst[i,j])
+    if compensated
+        for j ∈ 1+halossty:n-halossty
+            for i ∈ 1+halosstx:m-halosstx
+                dsst = (τj*sst[i,j] + τSST*sst_ref[i,j]) - dsst_comp[i,j]
+                sst_new = sst[i,j] + dsst
+                dsst_comp[i,j] = (sst_new - sst[i,j]) - dsst
+                sst[i,j] = sst_new
+            end
         end
-    end
-end
-
-"""Tracer consumption via relaxation back to 0."""
-function tracer_consumption!(   sst::Array{T,2},
-                                S::ModelSetup) where {T<:AbstractFloat}
-
-    @unpack jSST = S.constants
-    @unpack halosstx,halossty = S.grid
-
-    m,n = size(sst)
-
-    for j ∈ 1+halossty:n-halossty
-        for i ∈ 1+halosstx:m-halosstx
-            sst[i,j] -= jSST*sst[i,j]
+    else
+        for j ∈ 1+halossty:n-halossty
+            for i ∈ 1+halosstx:m-halosstx
+                sst[i,j] += τj*sst[i,j] + τSST*sst_ref[i,j]
+            end
         end
     end
 end
