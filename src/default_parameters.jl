@@ -53,16 +53,17 @@
     wk::Real=10e3                       # width [m] in y of Gaussian used for surface forcing
 
     # TIME STEPPING OPTIONS
-    time_scheme::String="SSPRK3"        # Runge-Kutta ("RK") or strong-stability preserving RK
+    time_scheme::String="RK"            # Runge-Kutta ("RK") or strong-stability preserving RK
                                         # "SSPRK2","SSPRK3","4SSPRK3"
     RKo::Int=4                          # Order of the RK time stepping scheme (2, 3 or 4)
     RKs::Int=3                          # Number of stages for SSPRK2
     RKn::Int=5                          # n^2 = s = Number of stages  for SSPRK3
-    cfl::Real=4.0                       # CFL number (1.0 recommended for RK4, 0.6 for RK3)
+    cfl::Real=0.9                       # CFL number (1.0 recommended for RK4, 0.6 for RK3)
     Ndays::Real=200.0                   # number of days to integrate for
     nstep_diff::Int=1                   # diffusive part every nstep_diff time steps.
     nstep_advcor::Int=0                 # advection and coriolis update every nstep_advcor time steps.
                                         # 0 means it is included in every RK4 substep
+    compensated::Bool=false             # Compensated summation in the time integration?
 
     # BOUNDARY CONDITION OPTIONS
     bc::String="periodic"               # "periodic" or anything else for nonperiodic
