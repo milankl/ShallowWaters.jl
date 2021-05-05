@@ -61,8 +61,8 @@ function ChannelWind(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     # for non-dimensional gradients the wind forcing needs to contain the grid spacing Δ
     xx_u,yy_u = meshgrid(x_u,y_u)
-    Fx = (scale*Δ*Fx0/ρ/H)*cos.(π*(yy_u/Ly .- 1/2)).^2
-    Fy = (scale*Δ*Fy0/ρ/H)*cos.(π*(xx_u/Lx .- 1/2)).^2
+    Fx = (scale*Fx0/ρ/H)*cos.(π*(yy_u/Ly .- 1/2)).^2
+    Fy = (scale*Fy0/ρ/H)*cos.(π*(xx_u/Lx .- 1/2)).^2
 
     return T.(Fx),T.(Fy)
 end
@@ -76,8 +76,8 @@ function ShearWind(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     # for non-dimensional gradients the wind forcing needs to contain the grid spacing Δ
     xx_u,yy_u = meshgrid(x_u,y_u)
-    Fx = (scale*Δ*Fx0/ρ/H)*tanh.(2π*(yy_u/Ly .- 1/2))
-    Fy = (scale*Δ*Fy0/ρ/H)*tanh.(2π*(xx_u/Lx .- 1/2))
+    Fx = (scale*Fx0/ρ/H)*tanh.(2π*(yy_u/Ly .- 1/2))
+    Fy = (scale*Fy0/ρ/H)*tanh.(2π*(xx_u/Lx .- 1/2))
 
     return T.(Fx),T.(Fy)
 end
@@ -92,8 +92,8 @@ function DoubleGyreWind(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
 
     # for non-dimensional gradients the wind forcing needs to contain the grid spacing Δ
     xx_u,yy_u = meshgrid(x_u,y_u)
-    Fx = (scale*Δ*Fx0/ρ/H)*(cos.(2π*(yy_u/Ly .- 1/2)) + 2*sin.(π*(yy_u/Ly .- 1/2)))
-    Fy = (scale*Δ*Fy0/ρ/H)*(cos.(2π*(xx_u/Lx .- 1/2)) + 2*sin.(π*(xx_u/Lx .- 1/2)))
+    Fx = (scale*Fx0/ρ/H)*(cos.(2π*(yy_u/Ly .- 1/2)) + 2*sin.(π*(yy_u/Ly .- 1/2)))
+    Fy = (scale*Fy0/ρ/H)*(cos.(2π*(xx_u/Lx .- 1/2)) + 2*sin.(π*(xx_u/Lx .- 1/2)))
     return T.(Fx),T.(Fy)
 end
 
@@ -104,8 +104,8 @@ function ConstantWind(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
     @unpack Fx0,Fy0,H,ρ,scale = P
 
     # for non-dimensional gradients the wind forcing needs to contain the grid spacing Δ
-    Fx = T.(scale*Δ*Fx0/ρ/H)*ones(T,nux,nuy)
-    Fy = T.(scale*Δ*Fy0/ρ/H)*ones(T,nvx,nvy)
+    Fx = T.(scale*Fx0/ρ/H)*ones(T,nux,nuy)
+    Fy = T.(scale*Fy0/ρ/H)*ones(T,nvx,nvy)
 
     return Fx,Fy
 end
@@ -206,7 +206,7 @@ function KelvinPump(::Type{T},P::Parameter,G::Grid) where {T<:AbstractFloat}
     mϕ = 2π*R/360.          # meters per degree latitude
     y0 = Ly/2 - (ϕ-ϕk)*mϕ   # y[m] for central latitude of pumping
 
-    Fη = A*Δ*exp.(-(yy_T.-y0).^2/(2*wk^2))
+    Fη = A*exp.(-(yy_T.-y0).^2/(2*wk^2))
 
     return T.(Fη)
 end

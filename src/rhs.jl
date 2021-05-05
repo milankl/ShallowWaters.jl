@@ -30,7 +30,7 @@ function rhs_nonlinear!(u::AbstractMatrix,
 
     @unpack h,h_u,h_v,U,V = Diag.VolumeFluxes
     @unpack H = S.forcing
-    @unpack ep = S.grid
+    @unpack ep,Δ = S.grid
 
     UVfluxes!(u,v,η,Diag,S)              # U,V needed for PV advection and in the continuity equation
     if S.grid.nstep_advcor == 0              # evaluate every RK substep
@@ -43,8 +43,8 @@ function rhs_nonlinear!(u::AbstractMatrix,
     @unpack g,scale,scale_inv = S.constants
     g_scale = g*scale
     bernoulli!(p,KEu,KEv,η,g_scale,ep,scale_inv)
-    ∂x!(dpdx,p)
-    ∂y!(dpdy,p)
+    ∂x!(dpdx,p,Δ)
+    ∂y!(dpdy,p,Δ)
 
     # adding the terms
     momentum_u!(Diag,S,t)
@@ -71,8 +71,8 @@ function rhs_linear!(   u::AbstractMatrix,
     # Pressure gradient
     @unpack dpdx,dpdy = Diag.Bernoulli
     g_scale = g*scale
-    ∂x!(dpdx,g_scale*η)
-    ∂y!(dpdy,g_scale*η)
+    ∂x!(dpdx,g_scale*η,Δ)
+    ∂y!(dpdy,g_scale*η,Δ)
 
     # Coriolis force
     @unpack qhv,qhu,v_u,u_v = Diag.Vorticity
@@ -97,13 +97,13 @@ function advection_coriolis!(   u::Array{T,2},
     @unpack h = Diag.VolumeFluxes
     @unpack h_q,dvdx,dudy = Diag.Vorticity
     @unpack u²,v²,KEu,KEv = Diag.Bernoulli
-    @unpack ep,f_q = S.grid
+    @unpack ep,f_q,Δ = S.grid
 
     Ixy!(h_q,h)
 
     # off-diagonals of stress tensor ∇(u,v)
-    ∂x!(dvdx,v)
-    ∂y!(dudy,u)
+    ∂x!(dvdx,v,Δ)
+    ∂y!(dudy,u,Δ)
 
     # non-linear part of the Bernoulli potential
     speed!(u²,v²,u,v)

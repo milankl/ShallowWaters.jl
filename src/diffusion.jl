@@ -22,16 +22,18 @@ function diffusion_constant!(   u::AbstractMatrix,
                                 Diag::DiagnosticVars,
                                 S::ModelSetup)
 
-    stress_tensor!(u,v,Diag)
+    @unpack Δ = S.grid
+
+    stress_tensor!(u,v,Diag,Δ)
     viscous_tensor_constant!(Diag,S)
 
     @unpack LLu1,LLu2,LLv1,LLv2 = Diag.Smagorinsky
     @unpack S11,S12,S21,S22 = Diag.Smagorinsky
 
-    ∂x!(LLu1,S11)
-    ∂y!(LLu2,S12)
-    ∂x!(LLv1,S21)
-    ∂y!(LLv2,S22)
+    ∂x!(LLu1,S11,Δ)
+    ∂y!(LLu2,S12,Δ)
+    ∂x!(LLv1,S21,Δ)
+    ∂y!(LLv2,S22,Δ)
 end
 
 """ Smagorinsky-like biharmonic viscosity
@@ -43,24 +45,25 @@ function diffusion_smagorinsky!(u::AbstractMatrix,
                                 S::ModelSetup)
 
     @unpack dudx,dvdy,dvdx,dudy = Diag.Vorticity
+    @unpack Δ = S.grid
 
-    ∂x!(dudx,u)
-    ∂y!(dvdy,v)
-    ∂x!(dvdx,v)
-    ∂y!(dudy,u)
+    ∂x!(dudx,u,Δ)
+    ∂y!(dvdy,v,Δ)
+    ∂x!(dvdx,v,Δ)
+    ∂y!(dudy,u,Δ)
 
     # biharmonic diffusion
-    stress_tensor!(u,v,Diag)
+    stress_tensor!(u,v,Diag,Δ)
     smagorinsky_coeff!(Diag,S)
     viscous_tensor_smagorinsky!(Diag)
 
     @unpack LLu1,LLu2,LLv1,LLv2 = Diag.Smagorinsky
     @unpack S11,S12,S21,S22 = Diag.Smagorinsky
 
-    ∂x!(LLu1,S11)
-    ∂y!(LLu2,S12)
-    ∂x!(LLv1,S21)
-    ∂y!(LLv2,S22)
+    ∂x!(LLu1,S11,Δ)
+    ∂y!(LLu2,S12,Δ)
+    ∂x!(LLv1,S21,Δ)
+    ∂y!(LLv2,S22,Δ)
 end
 
 """νSmag = cSmag * |D|, where deformation rate |D| = √((∂u/∂x - ∂v/∂y)^2 + (∂u/∂y + ∂v/∂x)^2).
@@ -111,14 +114,16 @@ function smagorinsky_coeff!(Diag::DiagnosticVars,S::ModelSetup)
 end
 
 """Biharmonic stress tensor ∇∇²(u,v) = (∂/∂x(∇²u), ∂/∂y(∇²u); ∂/∂x(∇²v), ∂/∂y(∇²v))"""
-function stress_tensor!(u::AbstractMatrix,v::AbstractMatrix,Diag::DiagnosticVars)
+function stress_tensor!(u::Matrix{T},v::Matrix{T},Diag::DiagnosticVars,Δ::Real) where T
+    
     @unpack Lu,Lv,dLudx,dLudy,dLvdx,dLvdy = Diag.Laplace
-    ∇²!(Lu,u)
-    ∇²!(Lv,v)
-    ∂x!(dLudx,Lu)
-    ∂y!(dLudy,Lu)
-    ∂x!(dLvdx,Lv)
-    ∂y!(dLvdy,Lv)
+
+    ∇²!(Lu,u,Δ)
+    ∇²!(Lv,v,Δ)
+    ∂x!(dLudx,Lu,Δ)
+    ∂y!(dLudy,Lu,Δ)
+    ∂x!(dLvdx,Lv,Δ)
+    ∂y!(dLvdy,Lv,Δ)
 end
 
 """Biharmonic stress tensor times Smagorinsky coefficient

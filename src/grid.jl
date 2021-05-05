@@ -71,8 +71,8 @@
     dtint::Int = Int(floor(cfl*Δ/c))            # dt converted to Int
     nt::Int = Int(ceil(Ndays*3600*24/dtint))    # number of time steps to integrate
     dt::T = T(dtint)                            # time step [s]
-    Δt::T = T(dtint/Δ)                          # time step divided by grid spacing [s/m]
-    Δt_diff::Tprog = Tprog(nstep_diff*dtint/Δ)  # time step for diffusive terms
+    Δt::T = T(dtint)                          # time step divided by grid spacing [s/m]
+    Δt_diff::Tprog = Tprog(nstep_diff*dtint)  # time step for diffusive terms
 
     # TIME STEPS FOR ADVECTION
     nadvstep::Int = max(1,Int(floor(Δ/Uadv/dtint)))         # advection each n time steps
@@ -93,10 +93,10 @@
     f₀::Float64 = coriolis_at_lat(ω,ϕ)                      # Coriolis parameter
     β::Float64 = β_at_lat(ω,R,ϕ)                            # Derivate of Coriolis parameter wrt latitude
     # scale only f_q as it's used for non-linear advection
-    f_q::Array{T,2} = T.(scale*Δ*(f₀ .+ β*(yy_q(bc,x_q_halo,y_q_halo) .- Ly/2)))  # same on the q-grid
+    f_q::Array{T,2} = T.(scale*(f₀ .+ β*(yy_q(bc,x_q_halo,y_q_halo) .- Ly/2)))  # same on the q-grid
     # f_u, f_v are only used for linear dynamics (scaling implicit)
-    f_u::Array{T,2} = T.(Δ*(f₀ .+ β*(meshgrid(x_u,y_u)[2] .- Ly/2)))        # f = f₀ + βy on the u-grid
-    f_v::Array{T,2} = T.(Δ*(f₀ .+ β*(meshgrid(x_v,y_v)[2] .- Ly/2)))        # same on the v-grid
+    f_u::Array{T,2} = T.(1*(f₀ .+ β*(meshgrid(x_u,y_u)[2] .- Ly/2)))        # f = f₀ + βy on the u-grid
+    f_v::Array{T,2} = T.(1*(f₀ .+ β*(meshgrid(x_v,y_v)[2] .- Ly/2)))        # same on the v-grid
 end
 
 """Helper function to create yy_q based on the boundary condition bc."""

@@ -65,22 +65,22 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
     # a are the coefficents to sum the rhs on the fly, such that sum=1
     # b are the coefficents for the update that used for a new evaluation of the RHS
     if P.RKo == 2     # Heun's method
-        RKaΔt = Tprog.([1/2,1/2]*G.dtint/G.Δ)
-        RKbΔt = Tprog.([1]*G.dtint/G.Δ)
+        RKaΔt = Tprog.([1/2,1/2]*G.dtint)
+        RKbΔt = Tprog.([1]*G.dtint)
     elseif P.RKo == 3     # version 2 / Heun's 3rd order
-        RKaΔt = Tprog.([1/4,0.,3/4]*G.dtint/G.Δ)
-        RKbΔt = Tprog.([1/3,2/3]*G.dtint/G.Δ)
+        RKaΔt = Tprog.([1/4,0.,3/4]*G.dtint)
+        RKbΔt = Tprog.([1/3,2/3]*G.dtint)
     elseif P.RKo == 4
-        RKaΔt = Tprog.([1/6,1/3,1/3,1/6]*G.dtint/G.Δ)
-        RKbΔt = Tprog.([.5,.5,1.]*G.dtint/G.Δ)
+        RKaΔt = Tprog.([1/6,1/3,1/3,1/6]*G.dtint)
+        RKbΔt = Tprog.([.5,.5,1.]*G.dtint)
     end
 
     # Δt/(s-1) for SSPRK2
-    Δt_Δs = convert(Tprog,G.dtint/G.Δ/(P.RKs-1))
+    Δt_Δs = convert(Tprog,G.dtint/(P.RKs-1))
 
     # time step and half the time step including the grid spacing as this is not included in the RHS
-    Δt_Δ = convert(Tprog,G.dtint/G.Δ)
-    Δt_Δ_half = convert(Tprog,G.dtint/G.Δ/2)
+    Δt_Δ = convert(Tprog,G.dtint)
+    Δt_Δ_half = convert(Tprog,G.dtint/2)
 
     # coefficients for SSPRK3
     SSPRK3c = SSPRK3coeff{Tprog}(P,Δt_Δ)
@@ -92,21 +92,21 @@ function Constants{T,Tprog}(P::Parameter,G::Grid) where {T<:AbstractFloat,Tprog<
     # BOTTOM FRICTION COEFFICIENTS
     # incl grid spacing Δ for non-dimensional gradients
     # include scale for quadratic cD only to unscale the scale^2 in u^2
-    cD = convert(T,-G.Δ*P.cD/P.scale)     # quadratic drag [m]
-    rD = convert(T,-G.Δ/(P.τD*24*3600))   # linear drag [m/s]
+    cD = convert(T,-P.cD/P.scale)     # quadratic drag [m]
+    rD = convert(T,-1/(P.τD*24*3600))   # linear drag [m/s]
 
     # INTERFACE RELAXATION FREQUENCY
     # incl grid spacing Δ for non-dimensional gradients
-    γ = convert(T,G.Δ/(P.t_relax*3600*24))    # [m/s]
+    γ = convert(T,1/(P.t_relax*3600*24))    # [m/s]
 
     # BIHARMONIC DIFFUSION
     # undo scaling here as smagorinksy diffusion contains scale^2 due to ~u^2
-    cSmag = convert(T,-P.cSmag/P.scale)   # Smagorinsky coefficient
-    νB = convert(T,-P.νB/30000)           # linear scaling based on 540m^s/s at Δ=30km
+    cSmag = convert(T,-G.Δ^3*P.cSmag/P.scale)   # Smagorinsky coefficient
+    νB = convert(T,-G.Δ^3*P.νB/30000)           # linear scaling based on 540m^s/s at Δ=30km
 
     # TRACER ADVECTION
-    τSST = convert(T,G.dtadvint/(P.τSST*3600*24))   # tracer restoring [1]
-    jSST = convert(T,G.dtadvint/(P.jSST*3600*24))   # tracer consumption [1]
+    τSST = convert(T,1/(P.τSST*3600*24))   # tracer restoring [1]
+    jSST = convert(T,1/(P.jSST*3600*24))   # tracer consumption [1]
 
     @unpack tracer_relaxation, tracer_consumption = P
     τSST = tracer_relaxation ? τSST : zero(T)       # set zero as τ,j will be added   

@@ -20,8 +20,8 @@
     R::Real=6.371e6                     # Earth's radius [m]
 
     # SCALE
-    scale::Real=2^6                     # multiplicative scale for the momentum equations u,v
-    scale_sst::Real=2^15                # multiplicative scale for sst
+    scale::Real=1                       # multiplicative scale for the momentum equations u,v
+    scale_sst::Real=1                   # multiplicative scale for sst
 
     # WIND FORCING OPTIONS
     wind_forcing_x::String="shear"      # "channel", "double_gyre", "shear","constant" or "none"

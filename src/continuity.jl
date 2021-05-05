@@ -77,7 +77,7 @@ function continuity!(   u::AbstractMatrix,
                         t::Int)
     
     @unpack U,V,dUdx,dVdy = Diag.VolumeFluxes
-    @unpack nstep_advcor = S.grid
+    @unpack nstep_advcor,Δ = S.grid
     @unpack time_scheme,surface_relax,surface_forcing = S.parameters
 
     if time_scheme != "RK"             # then u,v changed before evaluating semi-implicit continuity
@@ -85,8 +85,8 @@ function continuity!(   u::AbstractMatrix,
     end
 
     # divergence of mass flux
-    ∂x!(dUdx,U)
-    ∂y!(dVdy,V)
+    ∂x!(dUdx,U,Δ)
+    ∂y!(dVdy,V,Δ)
 
     if surface_relax
         continuity_surf_relax!(η,Diag,S,t)

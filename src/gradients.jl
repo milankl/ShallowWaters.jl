@@ -9,6 +9,17 @@ function ∂x!(dudx::Matrix{T},u::Matrix{T}) where {T<:AbstractFloat}
     end
 end
 
+function ∂x!(dudx::Matrix{T},u::Matrix{T},Δ::Real) where {T<:AbstractFloat}
+    m,n = size(dudx)
+    @boundscheck (m+1,n) == size(u) || throw(BoundsError())
+
+    ΔT = convert(T,Δ)
+
+    @inbounds for j ∈ 1:n, i ∈ 1:m
+        dudx[i,j] = (u[i+1,j] - u[i,j])/ΔT
+    end
+end
+
 """Calculates the 2nd order centred gradient in y-direction on any grid (u,v,T or q).
 The size of dudy must be m,n-1 compared to m,n = size(u)."""
 function ∂y!(dudy::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
@@ -17,6 +28,17 @@ function ∂y!(dudy::Array{T,2},u::Array{T,2}) where {T<:AbstractFloat}
 
     @inbounds for j ∈ 1:n, i ∈ 1:m
             dudy[i,j] = u[i,j+1] - u[i,j]
+    end
+end
+
+function ∂y!(dudy::Array{T,2},u::Array{T,2},Δ::Real) where {T<:AbstractFloat}
+    m,n = size(dudy)
+    @boundscheck (m,n+1) == size(u) || throw(BoundsError())
+
+    ΔT = convert(T,Δ)
+
+    @inbounds for j ∈ 1:n, i ∈ 1:m
+            dudy[i,j] = (u[i,j+1] - u[i,j])/ΔT
     end
 end
 
@@ -33,6 +55,24 @@ function ∇²!(du::Matrix{T},u::Matrix{T}) where {T<:AbstractFloat}
             #        1
             ui1j1 = u[i+1,j+1]
             du[i,j] = ((u[i,j+1] - ui1j1) + (u[i+2,j+1] - ui1j1)) + ((u[i+1,j] - ui1j1) + (u[i+1,j+2] - ui1j1))
+        end
+    end
+end
+
+function ∇²!(du::Matrix{T},u::Matrix{T},Δ::Real) where {T<:AbstractFloat}
+    m, n = size(du)
+    @boundscheck (m+2,n+2) == size(u) || throw(BoundsError())
+
+    ΔT² = convert(T,Δ^2)
+
+    @inbounds for j ∈ 1:n
+        for i ∈ 1:m
+            #        1
+            # the 1 -4 1  -stencil in low-precision resilient form
+            #        1
+            ui1j1 = u[i+1,j+1]
+            du[i,j] = (((u[i,j+1] - ui1j1) + (u[i+2,j+1] - ui1j1)) + 
+                    ((u[i+1,j] - ui1j1) + (u[i+1,j+2] - ui1j1)))/ΔT²
         end
     end
 end
