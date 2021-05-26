@@ -292,7 +292,11 @@ function time_integration(  Prog::PrognosticVars{Tprog},
     feedback_end!(feedback)
     output_close!(netCDFfiles,feedback,S)
 
-    return PrognosticVars{Tprog}(remove_halo(u,v,η,sst,S)...)
+    if S.parameters.return_time
+        return feedback.tend - feedback.t0
+    else
+        return PrognosticVars{Tprog}(remove_halo(u,v,η,sst,S)...)
+    end
 end
 
 """Add to a x multiplied with b. a += x*b """
