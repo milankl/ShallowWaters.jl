@@ -108,6 +108,7 @@
     output_dt::Real=24                  # output time step [hours]
     outpath::String=pwd()               # path to output folder
     compression_level::Int=3            # compression level
+    return_time::Bool=false             # return time of simulation of progn vars?
 
     # INITIAL CONDITIONS
     initial_cond::String="rest"         # "rest" or "ncfile" for restart from file

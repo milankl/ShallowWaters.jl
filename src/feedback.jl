@@ -1,6 +1,7 @@
 @with_kw mutable struct Feedback
     t0::Float64=time()                      # start time
     t1::Float64=time()                      # time for duration estimation
+    tend::Float64=t0                        # end time
     nans_detected::Bool=false               # did NaNs occur in the simulation?
     progress_txt::Union{IOStream,Nothing}   # txt is a Nothing in case of no output
     output::Bool                            # output to netCDF?
@@ -161,7 +162,11 @@ end
 function feedback_end!(feedback::Feedback)
     @unpack output,t0,progress_txt = feedback
 
-    s = " Integration done in "*readable_secs(time()-t0)*"."
+    # time when the simulation ends
+    tend = time()
+    feedback.tend = tend  # store in struct
+
+    s = " Integration done in "*readable_secs(tend-t0)*"."
     println(s)
     if output
         write(progress_txt,"\n"*s[2:end]*"\n")  # close txt file with last output
