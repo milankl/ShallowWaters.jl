@@ -47,3 +47,5 @@ ShallowWaters.jl was used and is described in more detail in
 >[1] Klöwer M, PD Düben, and TN Palmer, 2020. Number formats, error mitigation and scope for 16-bit arithmetics in weather and climate modelling analysed with a shallow water model. __Journal of Advances in Modeling Earth Systems__, [10.1029/2020MS002246](https://dx.doi.org/10.1029/2020MS002246)
 
 >[2] Klöwer M, PD Düben, and TN Palmer, 2019. Posits as an alternative to floats for weather and climate models. In: __Proceedings of the Conference for Next Generation Arithmetic 2019__, Singapore, __ACM__, [10.1145/3316279.3316281](https://dx.doi.org/10.1145/3316279.3316281)
+
+If you use this package please cite us.
