@@ -44,8 +44,11 @@ julia> ] add ShallowWaters
 
 ShallowWaters.jl was used and is described in more detail in  
 
->[1] Klöwer M, PD Düben, and TN Palmer, 2020. Number formats, error mitigation and scope for 16-bit arithmetics in weather and climate modelling analysed with a shallow water model. __Journal of Advances in Modeling Earth Systems__, [10.1029/2020MS002246](https://dx.doi.org/10.1029/2020MS002246)
+>[1] Klöwer M, S Hatfield, M Croci, PD Düben and TN Palmer, 2022. *Fluid simulations accelerated with 16 bits: Approaching 4x speedup on A64FX by squeezing ShallowWaters.jl into Float16*, **Journal of Advances in Modeling Earth Systems**, 14, [10.1029/2021MS002684](https://doi.org/10.1029/2021MS002684)
 
->[2] Klöwer M, PD Düben, and TN Palmer, 2019. Posits as an alternative to floats for weather and climate models. In: __Proceedings of the Conference for Next Generation Arithmetic 2019__, Singapore, __ACM__, [10.1145/3316279.3316281](https://dx.doi.org/10.1145/3316279.3316281)
+>[2] Klöwer M, PD Düben, and TN Palmer, 2020. Number formats, error mitigation and scope for 16-bit arithmetics in weather and climate modelling analysed with a shallow water model. __Journal of Advances in Modeling Earth Systems__, [10.1029/2020MS002246](https://dx.doi.org/10.1029/2020MS002246)
 
-If you use this package please cite us.
+>[3] Klöwer M, PD Düben, and TN Palmer, 2019. Posits as an alternative to floats for weather and climate models. In: __Proceedings of the Conference for Next Generation Arithmetic 2019__, Singapore, __ACM__, [10.1145/3316279.3316281](https://dx.doi.org/10.1145/3316279.3316281)
+
+If you use this package in your research, please cite us.
+Additionally, we would love to hear from you that you have used this package, so feel always free to reach out!
