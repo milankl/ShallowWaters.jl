@@ -112,7 +112,7 @@
 
     # INITIAL CONDITIONS
     initial_cond::String="rest"         # "rest" or "ncfile" for restart from file
-    path::String=outpath            # folder where to pick the restart files from
+    initpath::String=outpath            # folder where to pick the restart files from
     init_run_id::Int=0                  # run id for restart from run number
     init_starti::Int=-1                 # timestep to start from (-1 meaning last)
     get_id_mode::String="continue"      # How to determine the run id: "continue" or "fill"

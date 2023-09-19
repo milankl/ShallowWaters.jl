@@ -172,12 +172,12 @@ end
 """Checks output folders to determine a 4-digit run id number."""
 function get_run_id_path(S::ModelSetup)
 
-    @unpack output,outpath,get_id_mode,path = S.parameters
+    @unpack output,outpath,get_id_mode = S.parameters
 
     if output
         
         pattern = r"run_\d\d\d\d"               # run_???? in regex
-        runlist = filter(x->startswith(x,pattern),readdir(path))
+        runlist = filter(x->startswith(x,pattern),readdir(outpath))
         runlist = filter(x->endswith(  x,pattern),runlist)
         existing_runs = [parse(Int,id[5:end]) for id in runlist]
 
@@ -191,8 +191,8 @@ function get_run_id_path(S::ModelSetup)
         id = @sprintf("%04d",run_id)
 
         run_id2 = string("run_",id)
-        run_path = joinpath(path,run_id2)
-        @assert !(run_id2 in readdir(path)) "Run folder $run_path already exists."
+        run_path = joinpath(outpath,run_id2)
+        @assert !(run_id2 in readdir(outpath)) "Run folder $run_path already exists."
         mkdir(run_path)             # actually create the folder
 
         return run_id, run_path
