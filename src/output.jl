@@ -172,40 +172,31 @@ end
 """Checks output folders to determine a 4-digit run id number."""
 function get_run_id_path(S::ModelSetup)
 
-    @unpack output,outpath,get_id_mode = S.parameters
+    @unpack output,outpath,get_id_mode,path = S.parameters
 
     if output
-        runlist = filter(x->startswith(x,"run"),readdir(outpath))
-        existing_runs = [parse(Int,id[4:end]) for id in runlist]
+        
+        pattern = r"run_\d\d\d\d"               # run_???? in regex
+        runlist = filter(x->startswith(x,pattern),readdir(path))
+        runlist = filter(x->endswith(  x,pattern),runlist)
+        existing_runs = [parse(Int,id[5:end]) for id in runlist]
+
+        # get the run id from existing folders
         if length(existing_runs) == 0           # if no runfolder exists yet
-            runpath = joinpath(outpath,"run0000")
-            mkdir(runpath)
-            return 0,runpath
-        else                                    # create next folder
-            if get_id_mode == "fill"  # find the smallest gap in runfolders
-                run_id = gap(existing_runs)
-                runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
-                mkdir(runpath)
-
-            elseif get_id_mode == "specific" # specify the run_id as input argument
-                @unpack run_id = S.parameters
-                runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
-                try # create folder if not existent
-                    mkdir(runpath)
-                catch # else rm folder and create new one
-                    rm(runpath,recursive=true)
-                    mkdir(runpath)
-                end
-
-            elseif get_id_mode == "continue" # find largest folder and count one up
-                run_id = maximum(existing_runs)+1
-                runpath = joinpath(outpath,"run"*@sprintf("%04d",run_id))
-                mkdir(runpath)
-            else
-                throw(error("Order '$get_id_mode' is not valid for get_run_id_path(), choose continue or fill."))
-            end
-            return run_id,runpath
+            run_id = 1                          # start with run_0001
+        else
+            run_id = maximum(existing_runs)+1   # next run gets id +1
         end
+        
+        id = @sprintf("%04d",run_id)
+
+        run_id2 = string("run_",id)
+        run_path = joinpath(path,run_id2)
+        @assert !(run_id2 in readdir(path)) "Run folder $run_path already exists."
+        mkdir(run_path)             # actually create the folder
+
+        return run_id, run_path
+
     else
         return 0,"no runpath"
     end
