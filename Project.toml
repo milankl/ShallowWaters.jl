@@ -14,6 +14,7 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Interpolations = "0.12, 0.13, 0.14"
 NetCDF = "0.10, 0.11"
 Parameters = "0.12, 0.13"
+Dates = "^1.2"
 julia = "^1.2"
 
 [extras]
