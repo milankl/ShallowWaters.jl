@@ -15,6 +15,7 @@ Interpolations = "0.12, 0.13, 0.14"
 NetCDF = "0.10, 0.11"
 Parameters = "0.12, 0.13"
 Dates = "^1.2"
+Printf = "^1.2"
 julia = "^1.2"
 
 [extras]
