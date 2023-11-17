@@ -42,10 +42,10 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
         @unpack init_interpolation = S.parameters
         @unpack nx,ny = S.grid
 
-        inirunpath = joinpath(initpath,"run"*@sprintf("%04d",init_run_id))
+        # inirunpath = joinpath(initpath,"run"*@sprintf("%04d",init_run_id))
 
         # take starti time step from existing netcdf files
-        ncstring = joinpath(inirunpath,"u.nc")
+        ncstring = joinpath(initpath,"u.nc")
         ncu = NetCDF.open(ncstring)
 
         if init_starti == -1    # replace -1 with length of time dimension
@@ -54,10 +54,10 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
 
         u = ncu.vars["u"][:,:,init_starti]
 
-        ncv = NetCDF.open(joinpath(inirunpath,"v.nc"))
+        ncv = NetCDF.open(joinpath(initpath,"v.nc"))
         v = ncv.vars["v"][:,:,init_starti]
 
-        ncη = NetCDF.open(joinpath(inirunpath,"eta.nc"))
+        ncη = NetCDF.open(joinpath(initpath,"eta.nc"))
         η = ncη.vars["eta"][:,:,init_starti]
 
         # remove singleton time dimension
