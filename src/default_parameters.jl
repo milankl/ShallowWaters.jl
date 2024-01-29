@@ -104,7 +104,7 @@
 
     # OUTPUT OPTIONS
     output::Bool=false                  # netcdf output?
-    output_vars::Array{String,1}=["u","v","η","sst"]  # which variables to output? "du","dv","dη" also allowed
+    output_vars::Array{String,1}=["u","v","η","sst"]  # which variables to output? "du","dv","dη","H","ζ" also allowed
     output_dt::Real=24                  # output time step [hours]
     outpath::String=pwd()               # path to output folder
     compression_level::Int=3            # compression level
