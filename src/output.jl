@@ -8,11 +8,12 @@ struct NcFiles
     du::Union{NcFile,Nothing}       # tendency of u [m^2/s^2]
     dv::Union{NcFile,Nothing}       # tendency of v [m^2/s^2]
     dη::Union{NcFile,Nothing}       # tendency of η [m^2/s]
+    H::Union{NcFile,Nothing}        # layer thickness at rest [m]
     iout::Array{Integer,1}          # output index, stored in array for mutability
 end
 
 """Generator function for "empty" NcFiles struct."""
-NcFiles(x::Nothing) = NcFiles(x,x,x,x,x,x,x,x,x,[0])
+NcFiles(x::Nothing) = NcFiles(x,x,x,x,x,x,x,x,x,x,[0])
 
 """Generator function for NcFiles struct, creating the underlying netCDF files."""
 function NcFiles(feedback::Feedback,S::ModelSetup)
@@ -35,16 +36,22 @@ function NcFiles(feedback::Feedback,S::ModelSetup)
         ncdu = if "du" in output_vars nc_create(x_u,y_u,"du",runpath,"m^2/s^2","zonal velocity tendency",P) else nothing end
         ncdv = if "dv" in output_vars nc_create(x_v,y_v,"dv",runpath,"m^2/s^2","meridional velocity tendency",P) else nothing end
         ncdη = if "dη" in output_vars nc_create(x_T,y_T,"deta",runpath,"m^2/s","sea surface height tendency",P) else nothing end
+        nH = if "H" in output_vars nc_create(x_T,y_T,"H",runpath,"m","undisturbed layer thickness",P,false) else nothing end
 
         for nc in (ncu,ncv,ncη,ncsst,ncq,ncζ,ncdu,ncdv,ncdη)
-            if nc != nothing
+            if !isnothing(nc)
                 NetCDF.putatt(nc,"t",Dict("units"=>"s","long_name"=>"time"))
                 NetCDF.putatt(nc,"x",Dict("units"=>"m","long_name"=>"zonal coordinate"))
                 NetCDF.putatt(nc,"y",Dict("units"=>"m","long_name"=>"meridional coordinate"))
             end
         end
 
-        return NcFiles(ncu,ncv,ncη,ncsst,ncq,ncζ,ncdu,ncdv,ncdη,[0])
+        if !isnothing(nH) # output constant fields 
+            NetCDF.putatt(nH,"x",Dict("units"=>"m","long_name"=>"zonal coordinate"))
+            NetCDF.putatt(nH,"y",Dict("units"=>"m","long_name"=>"meridional coordinate"))
+        end
+
+        return NcFiles(ncu,ncv,ncη,ncsst,ncq,ncζ,ncdu,ncdv,ncdη,nH,[0])
     else
         return NcFiles(nothing)
     end
@@ -57,18 +64,24 @@ function nc_create( x::Array{T,1},
                     path::String,
                     unit::String,
                     long_name::String,
-                    P::Parameter) where {T<:Real}
+                    P::Parameter,
+                    output_tdim::Bool=true) where {T<:Real}
 
     @unpack compression_level = P
 
     xdim = NcDim("x",length(x),values=x)
     ydim = NcDim("y",length(y),values=y)
-    tdim = NcDim("t",0,unlimited=true)
+    
+    if output_tdim 
+        tdim = NcDim("t",0,unlimited=true)
+        var = NcVar(name,[xdim,ydim,tdim],t=Float32,compress=compression_level)
+        tvar = NcVar("t",tdim,t=Int32)
+        nc = NetCDF.create(joinpath(path,name*".nc"),[var,tvar],mode=NC_NETCDF4)
+    else 
+        var = NcVar(name,[xdim,ydim],t=Float32,compress=compression_level)
+        nc = NetCDF.create(joinpath(path,name*".nc"),[var],mode=NC_NETCDF4)
+    end 
 
-    var = NcVar(name,[xdim,ydim,tdim],t=Float32,compress=compression_level)
-    tvar = NcVar("t",tdim,t=Int32)
-
-    nc = NetCDF.create(joinpath(path,name*".nc"),[var,tvar],mode=NC_NETCDF4)
     # add missing_value although irrelevant for ncview compatibility
     NetCDF.putatt(nc,name,Dict("units"=>unit,"long_name"=>long_name,"missing_value"=>-999999f0))
     return nc
@@ -96,51 +109,55 @@ function output_nc!(i::Int,
         # As output is before copyto!(u,u0), take u0,v0,η0
         # Tendencies calculate from the last time step, du = u_n+1-u_n etc
         # WRITING THE VARIABLES
-        if ncs.u != nothing
+        if !isnothing(ncs.u)
             @views u = Float32.(scale_inv*Diag.RungeKutta.u0[halo+1:end-halo,halo+1:end-halo])
             NetCDF.putvar(ncs.u,"u",u,start=[1,1,iout],count=[-1,-1,1])
         end
-        if ncs.v != nothing
+        if !isnothing(ncs.v)
             @views v = Float32.(scale_inv*Diag.RungeKutta.v0[halo+1:end-halo,halo+1:end-halo])
             NetCDF.putvar(ncs.v,"v",v,start=[1,1,iout],count=[-1,-1,1])
         end
-        if ncs.η != nothing
+        if !isnothing(ncs.η)
             @views η = Float32.(Diag.RungeKutta.η0[haloη+1:end-haloη,haloη+1:end-haloη])
             NetCDF.putvar(ncs.η,"eta",η,start=[1,1,iout],count=[-1,-1,1])
         end
-        if ncs.sst != nothing
+        if !isnothing(ncs.sst)
             @views sst = Float32.(Prog.sst[halosstx+1:end-halosstx,halossty+1:end-halossty]/scale_sst)
             NetCDF.putvar(ncs.sst,"sst",sst,start=[1,1,iout],count=[-1,-1,1])
         end
-        if ncs.q != nothing
+        if !isnothing(ncs.q)
             @views q = Float32.(scale_inv*Diag.Vorticity.q[haloη+1:end-haloη,haloη+1:end-haloη])
             NetCDF.putvar(ncs.q,"q",q,start=[1,1,iout],count=[-1,-1,1])
         end
-        if ncs.ζ != nothing
+        if !isnothing(ncs.ζ)
             @unpack dvdx,dudy = Diag.Vorticity
             @unpack f_q = S.grid
             @views ζ = Float32.((dvdx[2:end-1,2:end-1]-dudy[2+ep:end-1,2:end-1])./abs.(f_q))
             NetCDF.putvar(ncs.ζ,"relvort",ζ,start=[1,1,iout],count=[-1,-1,1])
         end
-        if ncs.du != nothing
+        if !isnothing(ncs.du)
             @views u = Float32.(scale_inv*Diag.RungeKutta.u0[halo+1:end-halo,halo+1:end-halo])
             @views du = u-Float32.(scale_inv*Prog.u[halo+1:end-halo,halo+1:end-halo])
             NetCDF.putvar(ncs.du,"du",du,start=[1,1,iout],count=[-1,-1,1])
         end
-        if ncs.dv != nothing
+        if !isnothing(ncs.dv)
             @views v = Float32.(scale_inv*Diag.RungeKutta.v0[halo+1:end-halo,halo+1:end-halo])
             @views dv = v-Float32.(scale_inv*Prog.v[halo+1:end-halo,halo+1:end-halo])
             NetCDF.putvar(ncs.dv,"dv",dv,start=[1,1,iout],count=[-1,-1,1])
         end
-        if ncs.dη != nothing
+        if !isnothing(ncs.dη)
             @views η = Float32.(Diag.RungeKutta.η0[haloη+1:end-haloη,haloη+1:end-haloη])
             @views dη = η-Float32.(Prog.η[haloη+1:end-haloη,haloη+1:end-haloη])
             NetCDF.putvar(ncs.dη,"deta",dη,start=[1,1,iout],count=[-1,-1,1])
         end
+        if i==0 && !isnothing(ncs.H) # constant field, output only once, before the timestepping
+            @views H = Float32.(S.forcing.H[haloη+1:end-haloη,haloη+1:end-haloη])
+            NetCDF.putvar(ncs.H,"H",H,start=[1,1],count=[-1,-1])
+        end
 
         # WRITING THE TIME
         for nc in (ncs.u,ncs.v,ncs.η,ncs.sst,ncs.q,ncs.ζ,ncs.du,ncs.dv,ncs.dη)
-            if nc != nothing
+            if !isnothing(nc)
                 NetCDF.putvar(nc,"t",Int64[i*dtint],start=[iout])
                 NetCDF.sync(nc)         # sync to view netcdf while model is still running
             end
