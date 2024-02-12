@@ -32,7 +32,7 @@ function Forcing{T}(P::Parameter,G::Grid) where {T<:AbstractFloat}
         _,Fy = DoubleGyreWind(T,P,G)
     elseif wind_forcing_y == "constant"
         _,Fy = ConstantWind(T,P,G)
-    elseif wind_forcing_x == "none"
+    elseif wind_forcing_y == "none"
         _,Fy = NoWind(T,P,G)
     end
 
