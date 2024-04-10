@@ -300,8 +300,8 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
     end
 end
 
-"""Integrate ShallowWaters forward and checkpoints the integration. This is the 
-function needed if we want to use Enzyme on the model."""
+"""Integrate ShallowWaters forward and checkpoints the integration. This is the
+integration function needed if we want to use Enzyme on the model."""
 function checkpointed_integration(S, scheme)
 
     # setup
