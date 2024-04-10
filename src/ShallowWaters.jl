@@ -4,6 +4,9 @@ module ShallowWaters
 
     using NetCDF, Parameters, Printf, Dates, Interpolations
 
+    # SW additions
+    using Checkpointing, Enzyme
+
     include("default_parameters.jl")
     include("grid.jl")
     include("constants.jl")
