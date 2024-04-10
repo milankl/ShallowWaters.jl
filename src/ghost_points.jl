@@ -3,6 +3,134 @@ function add_halo(  u::Array{T,2},
                     v::Array{T,2},
                     η::Array{T,2},
                     sst::Array{T,2},
+                    G::Grid,
+                    P::Parameter,
+                    C::Constants) where {T<:AbstractFloat}
+
+    @unpack nx,ny,nux,nuy,nvx,nvy = G
+    @unpack halo,haloη,halosstx,halossty = G
+
+    # Add zeros to satisfy kinematic boundary conditions
+    u = cat(zeros(T,halo,nuy),u,zeros(T,halo,nuy),dims=1)
+    u = cat(zeros(T,nux+2*halo,halo),u,zeros(T,nux+2*halo,halo),dims=2)
+
+    v = cat(zeros(T,halo,nvy),v,zeros(T,halo,nvy),dims=1)
+    v = cat(zeros(T,nvx+2*halo,halo),v,zeros(T,nvx+2*halo,halo),dims=2)
+
+    η = cat(zeros(T,haloη,ny),η,zeros(T,haloη,ny),dims=1)
+    η = cat(zeros(T,nx+2*haloη,haloη),η,zeros(T,nx+2*haloη,haloη),dims=2)
+
+    sst = cat(zeros(T,halosstx,ny),sst,zeros(T,halosstx,ny),dims=1)
+    sst = cat(zeros(T,nx+2*halosstx,halossty),sst,zeros(T,nx+2*halosstx,halossty),dims=2)
+
+    # SCALING
+    @unpack scale,scale_sst = C
+    u *= scale
+    v *= scale
+    sst *= scale_sst
+
+    ghost_points!(u,v,η,P,C)
+    ghost_points_sst!(sst,P,G)
+    return u,v,η,sst
+end
+
+"""Cut off the halo from the prognostic variables."""
+function remove_halo(   u::Array{T,2},
+                        v::Array{T,2},
+                        η::Array{T,2},
+                        sst::Array{T,2},
+                        G::Grid,
+                        C::Constants
+                        ) where {T<:AbstractFloat}
+
+    @unpack halo,haloη,halosstx,halossty = G
+    @unpack scale_inv,scale_sst = C
+
+    # undo scaling as well
+    @views ucut = scale_inv*u[halo+1:end-halo,halo+1:end-halo]
+    @views vcut = scale_inv*v[halo+1:end-halo,halo+1:end-halo]
+    @views ηcut = η[haloη+1:end-haloη,haloη+1:end-haloη]
+    @views sstcut = sst[halosstx+1:end-halosstx,halossty+1:end-halossty]/scale_sst
+
+    return ucut,vcut,ηcut,sstcut
+end
+
+
+"""Decide on boundary condition P.bc which ghost point function to execute."""
+function ghost_points!( u::AbstractMatrix,
+                        v::AbstractMatrix,
+                        η::AbstractMatrix,
+                        P::Parameter, 
+                        C::Constants)
+
+    @unpack bc,Tcomm = P
+    @unpack one_minus_α = C
+
+    if bc == "periodic"
+        ghost_points_u_periodic!(Tcomm,u,one_minus_α)
+        ghost_points_v_periodic!(Tcomm,v)
+        ghost_points_η_periodic!(Tcomm,η)
+    else
+        ghost_points_u_nonperiodic!(u,one_minus_α)
+        ghost_points_v_nonperiodic!(v,one_minus_α)
+        ghost_points_η_nonperiodic!(η)
+    end
+end
+
+"""Decide on boundary condition P.bc which ghost point function to execute."""
+function ghost_points_uv!(  u::AbstractMatrix,
+                            v::AbstractMatrix,
+                            P::Parameter, 
+                            C::Constants)
+
+    @unpack bc,Tcomm = P
+    @unpack one_minus_α = C
+
+    if bc == "periodic"
+        ghost_points_u_periodic!(Tcomm,u,one_minus_α)
+        ghost_points_v_periodic!(Tcomm,v)
+    else
+        ghost_points_u_nonperiodic!(u,one_minus_α)
+        ghost_points_v_nonperiodic!(v,one_minus_α)
+    end
+end
+
+"""Decide on boundary condition P.bc which ghost point function to execute."""
+function ghost_points_η!(   η::AbstractMatrix,
+                            P::Parameter)
+
+    @unpack bc, Tcomm = P
+
+    if bc == "periodic"
+        ghost_points_η_periodic!(Tcomm,η)
+    else
+        ghost_points_η_nonperiodic!(η)
+    end
+end
+
+"""Decide on boundary condition P.bc which ghost point function to execute."""
+function ghost_points_sst!( sst::AbstractMatrix,
+                            P::Parameter,
+                            G::Grid)
+
+    @unpack bc,Tcomm = P
+    @unpack halosstx,halossty = G
+
+    if bc == "periodic"
+        ghost_points_sst_periodic!(Tcomm,sst,halosstx,halossty)
+    else
+        ghost_points_sst_nonperiodic!(sst,halosstx,halossty)
+    end
+end
+
+
+##### Original versions ######################################################################################################################
+
+""" Extends the matrices u,v,η,sst with a halo of ghost points for boundary conditions."""
+function add_halo(  u::Array{T,2},
+                    v::Array{T,2},
+                    η::Array{T,2},
+                    sst::Array{T,2},
                     S::ModelSetup) where {T<:AbstractFloat}
 
     @unpack nx,ny,nux,nuy,nvx,nvy = S.grid

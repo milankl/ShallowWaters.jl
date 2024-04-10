@@ -7,15 +7,15 @@
     Tini=Tprog                # number format to reduce precision for initial conditions
 
     # DOMAIN RESOLUTION AND RATIO
-    nx::Int=100                         # number of grid cells in x-direction
-    Lx::Real=4000e3                     # length of the domain in x-direction [m]
-    L_ratio::Real=2                     # Domain aspect ratio of Lx/Ly
+    nx::Int=128                         # number of grid cells in x-direction
+    Lx::Int=3840e3                      # length of the domain in x-direction [m]
+    L_ratio::Int=1                      # Domain aspect ratio of Lx/Ly
 
     # PHYSICAL CONSTANTS
-    g::Real=0.1                         # gravitational acceleration [m/s]
+    g::Real=9.81                       # gravitational acceleration [m^2/s] 
     H::Real=500.                        # layer thickness at rest [m]
     ρ::Real=1e3                         # water density [kg/m^3]
-    ϕ::Real=45.                         # central latitude of the domain (for coriolis) [°]
+    ϕ::Real=35.                         # central latitude of the domain (for coriolis) [°]
     ω::Real=2π/(24*3600)                # Earth's angular frequency [s^-1]
     R::Real=6.371e6                     # Earth's radius [m]
 
@@ -24,17 +24,17 @@
     scale_sst::Real=2^15                # multiplicative scale for sst
 
     # WIND FORCING OPTIONS
-    wind_forcing_x::String="shear"      # "channel", "double_gyre", "shear","constant" or "none"
+    wind_forcing_x::String="double_gyre"   # "channel", "double_gyre", "shear","constant" or "none"
     wind_forcing_y::String="constant"   # "channel", "double_gyre", "shear","constant" or "none"
     Fx0::Real=0.12                      # wind stress strength [Pa] in x-direction
     Fy0::Real=0.0                       # wind stress strength [Pa] in y-direction
-    seasonal_wind_x::Bool=true          # Change the wind stress with a sine of frequency ωFx,ωFy
+    seasonal_wind_x::Bool=false         # Change the wind stress with a sine of frequency ωFx,ωFy
     seasonal_wind_y::Bool=false         # same for y-component
     ωFx::Real=2                         # frequency [1/year] for x component
     ωFy::Real=2                         # frequency [1/year] for y component
 
     # BOTTOM TOPOGRAPHY OPTIONS
-    topography::String="ridges"         # "ridge", "seamount", "flat", "ridges", "bathtub"
+    topography::String="flat"         # "ridge", "seamount", "flat", "ridges", "bathtub"
     topo_ridges_positions::Vector = [0.05,0.25,0.45,0.9]
     topo_height::Real=100.               # height of seamount [m]
     topo_width::Real=300e3              # horizontal scale [m] of the seamount
@@ -66,9 +66,15 @@
     compensated::Bool=false             # Compensated summation in the time integration?
 
     # BOUNDARY CONDITION OPTIONS
-    bc::String="periodic"               # "periodic" or anything else for nonperiodic
+    bc::String="nonperiodic"               # "periodic" or anything else for nonperiodic
     α::Real=2.                          # lateral boundary condition parameter
                                         # 0 free-slip, 0<α<2 partial-slip, 2 no-slip
+
+    # PARAMETERS FOR ADJOINT METHOD
+    data_steps::StepRange{Int,Int} = 0:1:0      # Timesteps where data exists
+    data::Array{Float32, 1} = [0.]              # model data
+    J::Float64 = 0.                             # Placeholder for cost function evaluation
+    j::Int = 1                                  # For keeping track of the entry in data
 
     # MOMENTUM ADVECTION OPTIONS
     adv_scheme::String="ArakawaHsu"     # "Sadourny" or "ArakawaHsu"
