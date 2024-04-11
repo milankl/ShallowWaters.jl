@@ -1,14 +1,3 @@
-### Original ################################################################
-
-# struct ModelSetup{T<:AbstractFloat,Tprog<:AbstractFloat}
-#     parameters::Parameter
-#     grid::Grid{T,Tprog}
-#     constants::Constants{T,Tprog}
-#     forcing::Forcing{T}
-# end
-
-#############################################################################
-
 mutable struct PrognosticVars{T<:AbstractFloat}
     u::Array{T,2}           # u-velocity
     v::Array{T,2}           # v-velocity
