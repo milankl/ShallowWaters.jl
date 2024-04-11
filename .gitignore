@@ -40,3 +40,4 @@ run_*/
 
 # no nohup outputs
 nohup.out
+/my_scripts
