@@ -40,6 +40,4 @@ run_*/
 
 # no nohup outputs
 nohup.out
-
-# ignoring a folder on my computer (SW)
 /my_scripts

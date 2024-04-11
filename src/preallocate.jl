@@ -448,22 +448,6 @@ function SemiLagrangeVars{T}(G::Grid) where {T<:AbstractFloat}
                             halosstx=halosstx,halossty=halossty)
 end
 
-###################################################################
-
-# struct DiagnosticVars{T,Tprog}
-#     RungeKutta::RungeKuttaVars{Tprog}
-#     Tendencies::TendencyVars{Tprog}
-#     VolumeFluxes::VolumeFluxVars{T}
-#     Vorticity::VorticityVars{T}
-#     Bernoulli::BernoulliVars{T}
-#     Bottomdrag::BottomdragVars{T}
-#     ArakawaHsu::ArakawaHsuVars{T}
-#     Laplace::LaplaceVars{T}
-#     Smagorinsky::SmagorinskyVars{T}
-#     SemiLagrange::SemiLagrangeVars{T}
-#     PrognosticVarsRHS::PrognosticVars{T}        # low precision version
-# end
-
 """Preallocate the diagnostic variables and return them as matrices in structs."""
 function preallocate(   ::Type{T},
                         ::Type{Tprog},
