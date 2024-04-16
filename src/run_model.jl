@@ -35,8 +35,8 @@ function run_model(::Type{T},P::Parameter) where {T<:AbstractFloat}
 
     # one structure with everything already inside 
     S = ModelSetup{T,Tprog}(P,G,C,F,Prog,Diag,0)
-    P = time_integration(S)
+    Prog = time_integration(S)
 
-    return S, P
+    return Prog
 
 end

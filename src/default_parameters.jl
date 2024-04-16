@@ -8,8 +8,8 @@
 
     # DOMAIN RESOLUTION AND RATIO
     nx::Int=128                         # number of grid cells in x-direction
-    Lx::Int=3840e3                      # length of the domain in x-direction [m]
-    L_ratio::Int=1                      # Domain aspect ratio of Lx/Ly
+    Lx::Float64=3840e3                  # length of the domain in x-direction [m]
+    L_ratio::Real=1                     # Domain aspect ratio of Lx/Ly
 
     # PHYSICAL CONSTANTS
     g::Real=9.81                       # gravitational acceleration [m^2/s] 
@@ -80,7 +80,7 @@
     i::Int = 0                                  # Placeholder for current timestep, needed for Checkpointing.jl
 
     # MOMENTUM ADVECTION OPTIONS
-    adv_scheme::String="Sadourny"       # "Sadourny" or "ArakawaHsu"
+    adv_scheme::String="ArakawaHsu"       # "Sadourny" or "ArakawaHsu"
     dynamics::String="nonlinear"        # "linear" or "nonlinear"
 
     # BOTTOM FRICTION OPTIONS
