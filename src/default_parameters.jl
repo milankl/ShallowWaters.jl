@@ -1,4 +1,4 @@
-@with_kw mutable struct Parameter
+@with_kw struct Parameter
 
     T=Float32                 # number format
 
@@ -7,15 +7,15 @@
     Tini=Tprog                # number format to reduce precision for initial conditions
 
     # DOMAIN RESOLUTION AND RATIO
-    nx::Int=128                         # number of grid cells in x-direction
-    Lx::Float64=3840e3                  # length of the domain in x-direction [m]
-    L_ratio::Real=1                     # Domain aspect ratio of Lx/Ly
+    nx::Int=100                         # number of grid cells in x-direction
+    Lx::Real=4000e3                     # length of the domain in x-direction [m]
+    L_ratio::Real=2                     # Domain aspect ratio of Lx/Ly
 
     # PHYSICAL CONSTANTS
-    g::Real=9.81                       # gravitational acceleration [m^2/s] 
+    g::Real=0.1                         # gravitational acceleration [m/s]
     H::Real=500.                        # layer thickness at rest [m]
     ρ::Real=1e3                         # water density [kg/m^3]
-    ϕ::Real=35.                         # central latitude of the domain (for coriolis) [°]
+    ϕ::Real=45.                         # central latitude of the domain (for coriolis) [°]
     ω::Real=2π/(24*3600)                # Earth's angular frequency [s^-1]
     R::Real=6.371e6                     # Earth's radius [m]
 
@@ -24,17 +24,17 @@
     scale_sst::Real=2^15                # multiplicative scale for sst
 
     # WIND FORCING OPTIONS
-    wind_forcing_x::String="double_gyre"   # "channel", "double_gyre", "shear","constant" or "none"
+    wind_forcing_x::String="shear"      # "channel", "double_gyre", "shear","constant" or "none"
     wind_forcing_y::String="constant"   # "channel", "double_gyre", "shear","constant" or "none"
     Fx0::Real=0.12                      # wind stress strength [Pa] in x-direction
     Fy0::Real=0.0                       # wind stress strength [Pa] in y-direction
-    seasonal_wind_x::Bool=false         # Change the wind stress with a sine of frequency ωFx,ωFy
+    seasonal_wind_x::Bool=true          # Change the wind stress with a sine of frequency ωFx,ωFy
     seasonal_wind_y::Bool=false         # same for y-component
     ωFx::Real=2                         # frequency [1/year] for x component
     ωFy::Real=2                         # frequency [1/year] for y component
 
     # BOTTOM TOPOGRAPHY OPTIONS
-    topography::String="flat"         # "ridge", "seamount", "flat", "ridges", "bathtub"
+    topography::String="ridges"         # "ridge", "seamount", "flat", "ridges", "bathtub"
     topo_ridges_positions::Vector = [0.05,0.25,0.45,0.9]
     topo_height::Real=100.               # height of seamount [m]
     topo_width::Real=300e3              # horizontal scale [m] of the seamount
@@ -59,15 +59,15 @@
     RKs::Int=3                          # Number of stages for SSPRK2
     RKn::Int=5                          # n^2 = s = Number of stages  for SSPRK3
     cfl::Real=0.9                       # CFL number (1.0 recommended for RK4, 0.6 for RK3)
-    Ndays::Real=5                       # number of days to integrate for
+    Ndays::Real=200.0                   # number of days to integrate for
     nstep_diff::Int=1                   # diffusive part every nstep_diff time steps.
     nstep_advcor::Int=0                 # advection and coriolis update every nstep_advcor time steps.
                                         # 0 means it is included in every RK4 substep
     compensated::Bool=false             # Compensated summation in the time integration?
 
     # BOUNDARY CONDITION OPTIONS
-    bc::String="nonperiodic"            # "periodic" or anything else for nonperiodic
-    α::Real=0.                          # lateral boundary condition parameter
+    bc::String="periodic"               # "periodic" or anything else for nonperiodic
+    α::Real=2.                          # lateral boundary condition parameter
                                         # 0 free-slip, 0<α<2 partial-slip, 2 no-slip
 
     # PARAMETERS FOR ADJOINT METHOD
@@ -80,11 +80,11 @@
     i::Int = 0                                  # Placeholder for current timestep, needed for Checkpointing.jl
 
     # MOMENTUM ADVECTION OPTIONS
-    adv_scheme::String="ArakawaHsu"       # "Sadourny" or "ArakawaHsu"
+    adv_scheme::String="ArakawaHsu"     # "Sadourny" or "ArakawaHsu"
     dynamics::String="nonlinear"        # "linear" or "nonlinear"
 
     # BOTTOM FRICTION OPTIONS
-    bottom_drag::String="quadratic"     # "linear", "quadratic" or "none"
+    bottom_drag::String="none"          # "linear", "quadratic" or "none"
     cD::Real=1e-5                       # bottom drag coefficient [dimensionless] for quadratic
     τD::Real=300.                       # bottom drag coefficient [days] for linear
 
