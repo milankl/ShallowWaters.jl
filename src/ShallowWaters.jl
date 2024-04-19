@@ -8,9 +8,9 @@ module ShallowWaters
     include("grid.jl")
     include("constants.jl")
     include("forcing.jl")
+    include("preallocate.jl")
     include("model_setup.jl")
     include("initial_conditions.jl")
-    include("preallocate.jl")
 
     include("time_integration.jl")
     include("ghost_points.jl")

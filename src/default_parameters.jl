@@ -70,6 +70,15 @@
     α::Real=2.                          # lateral boundary condition parameter
                                         # 0 free-slip, 0<α<2 partial-slip, 2 no-slip
 
+    # PARAMETERS FOR ADJOINT METHOD
+    data_steps::StepRange{Int,Int} = 0:1:0      # Timesteps where data exists
+    data::Array{Float32, 1} = [0.]              # model data
+    J::Float64 = 0.                             # Placeholder for cost function evaluation
+    j::Int = 1                                  # For keeping track of the entry in data
+
+    # CHECKPOINTING VARIABLES
+    i::Int = 0                                  # Placeholder for current timestep, needed for Checkpointing.jl
+
     # MOMENTUM ADVECTION OPTIONS
     adv_scheme::String="ArakawaHsu"     # "Sadourny" or "ArakawaHsu"
     dynamics::String="nonlinear"        # "linear" or "nonlinear"

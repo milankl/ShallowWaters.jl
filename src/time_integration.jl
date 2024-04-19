@@ -1,7 +1,8 @@
 """Integrates ShallowWaters forward in time."""
-function time_integration(  Prog::PrognosticVars{Tprog},
-                            Diag::DiagnosticVars{T,Tprog},
-                            S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<:AbstractFloat}
+function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<:AbstractFloat}
+
+    Diag = S.Diag
+    Prog = S.Prog
 
     @unpack u,v,η,sst = Prog
     @unpack u0,v0,η0 = Diag.RungeKutta
@@ -171,7 +172,7 @@ function time_integration(  Prog::PrognosticVars{Tprog},
                     axb!(v1,Δt_Δn,dv)
 
                     # if compensated
-                    #     axb!(du_sum,Δt_Δn,du)   
+                    #     axb!(du_sum,Δt_Δn,du)
                     #     axb!(dv_sum,Δt_Δn,dv)
                     # end
                 end

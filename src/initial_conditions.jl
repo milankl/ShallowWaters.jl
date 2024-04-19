@@ -1,15 +1,3 @@
-"""
-    P = ProgVars{T}(u,v,η,sst)
-
-Struct containing the prognostic variables u,v,η and sst.
-"""
-struct PrognosticVars{T<:AbstractFloat}
-    u::Array{T,2}           # u-velocity
-    v::Array{T,2}           # v-velocity
-    η::Array{T,2}           # sea surface height / interface displacement
-    sst::Array{T,2}         # tracer / sea surface temperature
-end
-
 """Zero generator function for Grid G as argument."""
 function PrognosticVars{T}(G::Grid) where {T<:AbstractFloat}
     @unpack nux,nuy,nvx,nvy,nx,ny = G
@@ -23,12 +11,12 @@ function PrognosticVars{T}(G::Grid) where {T<:AbstractFloat}
     return PrognosticVars{T}(u,v,η,sst)
 end
 
-function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
+function initial_conditions(::Type{T},G::Grid,P::Parameter,C::Constants) where {T<:AbstractFloat}
 
     ## PROGNOSTIC VARIABLES U,V,η
-    @unpack nux,nuy,nvx,nvy,nx,ny = S.grid
-    @unpack initial_cond = S.parameters
-    @unpack Tini = S.parameters
+    @unpack nux,nuy,nvx,nvy,nx,ny = G
+    @unpack initial_cond = P
+    @unpack Tini = P
 
     if initial_cond == "rest"
 
@@ -38,14 +26,14 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
 
     elseif initial_cond == "ncfile"
 
-        @unpack initpath,init_run_id,init_starti = S.parameters
-        @unpack init_interpolation = S.parameters
-        @unpack nx,ny = S.grid
+        @unpack initpath,init_run_id,init_starti = P
+        @unpack init_interpolation = P
+        @unpack nx,ny = G
 
-        inirunpath = joinpath(initpath,"run"*@sprintf("%04d",init_run_id))
+        # inirunpath = joinpath(initpath,"run"*@sprintf("%04d",init_run_id))
 
         # take starti time step from existing netcdf files
-        ncstring = joinpath(inirunpath,"u.nc")
+        ncstring = joinpath(initpath,"u.nc")
         ncu = NetCDF.open(ncstring)
 
         if init_starti == -1    # replace -1 with length of time dimension
@@ -54,10 +42,10 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
 
         u = ncu.vars["u"][:,:,init_starti]
 
-        ncv = NetCDF.open(joinpath(inirunpath,"v.nc"))
+        ncv = NetCDF.open(joinpath(initpath,"v.nc"))
         v = ncv.vars["v"][:,:,init_starti]
 
-        ncη = NetCDF.open(joinpath(inirunpath,"eta.nc"))
+        ncη = NetCDF.open(joinpath(initpath,"eta.nc"))
         η = ncη.vars["eta"][:,:,init_starti]
 
         # remove singleton time dimension
@@ -118,10 +106,10 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
 
     ## SST
 
-    @unpack SSTmin, SSTmax, SSTw, SSTϕ = S.parameters
-    @unpack SSTwaves_nx,SSTwaves_ny,SSTwaves_p = S.parameters
-    @unpack sst_initial,scale = S.parameters
-    @unpack x_T,y_T,Lx,Ly = S.grid
+    @unpack SSTmin, SSTmax, SSTw, SSTϕ = P
+    @unpack SSTwaves_nx,SSTwaves_ny,SSTwaves_p = P
+    @unpack sst_initial,scale = P
+    @unpack x_T,y_T,Lx,Ly = G
 
     xx_T,yy_T = meshgrid(x_T,y_T)
 
@@ -136,7 +124,7 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
     elseif sst_initial == "flat"
         sst = fill(SSTmin,size(xx_T))
     elseif sst_initial == "rect"
-        @unpack sst_rect_coords = S.parameters
+        @unpack sst_rect_coords = P
         x0,x1,y0,y1 = sst_rect_coords
 
         sst = fill(SSTmin,size(xx_T))
@@ -159,7 +147,7 @@ function initial_conditions(::Type{T},S::ModelSetup) where {T<:AbstractFloat}
     η = T.(Tini.(η))
 
     #TODO SST INTERPOLATION
-    u,v,η,sst = add_halo(u,v,η,sst,S)
+    u,v,η,sst = add_halo(u,v,η,sst,G,P,C)
 
     return PrognosticVars{T}(u,v,η,sst)
 end
