@@ -1,4 +1,4 @@
-@with_kw struct Parameter
+@with_kw mutable struct Parameter
 
     T=Float32                 # number format
 
@@ -8,8 +8,8 @@
 
     # DOMAIN RESOLUTION AND RATIO
     nx::Int=100                         # number of grid cells in x-direction
-    Lx::Real=4000e3                     # length of the domain in x-direction [m]
-    L_ratio::Real=2                     # Domain aspect ratio of Lx/Ly
+    Lx::Int=4000e3                      # length of the domain in x-direction [m]
+    L_ratio::Int=2                      # Domain aspect ratio of Lx/Ly
 
     # PHYSICAL CONSTANTS
     g::Real=0.1                         # gravitational acceleration [m/s]
@@ -20,7 +20,7 @@
     R::Real=6.371e6                     # Earth's radius [m]
 
     # SCALE
-    scale::Real=2^6                     # multiplicative scale for the momentum equations u,v
+    scale::Int=2^6                      # multiplicative scale for the momentum equations u,v
     scale_sst::Real=2^15                # multiplicative scale for sst
 
     # WIND FORCING OPTIONS

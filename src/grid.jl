@@ -2,7 +2,7 @@
 
     # Parameters taken from Parameter struct
     nx::Int                             # number of grid cells in x-direction
-    Lx::Real                            # length of the domain in x-direction [m]
+    Lx::Int                             # length of the domain in x-direction [m]
     L_ratio::Real                       # Domain aspect ratio of Lx/Ly
     bc::String                          # boundary condition, "periodic" or "nonperiodic"
     g::Real                             # gravitational acceleration [m/s]
@@ -16,10 +16,10 @@
     ω::Real                             # Earth's angular frequency [s^-1]
     ϕ::Real                             # central latitue of the domain (for coriolis) [°]
     R::Real                             # Earth's radius [m]
-    scale::Real                         # multiplicative scale for momentum equations [1]
+    scale::Int                          # multiplicative scale for momentum equations [1]
 
     # DOMAIN SIZES
-    Δ::Real=Lx / nx                         # grid spacing
+    Δ::T=Lx / nx                            # grid spacing
     ny::Int=Int(round(Lx / L_ratio / Δ))    # number of grid cells in y-direction
     Ly::Real=ny * Δ                         # length of domain in y-direction
 
