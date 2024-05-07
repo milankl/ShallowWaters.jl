@@ -19,7 +19,7 @@
     scale::Int                          # multiplicative scale for momentum equations [1]
 
     # DOMAIN SIZES
-    Δ::T=Lx / nx                            # grid spacing
+    Δ::Int=Lx / nx                            # grid spacing
     ny::Int=Int(round(Lx / L_ratio / Δ))    # number of grid cells in y-direction
     Ly::Real=ny * Δ                         # length of domain in y-direction
 
