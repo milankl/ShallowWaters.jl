@@ -26,7 +26,7 @@ function SSPRK3coeff{T}(P::Parameter,Δt_Δ::T) where T
     return SSPRK3coeff{T}(n,s,kn,mn,Δt_Δn,kna,knb,Δt_Δnc)
 end
 
-struct Constants{T<:AbstractFloat,Tprog<:AbstractFloat}
+mutable struct Constants{T<:AbstractFloat,Tprog<:AbstractFloat}
 
     # RUNGE-KUTTA COEFFICIENTS 2nd/3rd/4th order including timestep Δt
     RKaΔt::Array{Tprog,1}

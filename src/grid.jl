@@ -2,26 +2,26 @@
 
     # Parameters taken from Parameter struct
     nx::Int                             # number of grid cells in x-direction
-    Lx::Real                            # length of the domain in x-direction [m]
-    L_ratio::Real                       # Domain aspect ratio of Lx/Ly
+    Lx::Int                             # length of the domain in x-direction [m]
+    L_ratio::Float64                    # Domain aspect ratio of Lx/Ly
     bc::String                          # boundary condition, "periodic" or "nonperiodic"
-    g::Real                             # gravitational acceleration [m/s]
-    H::Real                             # layer thickness at rest [m]
-    cfl::Real                           # CFL number (1.0 recommended for RK4, 0.6 for RK3)
-    Ndays::Real                         # number of days to integrate for
+    g::Float64                          # gravitational acceleration [m/s]
+    H::Float64                          # layer thickness at rest [m]
+    cfl::Float64                        # CFL number (1.0 recommended for RK4, 0.6 for RK3)
+    Ndays::Float64                      # number of days to integrate for
     nstep_diff::Int                     # diffusive terms every nstep_diff time steps.
     nstep_advcor::Int                   # nonlinear terms every nstep_advcor time steps.
-    Uadv::Real                          # Velocity scale [m/s] for tracer advection
-    output_dt::Real                     # output time step [hours]
-    ω::Real                             # Earth's angular frequency [s^-1]
-    ϕ::Real                             # central latitue of the domain (for coriolis) [°]
-    R::Real                             # Earth's radius [m]
-    scale::Real                         # multiplicative scale for momentum equations [1]
+    Uadv::Float64                       # Velocity scale [m/s] for tracer advection
+    output_dt::Float64                  # output time step [hours]
+    ω::Float64                          # Earth's angular frequency [s^-1]
+    ϕ::Float64                          # central latitue of the domain (for coriolis) [°]
+    R::Float64                          # Earth's radius [m]
+    scale::Float64                      # multiplicative scale for momentum equations [1]
 
     # DOMAIN SIZES
-    Δ::Real=Lx / nx                         # grid spacing
+    Δ::Int=Lx / nx                          # grid spacing
     ny::Int=Int(round(Lx / L_ratio / Δ))    # number of grid cells in y-direction
-    Ly::Real=ny * Δ                         # length of domain in y-direction
+    Ly::Float64=ny * Δ                      # length of domain in y-direction
 
     # NUMBER OF GRID POINTS
     nux::Int = if (bc == "periodic") nx else nx-1 end   # u-grid in x-direction
@@ -38,14 +38,14 @@
     nq::Int = nqx*nqy                   # q-grid
 
     # GRID VECTORS
-    x_T::AbstractVector = Δ*Array(1:nx) .- Δ/2
-    y_T::AbstractVector = Δ*Array(1:ny) .- Δ/2
-    x_u::AbstractVector = if (bc == "periodic") Δ*Array(0:nx-1) else Δ*Array(1:nx-1) end
-    y_u::AbstractVector = y_T
-    x_v::AbstractVector = x_T
-    y_v::AbstractVector = Δ*Array(1:ny-1)
-    x_q::AbstractVector = if bc == "periodic" x_u else Δ*Array(1:nx+1) .- Δ end
-    y_q::AbstractVector = Δ*Array(1:ny+1) .- Δ
+    x_T::Vector{Float64} = Δ*Array(1:nx) .- Δ/2
+    y_T::Vector{Float64} = Δ*Array(1:ny) .- Δ/2
+    x_u::Vector{Float64} = if (bc == "periodic") Δ*Array(0:nx-1) else Δ*Array(1:nx-1) end
+    y_u::Vector{Float64} = y_T
+    x_v::Vector{Float64} = x_T
+    y_v::Vector{Float64} = Δ*Array(1:ny-1)
+    x_q::Vector{Float64} = if bc == "periodic" x_u else Δ*Array(1:nx+1) .- Δ end
+    y_q::Vector{Float64} = Δ*Array(1:ny+1) .- Δ
 
     # HALO SIZES
     halo::Int=2                         # halo size for u,v (Biharmonic stencil requires 2)
@@ -57,17 +57,17 @@
     ep::Int = if bc == "periodic" 1 else 0 end  # is there a u-point on the left edge?
 
     # GRID VECTORS WITH HALO
-    x_T_halo::AbstractVector = Δ*Array(0:nx+1) .- Δ/2
-    y_T_halo::AbstractVector = Δ*Array(0:ny+1) .- Δ/2
-    x_u_halo::AbstractVector = if (bc == "periodic") Δ*Array(-2:nx+1) else Δ*Array(-1:nx+1) end
-    y_u_halo::AbstractVector = Δ*Array(-1:ny+2) .- Δ/2
-    x_v_halo::AbstractVector = Δ*Array(-1:nx+2) .- Δ/2
-    y_v_halo::AbstractVector = Δ*Array(-1:ny+1)
-    x_q_halo::AbstractVector = if bc == "periodic" x_u_halo else Δ*Array(-1:nx+3) .- Δ end
-    y_q_halo::AbstractVector = Δ*Array(-1:ny+3) .- Δ
+    x_T_halo::Vector{Float64} = Δ*Array(0:nx+1) .- Δ/2
+    y_T_halo::Vector{Float64} = Δ*Array(0:ny+1) .- Δ/2
+    x_u_halo::Vector{Float64} = if (bc == "periodic") Δ*Array(-2:nx+1) else Δ*Array(-1:nx+1) end
+    y_u_halo::Vector{Float64} = Δ*Array(-1:ny+2) .- Δ/2
+    x_v_halo::Vector{Float64} = Δ*Array(-1:nx+2) .- Δ/2
+    y_v_halo::Vector{Float64} = Δ*Array(-1:ny+1)
+    x_q_halo::Vector{Float64} = if bc == "periodic" x_u_halo else Δ*Array(-1:nx+3) .- Δ end
+    y_q_halo::Vector{Float64} = Δ*Array(-1:ny+3) .- Δ
 
     # TIME STEPS
-    c::Real = √(g*H)                            # shallow water gravity wave speed
+    c::Float64 = √(g*H)                         # shallow water gravity wave speed
     dtint::Int = Int(floor(cfl*Δ/c))            # dt converted to Int
     nt::Int = Int(ceil(Ndays*3600*24/dtint))    # number of time steps to integrate
     dt::T = T(dtint)                            # time step [s]
