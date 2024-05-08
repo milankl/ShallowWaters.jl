@@ -16,7 +16,7 @@
     ω::Real                             # Earth's angular frequency [s^-1]
     ϕ::Real                             # central latitue of the domain (for coriolis) [°]
     R::Real                             # Earth's radius [m]
-    scale::Int                          # multiplicative scale for momentum equations [1]
+    scale::Float64                      # multiplicative scale for momentum equations [1]
 
     # DOMAIN SIZES
     Δ::Int=Lx / nx                            # grid spacing
