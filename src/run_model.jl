@@ -40,3 +40,34 @@ function run_model(::Type{T},P::Parameter) where {T<:AbstractFloat}
     return Prog
 
 end
+
+function run_setup(::Type{T}=Float32;     # number format
+    kwargs...                             # all additional parameters
+    ) where {T<:AbstractFloat}
+
+    P = ShallowWaters.Parameter(T=T;kwargs...)
+    return run_setup(T,P)
+end
+
+function run_setup(P::ShallowWaters.Parameter)
+    @unpack T = P
+    return run_setup(T,P)
+end
+
+function run_setup(::Type{T},P::ShallowWaters.Parameter) where {T<:AbstractFloat}
+
+    @unpack Tprog = P
+
+    G = ShallowWaters.Grid{T,Tprog}(P)
+    C = ShallowWaters.Constants{T,Tprog}(P,G)
+    F = ShallowWaters.Forcing{T}(P,G)
+
+    Prog = ShallowWaters.initial_conditions(Tprog,G,P,C)
+    Diag = ShallowWaters.preallocate(T,Tprog,G)
+
+    # one structure with everything inside 
+    S = ShallowWaters.ModelSetup{T,Tprog}(P,G,C,F,Prog,Diag,0)
+
+    return S
+
+end
