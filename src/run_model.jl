@@ -41,20 +41,20 @@ function run_model(::Type{T},P::Parameter) where {T<:AbstractFloat}
 
 end
 
-function run_setup(::Type{T}=Float32;     # number format
+function model_setup(::Type{T}=Float32;     # number format
     kwargs...                             # all additional parameters
     ) where {T<:AbstractFloat}
 
     P = ShallowWaters.Parameter(T=T;kwargs...)
-    return run_setup(T,P)
+    return model_setup(T,P)
 end
 
-function run_setup(P::ShallowWaters.Parameter)
+function model_setup(P::ShallowWaters.Parameter)
     @unpack T = P
-    return run_setup(T,P)
+    return model_setup(T,P)
 end
 
-function run_setup(::Type{T},P::ShallowWaters.Parameter) where {T<:AbstractFloat}
+function model_setup(::Type{T},P::ShallowWaters.Parameter) where {T<:AbstractFloat}
 
     @unpack Tprog = P
 
