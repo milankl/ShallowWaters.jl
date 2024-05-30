@@ -1,7 +1,7 @@
 name = "ShallowWaters"
 uuid = "56019723-2d87-4a65-81ff-59d5d8913e3c"
 authors = ["Milan Kloewer and ShallowWaters.jl contributors"]
-version = "0.5.2"
+version = "0.5.3"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
