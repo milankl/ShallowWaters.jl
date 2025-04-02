@@ -23,7 +23,7 @@ function tracer!(   i::Integer,
         @unpack ssti,sst_ref,dsst_comp = Diag.SemiLagrange
 
         # convert to type T for mixed precision
-        sstrhs = convert(Diag.PrognosticVarsRHS.sst,sst)
+        sstrhs = mixprec_convert(Diag.PrognosticVarsRHS.sst,sst)
 
         departure!(u,v,Diag,S)
         adv_sst!(sstrhs,Diag,S)

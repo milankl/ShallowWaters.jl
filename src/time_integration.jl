@@ -28,9 +28,9 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
     Ixy!(Diag.Vorticity.h_q,Diag.VolumeFluxes.h)
 
     # calculate PV terms for initial conditions
-    urhs = convert(Diag.PrognosticVarsRHS.u,u)
-    vrhs = convert(Diag.PrognosticVarsRHS.v,v)
-    ηrhs = convert(Diag.PrognosticVarsRHS.η,η)
+    urhs = mixprec_convert(Diag.PrognosticVarsRHS.u,u)
+    vrhs = mixprec_convert(Diag.PrognosticVarsRHS.v,v)
+    ηrhs = mixprec_convert(Diag.PrognosticVarsRHS.η,η)
     advection_coriolis!(urhs,vrhs,ηrhs,Diag,S)
     PVadvection!(Diag,S)
 
@@ -71,9 +71,9 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
                 end
 
                 # type conversion for mixed precision
-                u1rhs = convert(Diag.PrognosticVarsRHS.u,u1)
-                v1rhs = convert(Diag.PrognosticVarsRHS.v,v1)
-                η1rhs = convert(Diag.PrognosticVarsRHS.η,η1)
+                u1rhs = mixprec_convert(Diag.PrognosticVarsRHS.u,u1)
+                v1rhs = mixprec_convert(Diag.PrognosticVarsRHS.v,v1)
+                η1rhs = mixprec_convert(Diag.PrognosticVarsRHS.η,η1)
 
                 rhs!(u1rhs,v1rhs,η1rhs,Diag,S,t)          # momentum only
                 continuity!(u1rhs,v1rhs,η1rhs,Diag,S,t)   # continuity equation 
@@ -118,9 +118,9 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
                 end
 
                 # type conversion for mixed precision
-                u1rhs = convert(Diag.PrognosticVarsRHS.u,u1)
-                v1rhs = convert(Diag.PrognosticVarsRHS.v,v1)
-                η1rhs = convert(Diag.PrognosticVarsRHS.η,η1)
+                u1rhs = mixprec_convert(Diag.PrognosticVarsRHS.u,u1)
+                v1rhs = mixprec_convert(Diag.PrognosticVarsRHS.v,v1)
+                η1rhs = mixprec_convert(Diag.PrognosticVarsRHS.η,η1)
 
                 rhs!(u1rhs,v1rhs,η1rhs,Diag,S,t)        # momentum only
 
@@ -130,8 +130,8 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
 
                 # semi-implicit for continuity equation, use new u1,v1 to calcualte dη
                 ghost_points_uv!(u1,v1,S)
-                u1rhs = convert(Diag.PrognosticVarsRHS.u,u1)
-                v1rhs = convert(Diag.PrognosticVarsRHS.v,v1)
+                u1rhs = mixprec_convert(Diag.PrognosticVarsRHS.u,u1)
+                v1rhs = mixprec_convert(Diag.PrognosticVarsRHS.v,v1)
                 continuity!(u1rhs,v1rhs,η1rhs,Diag,S,t)
                 axb!(η1,Δt_Δs,dη)       # η1 = η1 + Δt/(s-1)*RHS(u1)
             end
@@ -158,9 +158,9 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
                 end
 
                 # type conversion for mixed precision
-                u1rhs = convert(Diag.PrognosticVarsRHS.u,u1)
-                v1rhs = convert(Diag.PrognosticVarsRHS.v,v1)
-                η1rhs = convert(Diag.PrognosticVarsRHS.η,η1)
+                u1rhs = mixprec_convert(Diag.PrognosticVarsRHS.u,u1)
+                v1rhs = mixprec_convert(Diag.PrognosticVarsRHS.v,v1)
+                η1rhs = mixprec_convert(Diag.PrognosticVarsRHS.η,η1)
 
                 rhs!(u1rhs,v1rhs,η1rhs,Diag,S,t)
 
@@ -179,8 +179,8 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
 
                 # semi-implicit for continuity equation, use new u1,v1 to calcualte dη
                 ghost_points_uv!(u1,v1,S)
-                u1rhs = convert(Diag.PrognosticVarsRHS.u,u1)
-                v1rhs = convert(Diag.PrognosticVarsRHS.v,v1)
+                u1rhs = mixprec_convert(Diag.PrognosticVarsRHS.u,u1)
+                v1rhs = mixprec_convert(Diag.PrognosticVarsRHS.v,v1)
                 continuity!(u1rhs,v1rhs,η1rhs,Diag,S,t)
 
                 if rki == kn
@@ -210,9 +210,9 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
                 end
 
                 # type conversion for mixed precision
-                u1rhs = convert(Diag.PrognosticVarsRHS.u,u1)
-                v1rhs = convert(Diag.PrognosticVarsRHS.v,v1)
-                η1rhs = convert(Diag.PrognosticVarsRHS.η,η1)
+                u1rhs = mixprec_convert(Diag.PrognosticVarsRHS.u,u1)
+                v1rhs = mixprec_convert(Diag.PrognosticVarsRHS.v,v1)
+                η1rhs = mixprec_convert(Diag.PrognosticVarsRHS.η,η1)
 
                 rhs!(u1rhs,v1rhs,η1rhs,Diag,S,t)
 
@@ -223,8 +223,8 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
 
                 # semi-implicit for continuity equation, use u1,v1 to calcualte dη
                 ghost_points_uv!(u1,v1,S)
-                u1rhs = convert(Diag.PrognosticVarsRHS.u,u1)
-                v1rhs = convert(Diag.PrognosticVarsRHS.v,v1)
+                u1rhs = mixprec_convert(Diag.PrognosticVarsRHS.u,u1)
+                v1rhs = mixprec_convert(Diag.PrognosticVarsRHS.v,v1)
                 continuity!(u1rhs,v1rhs,η1rhs,Diag,S,t)
                 
                 caxb!(η0,η1,Δt_Δ,dη)    # store Euler update into η0
@@ -245,9 +245,9 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
         ghost_points!(u0,v0,η0,S)
 
         # type conversion for mixed precision
-        u0rhs = convert(Diag.PrognosticVarsRHS.u,u0)
-        v0rhs = convert(Diag.PrognosticVarsRHS.v,v0)
-        η0rhs = convert(Diag.PrognosticVarsRHS.η,η0)
+        u0rhs = mixprec_convert(Diag.PrognosticVarsRHS.u,u0)
+        v0rhs = mixprec_convert(Diag.PrognosticVarsRHS.v,v0)
+        η0rhs = mixprec_convert(Diag.PrognosticVarsRHS.η,η0)
 
         # ADVECTION and CORIOLIS TERMS
         # although included in the tendency of every RK substep,
@@ -270,8 +270,8 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
         t += dtint
 
         # TRACER ADVECTION
-        u0rhs = convert(Diag.PrognosticVarsRHS.u,u0)  # copy back as add_drag_diff_tendencies changed u0,v0
-        v0rhs = convert(Diag.PrognosticVarsRHS.v,v0)
+        u0rhs = mixprec_convert(Diag.PrognosticVarsRHS.u,u0)  # copy back as add_drag_diff_tendencies changed u0,v0
+        v0rhs = mixprec_convert(Diag.PrognosticVarsRHS.v,v0)
         tracer!(i,u0rhs,v0rhs,Prog,Diag,S)
 
         # feedback and output
@@ -395,7 +395,7 @@ end
 
 """Convert function for two arrays, X1, X2, in case their eltypes differ.
 Convert every element from X1 and store it in X2."""
-function Base.convert(X2::Array{T2,N},X1::Array{T1,N}) where {T1,T2,N}
+function mixprec_convert(X2::Array{T2,N},X1::Array{T1,N}) where {T1,T2,N}
 
     @boundscheck size(X2) == size(X1) || throw(BoundsError())
 
@@ -409,7 +409,7 @@ end
 
 """Convert function for two arrays, X1, X2, in case their eltypes are identical.
 Just pass X1, such that X2 is pointed to the same place in memory."""
-function Base.convert(X2::Array{T,N},X1::Array{T,N}) where {T,N}
+function mixprec_convert(X2::Array{T,N},X1::Array{T,N}) where {T,N}
     @boundscheck size(X2) == size(X1) || throw(BoundsError())
     return X1
 end

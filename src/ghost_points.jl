@@ -68,6 +68,34 @@ function add_halo(  u::Array{T,2},
     return u,v,η,sst
 end
 
+function add_halo(u::Array{T,2},
+                  v::Array{T,2},
+                  η::Array{T,2},
+                  S::ModelSetup) where {T<:AbstractFloat}
+
+@unpack nx,ny,nux,nuy,nvx,nvy = S.grid
+@unpack halo,haloη,halosstx,halossty = S.grid
+
+# Add zeros to satisfy kinematic boundary conditions
+u = cat(zeros(T,halo,nuy),u,zeros(T,halo,nuy),dims=1)
+u = cat(zeros(T,nux+2*halo,halo),u,zeros(T,nux+2*halo,halo),dims=2)
+
+v = cat(zeros(T,halo,nvy),v,zeros(T,halo,nvy),dims=1)
+v = cat(zeros(T,nvx+2*halo,halo),v,zeros(T,nvx+2*halo,halo),dims=2)
+
+η = cat(zeros(T,haloη,ny),η,zeros(T,haloη,ny),dims=1)
+η = cat(zeros(T,nx+2*haloη,haloη),η,zeros(T,nx+2*haloη,haloη),dims=2)
+
+# SCALING
+@unpack scale,scale_sst = S.constants
+u *= scale
+v *= scale
+
+ghost_points!(u,v,η,S)
+
+return u,v,η
+end
+
 """Cut off the halo from the prognostic variables."""
 function remove_halo(   u::Array{T,2},
                         v::Array{T,2},
@@ -132,7 +160,7 @@ end
 """Decide on boundary condition P.bc which ghost point function to execute."""
 function ghost_points_uv!(  u::AbstractMatrix,
                             v::AbstractMatrix,
-                            P::Parameter, 
+                            P::Parameter,
                             C::Constants)
 
     @unpack bc,Tcomm = P

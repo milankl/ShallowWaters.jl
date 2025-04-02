@@ -26,5 +26,5 @@ mutable struct ModelSetup{T<:AbstractFloat,Tprog<:AbstractFloat}
     forcing::Forcing{T}
     Prog::PrognosticVars{Tprog}
     Diag::DiagnosticVars{T, Tprog}
-    t::Int                              # SW: I believe this has something to do with Checkpointing, need to verify
+    t::Int
 end
