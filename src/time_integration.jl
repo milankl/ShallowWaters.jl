@@ -28,12 +28,9 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
     Ixy!(Diag.Vorticity.h_q,Diag.VolumeFluxes.h)
 
     # calculate PV terms for initial conditions
-    Diag.PrognosticVarsRHS.u .= u
-    urhs = Diag.PrognosticVarsRHS.u
-    Diag.PrognosticVarsRHS.v .= v
-    vrhs = Diag.PrognosticVarsRHS.v
-    Diag.PrognosticVarsRHS.η .= η
-    ηrhs = Diag.PrognosticVarsRHS.η
+    urhs = Diag.PrognosticVarsRHS.u .= u
+    vrhs = Diag.PrognosticVarsRHS.v .= v
+    ηrhs = Diag.PrognosticVarsRHS.η .= η
 
     advection_coriolis!(urhs,vrhs,ηrhs,Diag,S)
     PVadvection!(Diag,S)
