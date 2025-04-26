@@ -72,12 +72,9 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
                 end
 
                 # type conversion for mixed precision
-                Diag.PrognosticVarsRHS.u .= u1
-                u1rhs = Diag.PrognosticVarsRHS.u
-                Diag.PrognosticVarsRHS.v .= v1
-                v1rhs = Diag.PrognosticVarsRHS.v
-                Diag.PrognosticVarsRHS.η .= η1
-                η1rhs = Diag.PrognosticVarsRHS.η
+                u1rhs = Diag.PrognosticVarsRHS.u .= u1
+                v1rhs = Diag.PrognosticVarsRHS.v .= v1
+                η1rhs = Diag.PrognosticVarsRHS.η .= η1
 
                 rhs!(u1rhs,v1rhs,η1rhs,Diag,S,t)          # momentum only
                 continuity!(u1rhs,v1rhs,η1rhs,Diag,S,t)   # continuity equation 
@@ -122,12 +119,9 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
                 end
 
                 # type conversion for mixed precision
-                Diag.PrognosticVarsRHS.u .= u1
-                u1rhs = Diag.PrognosticVarsRHS.u
-                Diag.PrognosticVarsRHS.v .= v1
-                v1rhs = Diag.PrognosticVarsRHS.v
-                Diag.PrognosticVarsRHS.η .= η1
-                η1rhs = Diag.PrognosticVarsRHS.η
+                u1rhs = Diag.PrognosticVarsRHS.u .= u1
+                v1rhs = Diag.PrognosticVarsRHS.v .= v1
+                η1rhs = Diag.PrognosticVarsRHS.η .= η1
 
                 rhs!(u1rhs,v1rhs,η1rhs,Diag,S,t)        # momentum only
 
@@ -137,10 +131,8 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
 
                 # semi-implicit for continuity equation, use new u1,v1 to calcualte dη
                 ghost_points_uv!(u1,v1,S)
-                Diag.PrognosticVarsRHS.u .= u1
-                u1rhs .= Diag.PrognosticVarsRHS.u
-                Diag.PrognosticVarsRHS.v .= v1
-                v1rhs .= Diag.PrognosticVarsRHS.v
+                u1rhs .= Diag.PrognosticVarsRHS.u .= u1
+                v1rhs .= Diag.PrognosticVarsRHS.v .= v1
 
                 continuity!(u1rhs,v1rhs,η1rhs,Diag,S,t)
                 axb!(η1,Δt_Δs,dη)       # η1 = η1 + Δt/(s-1)*RHS(u1)
@@ -168,12 +160,9 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
                 end
 
                 # type conversion for mixed precision
-                Diag.PrognosticVarsRHS.u .= u1
-                u1rhs = Diag.PrognosticVarsRHS.u
-                Diag.PrognosticVarsRHS.v .= v1
-                v1rhs = Diag.PrognosticVarsRHS.v
-                Diag.PrognosticVarsRHS.η .= η1
-                η1rhs = Diag.PrognosticVarsRHS.η
+                u1rhs = Diag.PrognosticVarsRHS.u .= u1
+                v1rhs = Diag.PrognosticVarsRHS.v .= v1
+                η1rhs = Diag.PrognosticVarsRHS.η .= η1
 
                 rhs!(u1rhs,v1rhs,η1rhs,Diag,S,t)
 
@@ -192,10 +181,8 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
 
                 # semi-implicit for continuity equation, use new u1,v1 to calcualte dη
                 ghost_points_uv!(u1,v1,S)
-                Diag.PrognosticVarsRHS.u .= u1
-                u1rhs .= Diag.PrognosticVarsRHS.u
-                Diag.PrognosticVarsRHS.v .= v1
-                v1rhs .= Diag.PrognosticVarsRHS.v
+                u1rhs .= Diag.PrognosticVarsRHS.u .= u1
+                v1rhs .= Diag.PrognosticVarsRHS.v .= v1
 
                 continuity!(u1rhs,v1rhs,η1rhs,Diag,S,t)
 
@@ -226,14 +213,9 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
                 end
 
                 # type conversion for mixed precision
-                Diag.PrognosticVarsRHS.u .= u1
-                u1rhs = Diag.PrognosticVarsRHS.u
-
-                Diag.PrognosticVarsRHS.v .= v1
-                v1rhs = Diag.PrognosticVarsRHS.v
-
-                Diag.PrognosticVarsRHS.η .= η1
-                η1rhs = Diag.PrognosticVarsRHS.η
+                u1rhs = Diag.PrognosticVarsRHS.u .= u1
+                v1rhs = Diag.PrognosticVarsRHS.v .= v1
+                η1rhs = Diag.PrognosticVarsRHS.η .= η1
 
                 rhs!(u1rhs,v1rhs,η1rhs,Diag,S,t)
 
@@ -245,10 +227,8 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
                 # semi-implicit for continuity equation, use u1,v1 to calcualte dη
                 ghost_points_uv!(u1,v1,S)
 
-                Diag.PrognosticVarsRHS.u .= u1
-                u1rhs .= Diag.PrognosticVarsRHS.u
-                Diag.PrognosticVarsRHS.v .= v1
-                v1rhs .= Diag.PrognosticVarsRHS.v
+                u1rhs .= Diag.PrognosticVarsRHS.u .= u1
+                v1rhs .= Diag.PrognosticVarsRHS.v .= v1
 
                 continuity!(u1rhs,v1rhs,η1rhs,Diag,S,t)
                 
@@ -270,12 +250,9 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
         ghost_points!(u0,v0,η0,S)
 
         # type conversion for mixed precision
-        Diag.PrognosticVarsRHS.u .= u0
-        u0rhs = Diag.PrognosticVarsRHS.u
-        Diag.PrognosticVarsRHS.v .= v0
-        v0rhs = Diag.PrognosticVarsRHS.v
-        Diag.PrognosticVarsRHS.η .= η0
-        η0rhs = Diag.PrognosticVarsRHS.η
+        u0rhs = Diag.PrognosticVarsRHS.u .= u0
+        v0rhs = Diag.PrognosticVarsRHS.v .= v0
+        η0rhs = Diag.PrognosticVarsRHS.η .= η0
 
         # ADVECTION and CORIOLIS TERMS
         # although included in the tendency of every RK substep,
@@ -298,10 +275,8 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
         t += dtint
 
         # TRACER ADVECTION
-        Diag.PrognosticVarsRHS.u .= u0
-        u0rhs .= Diag.PrognosticVarsRHS.u
-        Diag.PrognosticVarsRHS.v .= v0
-        v0rhs .= Diag.PrognosticVarsRHS.v
+        u0rhs .= Diag.PrognosticVarsRHS.u .= u0
+        v0rhs .= Diag.PrognosticVarsRHS.v .= v0
 
         tracer!(i,u0rhs,v0rhs,Prog,Diag,S)
 
