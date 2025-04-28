@@ -131,8 +131,8 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
 
                 # semi-implicit for continuity equation, use new u1,v1 to calcualte dη
                 ghost_points_uv!(u1,v1,S)
-                u1rhs .= Diag.PrognosticVarsRHS.u .= u1
-                v1rhs .= Diag.PrognosticVarsRHS.v .= v1
+                u1rhs = Diag.PrognosticVarsRHS.u .= u1
+                v1rhs = Diag.PrognosticVarsRHS.v .= v1
 
                 continuity!(u1rhs,v1rhs,η1rhs,Diag,S,t)
                 axb!(η1,Δt_Δs,dη)       # η1 = η1 + Δt/(s-1)*RHS(u1)
@@ -181,8 +181,8 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
 
                 # semi-implicit for continuity equation, use new u1,v1 to calcualte dη
                 ghost_points_uv!(u1,v1,S)
-                u1rhs .= Diag.PrognosticVarsRHS.u .= u1
-                v1rhs .= Diag.PrognosticVarsRHS.v .= v1
+                u1rhs = Diag.PrognosticVarsRHS.u .= u1
+                v1rhs = Diag.PrognosticVarsRHS.v .= v1
 
                 continuity!(u1rhs,v1rhs,η1rhs,Diag,S,t)
 
@@ -227,8 +227,8 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
                 # semi-implicit for continuity equation, use u1,v1 to calcualte dη
                 ghost_points_uv!(u1,v1,S)
 
-                u1rhs .= Diag.PrognosticVarsRHS.u .= u1
-                v1rhs .= Diag.PrognosticVarsRHS.v .= v1
+                u1rhs = Diag.PrognosticVarsRHS.u .= u1
+                v1rhs = Diag.PrognosticVarsRHS.v .= v1
 
                 continuity!(u1rhs,v1rhs,η1rhs,Diag,S,t)
                 
@@ -275,8 +275,8 @@ function time_integration(S::ModelSetup{T,Tprog}) where {T<:AbstractFloat,Tprog<
         t += dtint
 
         # TRACER ADVECTION
-        u0rhs .= Diag.PrognosticVarsRHS.u .= u0
-        v0rhs .= Diag.PrognosticVarsRHS.v .= v0
+        u0rhs = Diag.PrognosticVarsRHS.u .= u0
+        v0rhs = Diag.PrognosticVarsRHS.v .= v0
 
         tracer!(i,u0rhs,v0rhs,Prog,Diag,S)
 
@@ -398,24 +398,3 @@ function dxaybzc!(  d::Array{T,2},
         end
     end
 end
-
-# """Convert function for two arrays, X1, X2, in case their eltypes differ.
-# Convert every element from X1 and store it in X2."""
-# function mixprec_convert(X2::Array{T2,N},X1::Array{T1,N}) where {T1,T2,N}
-
-#     @boundscheck size(X2) == size(X1) || throw(BoundsError())
-
-#     @inbounds for i in eachindex(X1)
-#             X2[i] = convert(T2,X1[i])
-#     end
-
-#     return X2
-# end
-
-
-# """Convert function for two arrays, X1, X2, in case their eltypes are identical.
-# Just pass X1, such that X2 is pointed to the same place in memory."""
-# function mixprec_convert(X2::Array{T,N},X1::Array{T,N}) where {T,N}
-#     @boundscheck size(X2) == size(X1) || throw(BoundsError())
-#     return X1
-# end
