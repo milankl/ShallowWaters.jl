@@ -14,7 +14,7 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Checkpointing = "eb46d486-4f9c-4c3d-b445-a617f2a2f1ca"
 
 [compat]
-Checkpointing = "0.9"
+Checkpointing = "0.11.1"
 Interpolations = "0.12, 0.13, 0.14"
 NetCDF = "0.10, 0.11"
 Parameters = "0.12, 0.13"
