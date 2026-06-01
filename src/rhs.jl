@@ -252,7 +252,7 @@ function momentum_u!(   Diag::DiagnosticVars{T,Tprog},
                 du[i+2,j+2] = (Tprog(qhv[i,j]) - Tprog(dpdx[i+1-ep,j+1])) + Tprog(Fxt*Fx[i,j]) + Tprog(S.Diag.ZBVars.S_u[i,j])
             end
         end
-    elseif
+    else
         @inbounds for j ∈ 1:n
             for i ∈ 1:m
                 du[i+2,j+2] = (Tprog(qhv[i,j]) - Tprog(dpdx[i+1-ep,j+1])) + Tprog(Fxt*Fx[i,j])
