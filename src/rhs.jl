@@ -46,6 +46,11 @@ function rhs_nonlinear!(u::AbstractMatrix,
     ∂x!(dpdx,p)
     ∂y!(dpdy,p)
 
+    # Check if adding Zanna Bolton forcing term
+    if S.parameters.zb_forcing_momentum
+        ZB_momentum(u,v,S,Diag)
+    end
+
     # adding the terms
     momentum_u!(Diag,S,t)
     momentum_v!(Diag,S,t)
@@ -241,9 +246,17 @@ function momentum_u!(   Diag::DiagnosticVars{T,Tprog},
         Fxt = one(T)
     end
 
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-            du[i+2,j+2] = (Tprog(qhv[i,j]) - Tprog(dpdx[i+1-ep,j+1])) + Tprog(Fxt*Fx[i,j])
+    if  S.parameters.zb_forcing_momentum
+        @inbounds for j ∈ 1:n
+            for i ∈ 1:m 
+                du[i+2,j+2] = (Tprog(qhv[i,j]) - Tprog(dpdx[i+1-ep,j+1])) + Tprog(Fxt*Fx[i,j]) + Tprog(S.Diag.ZBVars.S_u[i,j])
+            end
+        end
+    elseif
+        @inbounds for j ∈ 1:n
+            for i ∈ 1:m
+                du[i+2,j+2] = (Tprog(qhv[i,j]) - Tprog(dpdx[i+1-ep,j+1])) + Tprog(Fxt*Fx[i,j])
+            end
         end
     end
 end
@@ -270,9 +283,17 @@ function momentum_v!(   Diag::DiagnosticVars{T,Tprog},
         Fyt = one(T)
     end
 
-    @inbounds for j ∈ 1:n
-        for i ∈ 1:m
-             dv[i+2,j+2] = -(Tprog(qhu[i,j]) + Tprog(dpdy[i+1,j+1])) + Tprog(Fyt*Fy[i,j])
+    if S.parameters.zb_forcing_momentum
+        @inbounds for j ∈ 1:n
+            for i ∈ 1:m
+                dv[i+2,j+2] = -(Tprog(qhu[i,j]) + Tprog(dpdy[i+1,j+1])) + Tprog(Fyt*Fy[i,j]) + Tprog(S.Diag.ZBVars.S_v[i,j])
+            end
+        end
+    else
+        @inbounds for j ∈ 1:n
+            for i ∈ 1:m
+                dv[i+2,j+2] = -(Tprog(qhu[i,j]) + Tprog(dpdy[i+1,j+1])) + Tprog(Fyt*Fy[i,j])
+            end
         end
     end
 end
