@@ -48,7 +48,7 @@ function rhs_nonlinear!(u::AbstractMatrix,
 
     # Check if adding Zanna Bolton forcing term
     if S.parameters.zb_forcing_momentum
-        ZB_momentum(u,v,S,Diag)
+        ZB_forcing!(S,u,v)
     end
 
     # adding the terms

@@ -235,7 +235,7 @@ function add_drag_diff_tendencies!( u::Matrix{Tprog},
     @boundscheck (m+2-ep,n) == size(LLu2) || throw(BoundsError())
 
     if S.parameters.zb_forcing_dissipation
-        ZB_forcing(u,v,S,Diag)
+        ZB_forcing!(S,u,v)
     end
 
     if compensated
