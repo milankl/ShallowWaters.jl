@@ -488,17 +488,16 @@ end
     Dhatsq::Array{T,2} = zeros(T,nqx-1+2*haloη,nqy-1+2*haloη)   # square of the tensor
     Dhatq::Array{T,2} = zeros(T,nqx,nqy)                  # tensor interpolated onto q-grid
 
-    ζpDT::Array{T,2} = zeros(T,nx,ny)           # ζ^2 + D^2 interpolated to cell centers, not currently used
     ζsqT::Array{T,2} = zeros(T,nqx-1,nqy-1)     # ζ^2 interpolated to cell centers
-    ζD::Array{T,2} = zeros(T,nqx,nqy)           # ζ ⋅ D, cell corners
-    ζDT::Array{T,2} = zeros(T,nqx-1,nqy-1)      # ζ ⋅ D, placed on cell centers
-    ζDhat::Array{T,2} = zeros(T,nqx,nqy)        # ζ ⋅ Dhat, cell corners
+    ζD::Array{T,2} = zeros(T,nqx,nqy)           # ζD, cell corners
+    ζDT::Array{T,2} = zeros(T,nqx-1,nqy-1)      # ζD, placed on cell centers
+    ζDhat::Array{T,2} = zeros(T,nqx,nqy)        # ζDhat, cell corners
     
-    trace::Array{T,2} = zeros(T,nx,ny)     # ξ^2 + D^2 + Dhat^2, cell centers
+    trace::Array{T,2} = zeros(T,nx,ny)     # ζ^2 (+ D^2 + Dhat^2), cell centers. We only compute ζ^2 rather than the whole sum
 
-    ζD_filtered::Array{T,2} = zeros(T,nx,ny)      # ξD with filter applied
-    ζDhat_filtered::Array{T,2} = zeros(T,nqx,nqy)   # ξDhat with filter applied
-    trace_filtered::Array{T,2} = zeros(T,nx,ny)     # trace with filter applied
+    ζD_filtered::Array{T,2} = zeros(T,nqx-1,nqy-1)        # ζD with filter applied
+    ζDhat_filtered::Array{T,2} = zeros(T,nqx,nqy)         # ζDhat with filter applied
+    trace_filtered::Array{T,2} = zeros(T,nqx-1,nqy-1)     # trace with filter applied
 
     dζDdx::Array{T,2} = zeros(T,nux,nuy)             # u-grid
     dζDhatdy::Array{T,2} = zeros(T,nux+halo,nuy)     # u-grid, initially with extra halo points
@@ -541,7 +540,7 @@ function preallocate(   ::Type{T},
     SM = SmagorinskyVars{T}(G)
     SL = SemiLagrangeVars{T}(G)
     PV = PrognosticVars{T}(G)
-    ZB = ZBVars{T}(G)
+    ZB = ZBVars{Tprog}(G)
 
     return DiagnosticVars{T,Tprog}(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PV,ZB)
 end

@@ -110,15 +110,13 @@ function ZB_forcing!(S, u, v)
     @unpack zb_filtered, N  = S.parameters
     @unpack γ₀, ζ, ζsq, D, Dsq, Dhat, Dhatsq, Dhatq = Diag.ZBVars
     @unpack ζD, ζDT, ζDhat, ζsqT, trace = Diag.ZBVars
-    @unpack ζpDT = Diag.ZBVars
     @unpack dudx, dudy, dvdx, dvdy = Diag.ZBVars
 
     @unpack dζDdx, dζDhatdy, dtracedx = Diag.ZBVars
     @unpack dζDhatdx, dζDdy, dtracedy = Diag.ZBVars
     @unpack S_u, S_v = Diag.ZBVars
-    @unpack Δ, scale, f₀ = S.grid
+    @unpack Δ, scale, f₀, ep = S.grid
 
-    @unpack Ker = Diag.ZBVars
     @unpack ζD_filtered, ζDhat_filtered, trace_filtered = Diag.ZBVars
 
     @unpack halo, haloη, ep, nux, nuy, nvx, nvy = S.grid
@@ -142,15 +140,15 @@ function ZB_forcing!(S, u, v)
     # Relative vorticity and shear deformation, cell corners
     @inbounds for j ∈ 1:nq
         for k ∈ 1:mq
-            ζ[k,j] = dvdx[k+1,j+1] - dudy[k+1,j+1]
-            D[k,j] = dudy[k+1,j+1] + dvdx[k+1,j+1]
+            ζ[k,j] = dvdx[k+1,j+1] - dudy[k+1+ep,j+1]
+            D[k,j] = dudy[k+1+ep,j+1] + dvdx[k+1,j+1]
         end
     end
 
     # Stretch deformation, cell centers (with halo)
     @inbounds for j ∈ 1:nTh
         for k ∈ 1:mTh
-            Dhat[k,j] = dudx[k,j+1] - dvdy[k+1,j]
+            Dhat[k,j] = dudx[k+ep,j+1] - dvdy[k+1,j]
         end
     end
 
