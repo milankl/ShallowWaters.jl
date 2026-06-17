@@ -472,14 +472,7 @@ end
     dvdx::Array{T,2} = zeros(T,nvx+2*halo-1,nvy+2*halo)    # ∂v/∂x
     dvdy::Array{T,2} = zeros(T,nvx+2*halo,nvy+2*halo-1)    # ∂v/∂y
 
-    γ₀::Float64=0.3                       # coefficient in parameterization term
-
-    # these are only utilized in a scheme where γ varies spacially
-    γ::Array{T,2} = zeros(T,nx,ny)
-    γ_u::Array{T,2} = zeros(T,nux,nuy)
-    γ_v::Array{T,2} = zeros(T,nvx,nvy)
-
-    Ker::Array{T,2} = zeros(3,3)    # convolutional kernal
+    γ₀::T=0.3                       # coefficient in parameterization term
 
     ζ::Array{T,2} = zeros(T,nqx,nqy)      # relative vorticity, cell corners
     ζsq::Array{T,2} = zeros(T,nqx,nqy)    # relative vorticity squared, cell corners
@@ -528,19 +521,8 @@ function ZBVars{T}(G::Grid) where {T<:AbstractFloat}
     @unpack halo,haloη = G
     @unpack halosstx,halossty = G
 
-    Ker = zeros(3,3)
-    Ker[1,1] = 1
-    Ker[1,2] = 2
-    Ker[1,3] = 1
-    Ker[2,1] = 2
-    Ker[2,2] = 4
-    Ker[2,3] = 2
-    Ker[3,1] = 1
-    Ker[3,2] = 2
-    Ker[3,3] = 1
-
     return ZBVars{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη,
-                            halosstx=halosstx,halossty=halossty,Ker=Ker)
+                            halosstx=halosstx,halossty=halossty)
 end
 
 """Preallocate the diagnostic variables and return them as matrices in structs."""

@@ -104,8 +104,9 @@ function apply_filter(N,ζsqT,ζDT,ζDhat,ζD_filtered,ζDhat_filtered,trace_fil
 
 end
 
-function ZB_forcing(u, v, S, Diag)
+function ZB_forcing!(S, u, v)
 
+    Diag = S.Diag
     @unpack zb_filtered, N  = S.parameters
     @unpack γ₀, ζ, ζsq, D, Dsq, Dhat, Dhatsq, Dhatq = Diag.ZBVars
     @unpack ζD, ζDT, ζDhat, ζsqT, trace = Diag.ZBVars
