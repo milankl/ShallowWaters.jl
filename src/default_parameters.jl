@@ -157,6 +157,8 @@
     @assert init_run_id >= 0 "Initial condition run id, init_run_id, has to be >= 0, $init_run_id given."
     @assert init_starti > 0 || init_starti == -1 "Start index, init_starti, has to be >0 || -1, $init_starti given."
     @assert get_id_mode in ["continue","fill","specific"] "get_id_mode $get_id_mode unsupported."
+    @assert !(zb_forcing_momentum && zb_forcing_dissipation)   "Model is adding the ZB forcing to both the momentum and dissipation calculations, should only add to one or the other"
+    @assert !((zb_forcing_dissipation || zb_forcing_momentum) && L_ratio == 2)   "ZB forcing breaks on a non-square domain, L_ratio = $L_ratio given"
 end
 
 """
