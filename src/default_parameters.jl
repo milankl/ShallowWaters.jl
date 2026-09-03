@@ -74,7 +74,7 @@
     zb_forcing_momentum::Bool=false     # add ZB forcing term to momentum calculation?
     zb_forcing_dissipation::Bool=false  # add ZB forcing term to dissipation calculation? (i.e. once per timestep)
     zb_filtered::Bool=true              # apply a filter to entries in the forcing tensor?
-    N::Int=1                            # how many times to apply filter to entries in forcing tensor
+    N::Int=1                            # how many times to apply filter to entries in ZB forcing tensor
 
     # MOMENTUM ADVECTION OPTIONS
     adv_scheme::String="ArakawaHsu"     # "Sadourny" or "ArakawaHsu"
@@ -158,7 +158,7 @@
     @assert init_starti > 0 || init_starti == -1 "Start index, init_starti, has to be >0 || -1, $init_starti given."
     @assert get_id_mode in ["continue","fill","specific"] "get_id_mode $get_id_mode unsupported."
     @assert !(zb_forcing_momentum && zb_forcing_dissipation)   "Model is adding the ZB forcing to both the momentum and dissipation calculations, should only add to one or the other"
-    @assert !((zb_forcing_dissipation || zb_forcing_momentum) && L_ratio == 2)   "ZB forcing breaks on a non-square domain, L_ratio = $L_ratio given"
+    @assert !((zb_forcing_dissipation || zb_forcing_momentum) && bc == "periodic")   "ZB forcing breaks on a periodic domain"
 end
 
 """
