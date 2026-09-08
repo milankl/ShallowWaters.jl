@@ -76,6 +76,10 @@
     zb_filtered::Bool=true              # apply a filter to entries in the forcing tensor?
     N::Int=1                            # how many times to apply filter to entries in ZB forcing tensor
 
+    # NN FORCING OPTIONS
+    nn_forcing_momentum::Bool=false
+    nn_forcing_dissipation::Bool=false
+
     # MOMENTUM ADVECTION OPTIONS
     adv_scheme::String="ArakawaHsu"     # "Sadourny" or "ArakawaHsu"
     dynamics::String="nonlinear"        # "linear" or "nonlinear"

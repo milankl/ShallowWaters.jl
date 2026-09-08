@@ -18,6 +18,7 @@ struct DiagnosticVars{T,Tprog}
     SemiLagrange::SemiLagrangeVars{T}
     PrognosticVarsRHS::PrognosticVars{T}        # low precision version
     ZBVars::ZBVars{Tprog}
+    CNNVars::CNNVars{Tprog}
 end
 
 mutable struct ModelSetup{T<:AbstractFloat,Tprog<:AbstractFloat}

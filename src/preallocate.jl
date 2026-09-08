@@ -524,6 +524,147 @@ function ZBVars{T}(G::Grid) where {T<:AbstractFloat}
                             halosstx=halosstx,halossty=halossty)
 end
 
+""" Variables that appear in NN forcing term """
+@with_kw mutable struct CNNVars{T<:AbstractFloat, SuLayerType, SvLayerType, SuModelType, SvModelType}#, SuCompiledType, SvCompiledType, DSuCompiledType, DSvCompiledType}
+
+    # to be specified
+    nx::Int
+    ny::Int
+    bc::String
+    halo::Int
+    haloη::Int
+    halosstx::Int
+    halossty::Int
+
+    nux::Int = if (bc == "periodic") nx else nx-1 end      # u-grid in x-direction
+    nuy::Int = ny                                          # u-grid in y-direction
+    nvx::Int = nx                                          # v-grid in x-direction
+    nvy::Int = ny-1                                        # v-grid in y-direction
+    nqx::Int = if (bc == "periodic") nx else nx+1 end      # q-grid in x-direction
+    nqy::Int = ny+1                                        # q-grid in y-direction
+
+    γ₀::Float64=0.3                       # coefficient in parameterization term
+
+    dudx::Array{T,2} = zeros(T,nux+2*halo-1,nuy+2*halo)    # ∂u/∂x
+    dudy::Array{T,2} = zeros(T,nux+2*halo,nuy+2*halo-1)    # ∂u/∂y
+    dvdx::Array{T,2} = zeros(T,nvx+2*halo-1,nvy+2*halo)    # ∂v/∂x
+    dvdy::Array{T,2} = zeros(T,nvx+2*halo,nvy+2*halo-1)    # ∂v/∂y
+
+    ζ::Array{T,2} = zeros(T,nqx,nqy)      # relative vorticity, cell corners
+    D::Array{T,2} = zeros(T,nqx,nqy)      # shear deformation of flow field, cell corners
+    Dhat::Array{T,2} = zeros(T,nx+2*haloη,ny+2*haloη)     # stretch deformation of flow field, cell centers w/ halo
+
+    Dhatq::Array{T,2} = zeros(T,nqx,nqy)    # stretch deformation, interpolated to cell corners to match ζ and D
+
+    ζT::Array{T,2} = zeros(T,nx,ny)         # ζ interpolated to cell centers
+    DT::Array{T,2} = zeros(T,nx,ny)         # D, interpolated on cell centers
+    DhatT::Array{T,2} = zeros(T,nx,ny)      # Dhat, further interpolated to cell centers, now with no halo
+
+    # for using u and v as inputs to the CNN instead
+    uqh::Array{T,2} = zeros(T,nux+2*halo,nuy+2*halo-1)
+    vqh::Array{T,2} = zeros(T,nvx+2*halo-1,nvy+2*halo)
+    uq::Array{T,2} = zeros(T,nqx,nqy)
+    vq::Array{T,2} = zeros(T,nqx,nqy)
+    uT::Array{T,2} = zeros(T,nx,ny)
+    vT::Array{T,2} = zeros(T,nx,ny)
+
+    T11::Array{T,2} = zeros(T,nx,ny)
+    T12::Array{T,2} = zeros(T,nqx,nqy)
+    T22::Array{T,2} = zeros(T,nx,ny)
+
+    dT11dx::Array{T,2} = zeros(T,nux,nuy)    # derivative of T11 in the x-direction, u-grid
+    dT12dy::Array{T,2} = zeros(T,nux+halo,nuy)    # derivative of T12 in the y-direction, u-grid
+    dT12dx::Array{T,2} = zeros(T,nvx,nvy+halo)    # derivative of T12 in the x-direction, v-grid
+    dT22dy::Array{T,2} = zeros(T,nvx,nvy)    # derivative of T22 in the y-direction, v-grid
+
+    res_Su::Array{T,2} = zeros(nqx,nuy)
+    res_Sv::Array{T,2} = zeros(nvx,nqy)
+
+    #offdiag -> S_u diag -> S_v
+    S_u::Array{T,2} = zeros(T,nux,nuy)             # total forcing in x-direction
+    S_v::Array{T,2} = zeros(T,nvx,nvy)             # total forcing in y-direction
+
+    Su_layers::SuLayerType
+    Sv_layers::SvLayerType
+
+    model_Su::SuModelType
+    model_Sv::SvModelType
+
+    # compiled_Su::SuCompiledType
+    # compiled_Sv::SvCompiledType
+
+    # compiled_dSu::DSuCompiledType
+    # compiled_dSv::DSvCompiledType
+
+end
+
+"""Generator function for convolutional NN momentum terms"""
+function CNNVars{T}(G::Grid) where {T<:AbstractFloat}
+
+    @unpack nx,ny,bc,Δ= G
+    @unpack halo,haloη = G
+    @unpack halosstx,halossty = G
+
+    nqx = if (bc == "periodic") nx else nx+1 end      # q-grid in x-direction
+    nqy = ny+1                                        # q-grid in y-direction
+
+    # This was the size of the CNNs set for my work. There's currently no setup for the user
+    # to decide how large/small to make the CNN forcing term, the only way to alter the number of
+    # weights is to manually change these values
+    Su_dims = [3,25,25,1]
+    Sv_dims = [3,25,25,2]
+
+    Su_layers = Lux.Chain(
+        (
+            Lux.Conv((5,5), Su_dims[i] => Su_dims[i+1], (i == (length(Su_dims)-1) ? identity : gelu); pad=SamePad(),use_bias=false)
+            for i in 1:(length(Su_dims)-1)
+        )...
+    )
+
+    Sv_layers = Lux.Chain(
+        (
+            Lux.Conv((5,5), Sv_dims[i] => Sv_dims[i+1], (i == (length(Sv_dims)-1) ? identity : gelu); pad=SamePad(),use_bias=false)
+            for i in 1:(length(Sv_dims)-1)
+        )...
+    )
+
+    model_Su = Lux.setup(Random.default_rng(), Su_layers)
+    model_Sv = Lux.setup(Random.default_rng(), Sv_layers)
+
+    use_reactant = false
+    # if use_reactant
+    #     model_Su = Reactant.to_rarray(model_Su)
+    #     Su_input = Reactant.to_rarray(Array{T}(undef, 9+9+4, nqx, nqy))
+    #     Sv_input = Reactant.to_rarray(Array{T}(undef, 9+4+4, nx, ny))
+
+    #     Su_dinput = Reactant.to_rarray(Array{T}(undef, 9+9+4, nqx, nqy))
+    #     Sv_dinput = Reactant.to_rarray(Array{T}(undef, 9+4+4, nx, ny))
+
+    #     d_Su_res = Reactant.to_rarray(Array{T}(undef, 1, nqx, nqy))
+    #     d_Sv_res = Reactant.to_rarray(Array{T}(undef, 2, nx, ny))
+    # end
+    # if use_reactant
+    #     model_Sv = Reactant.to_rarray(model_Sv)
+    # end
+
+    # if use_reactant
+    #     compiled_Su = Reactant.@compile Lux.apply(Su_layers, Su_input, model_Su[1], model_Su[2])
+    #     compiled_Sv = Reactant.@compile Lux.apply(Sv_layers, Sv_input, model_Sv[1], model_Sv[2])
+
+    #     compiled_dSu = Reactant.@compile grad_apply(d_Su_res, deepcopy(model_Su[1]), Su_layers, Su_input, Su_dinput, model_Su[1], model_Su[2])
+    #     compiled_dSv = Reactant.@compile grad_apply(d_Sv_res, deepcopy(model_Sv[1]), Sv_layers, Sv_input, Sv_dinput, model_Sv[1], model_Sv[2])
+    # else
+    #     compiled_Su = nothing
+    #     compiled_Sv = nothing
+    #     compiled_dSu = nothing
+    #     compiled_dSv = nothing
+    # end
+
+    return CNNVars{T, typeof(Su_layers), typeof(Sv_layers), typeof(model_Su), typeof(model_Sv)}(; nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη,
+                    halosstx=halosstx,halossty=halossty, Su_layers, Sv_layers, model_Su, model_Sv#, compiled_Su, compiled_Sv, compiled_dSu, compiled_dSv
+    )
+end
+
 """Preallocate the diagnostic variables and return them as matrices in structs."""
 function preallocate(   ::Type{T},
                         ::Type{Tprog},
@@ -541,6 +682,7 @@ function preallocate(   ::Type{T},
     SL = SemiLagrangeVars{T}(G)
     PV = PrognosticVars{T}(G)
     ZB = ZBVars{Tprog}(G)
+    CNN = CNNVars{T}(G)
 
-    return DiagnosticVars{T,Tprog}(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PV,ZB)
+    return DiagnosticVars{T,Tprog}(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PV,ZB,CNN)
 end
