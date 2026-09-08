@@ -682,7 +682,7 @@ function preallocate(   ::Type{T},
     SL = SemiLagrangeVars{T}(G)
     PV = PrognosticVars{T}(G)
     ZB = ZBVars{Tprog}(G)
-    CNN = CNNVars{T}(G)
+    CNN = CNNVars{Tprog}(G)
 
     return DiagnosticVars{T,Tprog}(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PV,ZB,CNN)
 end
