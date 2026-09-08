@@ -448,6 +448,82 @@ function SemiLagrangeVars{T}(G::Grid) where {T<:AbstractFloat}
                             halosstx=halosstx,halossty=halossty)
 end
 
+""" Variables that appear in Zanna-Bolton forcing term """
+@with_kw struct ZBVars{T<:AbstractFloat}
+
+    # to be specified
+    nx::Int
+    ny::Int
+    bc::String
+    halo::Int
+    haloη::Int
+    halosstx::Int
+    halossty::Int
+
+    nux::Int = if (bc == "periodic") nx else nx-1 end      # u-grid in x-direction
+    nuy::Int = ny                                          # u-grid in y-direction
+    nvx::Int = nx                                          # v-grid in x-direction
+    nvy::Int = ny-1                                        # v-grid in y-direction
+    nqx::Int = if (bc == "periodic") nx else nx+1 end      # q-grid in x-direction
+    nqy::Int = ny+1                                        # q-grid in y-direction
+
+    dudx::Array{T,2} = zeros(T,nux+2*halo-1,nuy+2*halo)    # ∂u/∂x
+    dudy::Array{T,2} = zeros(T,nux+2*halo,nuy+2*halo-1)    # ∂u/∂y
+    dvdx::Array{T,2} = zeros(T,nvx+2*halo-1,nvy+2*halo)    # ∂v/∂x
+    dvdy::Array{T,2} = zeros(T,nvx+2*halo,nvy+2*halo-1)    # ∂v/∂y
+
+    γ₀::T=0.3                       # coefficient in parameterization term
+
+    ζ::Array{T,2} = zeros(T,nqx,nqy)      # relative vorticity, cell corners
+    ζsq::Array{T,2} = zeros(T,nqx,nqy)    # relative vorticity squared, cell corners
+
+    D::Array{T,2} = zeros(T,nqx,nqy)      # shear deformation of flow field, cell corners
+    Dsq::Array{T,2} = zeros(T,nqx,nqy)    # square of the tensor
+
+    D_n::Array{T,2} = zeros(T,nvx+2*halo-1,nvy+2*halo)
+    D_nT::Array{T,2} = zeros(T,nx+2*haloη,ny+2*haloη) 
+    D_q::Array{T,2} = zeros(T,nqx,nqy)
+
+    Dhat::Array{T,2} = zeros(T,nqx-1+2*haloη,nqy-1+2*haloη)     # stretch deformation of flow field, cell centers w/ halo
+    Dhatsq::Array{T,2} = zeros(T,nqx-1+2*haloη,nqy-1+2*haloη)   # square of the tensor
+    Dhatq::Array{T,2} = zeros(T,nqx,nqy)                  # tensor interpolated onto q-grid
+
+    ζsqT::Array{T,2} = zeros(T,nqx-1,nqy-1)     # ζ^2 interpolated to cell centers
+    ζD::Array{T,2} = zeros(T,nqx,nqy)           # ζD, cell corners
+    ζDT::Array{T,2} = zeros(T,nqx-1,nqy-1)      # ζD, placed on cell centers
+    ζDhat::Array{T,2} = zeros(T,nqx,nqy)        # ζDhat, cell corners
+    
+    trace::Array{T,2} = zeros(T,nx,ny)     # ζ^2 (+ D^2 + Dhat^2), cell centers. We only compute ζ^2 rather than the whole sum
+
+    ζD_filtered::Array{T,2} = zeros(T,nqx-1,nqy-1)        # ζD with filter applied
+    ζDhat_filtered::Array{T,2} = zeros(T,nqx,nqy)         # ζDhat with filter applied
+    trace_filtered::Array{T,2} = zeros(T,nqx-1,nqy-1)     # trace with filter applied
+
+    dζDdx::Array{T,2} = zeros(T,nux,nuy)             # u-grid
+    dζDhatdy::Array{T,2} = zeros(T,nux+halo,nuy)     # u-grid, initially with extra halo points
+    dtracedx::Array{T,2} = zeros(T,nux,nuy)          # u-grid 
+
+    S_u::Array{T,2} = zeros(T,nux,nuy)             # total forcing in x-direction
+
+    dζDhatdx::Array{T,2} = zeros(T,nvx,nvy+halo)   # v-grid, initially with extra halo points
+    dζDdy::Array{T,2} = zeros(T,nvx,nvy)           # v-grid
+    dtracedy::Array{T,2} = zeros(T,nvx,nvy)        # v-grid
+
+    S_v::Array{T,2} = zeros(T,nvx,nvy)             # total forcing in y-direction
+
+end
+
+"""Generator function for ZB_momentum terms."""
+function ZBVars{T}(G::Grid) where {T<:AbstractFloat}
+
+    @unpack nx,ny,bc = G
+    @unpack halo,haloη = G
+    @unpack halosstx,halossty = G
+
+    return ZBVars{T}(nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη,
+                            halosstx=halosstx,halossty=halossty)
+end
+
 """Preallocate the diagnostic variables and return them as matrices in structs."""
 function preallocate(   ::Type{T},
                         ::Type{Tprog},
@@ -464,6 +540,7 @@ function preallocate(   ::Type{T},
     SM = SmagorinskyVars{T}(G)
     SL = SemiLagrangeVars{T}(G)
     PV = PrognosticVars{T}(G)
+    ZB = ZBVars{Tprog}(G)
 
-    return DiagnosticVars{T,Tprog}(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PV)
+    return DiagnosticVars{T,Tprog}(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PV,ZB)
 end
