@@ -552,21 +552,13 @@ end
 
     ζ::Array{T,2} = zeros(T,nqx,nqy)      # relative vorticity, cell corners
     D::Array{T,2} = zeros(T,nqx,nqy)      # shear deformation of flow field, cell corners
-    Dhat::Array{T,2} = zeros(T,nx+2*haloη,ny+2*haloη)     # stretch deformation of flow field, cell centers w/ halo
+    Dhat::Array{T,2} = zeros(T,nqx-1+2*haloη,nqy-1+2*haloη)     # stretch deformation of flow field, cell centers w/ halo
 
     Dhatq::Array{T,2} = zeros(T,nqx,nqy)    # stretch deformation, interpolated to cell corners to match ζ and D
 
-    ζT::Array{T,2} = zeros(T,nx,ny)         # ζ interpolated to cell centers
-    DT::Array{T,2} = zeros(T,nx,ny)         # D, interpolated on cell centers
-    DhatT::Array{T,2} = zeros(T,nx,ny)      # Dhat, further interpolated to cell centers, now with no halo
-
-    # for using u and v as inputs to the CNN instead
-    uqh::Array{T,2} = zeros(T,nux+2*halo,nuy+2*halo-1)
-    vqh::Array{T,2} = zeros(T,nvx+2*halo-1,nvy+2*halo)
-    uq::Array{T,2} = zeros(T,nqx,nqy)
-    vq::Array{T,2} = zeros(T,nqx,nqy)
-    uT::Array{T,2} = zeros(T,nx,ny)
-    vT::Array{T,2} = zeros(T,nx,ny)
+    ζT::Array{T,2} = zeros(T,nqx-1,nqy-1)         # ζ interpolated to cell centers
+    DT::Array{T,2} = zeros(T,nqx-1,nqy-1)         # D, interpolated on cell centers
+    DhatT::Array{T,2} = zeros(T,nqx-1,nqy-1)      # Dhat, further interpolated to cell centers, now with no halo
 
     T11::Array{T,2} = zeros(T,nx,ny)
     T12::Array{T,2} = zeros(T,nqx,nqy)
@@ -580,7 +572,6 @@ end
     res_Su::Array{T,2} = zeros(nqx,nuy)
     res_Sv::Array{T,2} = zeros(nvx,nqy)
 
-    #offdiag -> S_u diag -> S_v
     S_u::Array{T,2} = zeros(T,nux,nuy)             # total forcing in x-direction
     S_v::Array{T,2} = zeros(T,nvx,nvy)             # total forcing in y-direction
 

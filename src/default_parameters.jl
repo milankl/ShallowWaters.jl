@@ -163,6 +163,10 @@
     @assert get_id_mode in ["continue","fill","specific"] "get_id_mode $get_id_mode unsupported."
     @assert !(zb_forcing_momentum && zb_forcing_dissipation)   "Model is adding the ZB forcing to both the momentum and dissipation calculations, should only add to one or the other"
     @assert !((zb_forcing_dissipation || zb_forcing_momentum) && bc == "periodic")   "ZB forcing breaks on a periodic domain"
+    @assert !(nn_forcing_momentum && nn_forcing_dissipation)   "Model is adding the NN forcing to both the momentum and dissipation calculations, should only add to one or the other"
+    @assert !(nn_forcing_momentum && zb_forcing_dissipation || nn_forcing_momentum && zb_forcing_momentum)   "Model is adding both the ZB and NN forcing, should only add to one or the other"
+    @assert !(nn_forcing_dissipation && zb_forcing_dissipation || nn_forcing_dissipation && zb_forcing_momentum)   "Model is adding both the ZB and NN forcing, should only add to one or the other"
+    @assert !((nn_forcing_dissipation || nn_forcing_momentum) && bc == "periodic")   "NN forcing breaks on a periodic domain"
 end
 
 """

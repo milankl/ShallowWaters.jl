@@ -75,7 +75,7 @@ T_11, T_12, and T_22 are output from two separate CNNs
 The inputs to the CNNs will be the vorticity, shear, and stretch deformation fields,
 following the Zanna & Bolton parameterization contained in zanna_bolton_forcing.
 
-As of 09/08/26 the CNN forcing has been successfully trained in a flat bottom,
+As of 09/08/26 the weights in this forcing function have been successfully trained in a flat bottom,
 barotropic gyre setup with the following parameters:
 ShallowWaters.Parameter(T=T;
     output=false,
@@ -96,9 +96,10 @@ ShallowWaters.Parameter(T=T;
     nx=128
 )
 This is not to say that the CNNs can't be trained in a different setup, but this is all that's been tested.
+Also, just like with the Zanna-Bolton parameterization, CNN_forcing_momentum has issues on a periodic domain.
 
-As of now though there are dimension issues when L_ration \neq 1, so the CNN forcing won't work on a non-square
-domain. Moreover, just like with the Zanna-Bolton parameterization, CNN_forcing_momentum has issues on a periodic domain.
+Warning about this function: the default weights that Lux chooses *will* cause the model to diverge, one needs to use
+tuned weights/tune the weights themselves to make the forcing work stably alongside model integration
 """
 function CNN_momentum(u, v, S)
 
@@ -114,8 +115,6 @@ function CNN_momentum(u, v, S)
     @unpack model_Su, model_Sv = Diag.CNNVars
     @unpack Su_layers, Sv_layers = Diag.CNNVars
     @unpack Dhatq, ζT, DT, DhatT = Diag.CNNVars
-
-    @unpack uq, vq, uqh, vqh, uT, vT = Diag.CNNVars
 
     @unpack T11, T22, T12 = Diag.CNNVars
     @unpack dT11dx, dT12dy, dT12dx, dT22dy = Diag.CNNVars
@@ -175,7 +174,7 @@ function CNN_momentum(u, v, S)
     Su_input[:,:,2,1] .= D
     Su_input[:,:,3,1] .= Dhatq
 
-    Sv_input = Array{T}(undef, nx, nx, 3, 1)
+    Sv_input = Array{T}(undef, nx, ny, 3, 1)
     Sv_input[:,:,1,1] .= ζT
     Sv_input[:,:,2,1] .= DT
     Sv_input[:,:,3,1] .= DhatT
