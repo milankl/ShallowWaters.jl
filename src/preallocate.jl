@@ -524,6 +524,126 @@ function ZBVars{T}(G::Grid) where {T<:AbstractFloat}
                             halosstx=halosstx,halossty=halossty)
 end
 
+""" Variables that appear in NN forcing term, should only be filled when extension is added """
+@with_kw mutable struct CNNVars{T<:AbstractFloat, SuLayerType, SvLayerType, SuModelType, SvModelType}
+
+    # to be specified
+    nx::Int
+    ny::Int
+    bc::String
+    halo::Int
+    haloη::Int
+
+    nux::Int = if (bc == "periodic") nx else nx-1 end      # u-grid in x-direction
+    nuy::Int = ny                                          # u-grid in y-direction
+    nvx::Int = nx                                          # v-grid in x-direction
+    nvy::Int = ny-1                                        # v-grid in y-direction
+    nqx::Int = if (bc == "periodic") nx else nx+1 end      # q-grid in x-direction
+    nqy::Int = ny+1                                        # q-grid in y-direction
+
+    γ₀::Float64=0.3                       # coefficient in parameterization term
+
+    dudx::Array{T,2} = zeros(T,nux+2*halo-1,nuy+2*halo)    # ∂u/∂x
+    dudy::Array{T,2} = zeros(T,nux+2*halo,nuy+2*halo-1)    # ∂u/∂y
+    dvdx::Array{T,2} = zeros(T,nvx+2*halo-1,nvy+2*halo)    # ∂v/∂x
+    dvdy::Array{T,2} = zeros(T,nvx+2*halo,nvy+2*halo-1)    # ∂v/∂y
+
+    ζ::Array{T,2} = zeros(T,nqx,nqy)      # relative vorticity, cell corners
+    D::Array{T,2} = zeros(T,nqx,nqy)      # shear deformation of flow field, cell corners
+    Dhat::Array{T,2} = zeros(T,nqx-1+2*haloη,nqy-1+2*haloη)     # stretch deformation of flow field, cell centers w/ halo
+
+    Dhatq::Array{T,2} = zeros(T,nqx,nqy)    # stretch deformation, interpolated to cell corners to match ζ and D
+
+    ζT::Array{T,2} = zeros(T,nqx-1,nqy-1)         # ζ interpolated to cell centers
+    DT::Array{T,2} = zeros(T,nqx-1,nqy-1)         # D, interpolated on cell centers
+    DhatT::Array{T,2} = zeros(T,nqx-1,nqy-1)      # Dhat, further interpolated to cell centers, now with no halo
+
+    T11::Array{T,2} = zeros(T,nx,ny)
+    T12::Array{T,2} = zeros(T,nqx,nqy)
+    T22::Array{T,2} = zeros(T,nx,ny)
+
+    dT11dx::Array{T,2} = zeros(T,nux,nuy)    # derivative of T11 in the x-direction, u-grid
+    dT12dy::Array{T,2} = zeros(T,nux+halo,nuy)    # derivative of T12 in the y-direction, u-grid
+    dT12dx::Array{T,2} = zeros(T,nvx,nvy+halo)    # derivative of T12 in the x-direction, v-grid
+    dT22dy::Array{T,2} = zeros(T,nvx,nvy)    # derivative of T22 in the y-direction, v-grid
+
+    res_Su::Array{T,2} = zeros(nqx,nuy)
+    res_Sv::Array{T,2} = zeros(nvx,nqy)
+
+    S_u::Array{T,2} = zeros(T,nux,nuy)             # total forcing in x-direction
+    S_v::Array{T,2} = zeros(T,nvx,nvy)             # total forcing in y-direction
+
+    Su_layers::SuLayerType
+    Sv_layers::SvLayerType
+
+    model_Su::SuModelType
+    model_Sv::SvModelType
+
+    # compiled_Su::SuCompiledType
+    # compiled_Sv::SvCompiledType
+
+    # compiled_dSu::DSuCompiledType
+    # compiled_dSv::DSvCompiledType
+
+end
+
+"""
+We only want CNNVars to contain the Lux values if the extension is loaded
+"""
+function build_cnn_vars(::Type{T}, G::Grid) where {T<:AbstractFloat}
+    if hasmethod(CNNVars{T}, Tuple{typeof(G)})
+        # Lux extension is loaded and has defined the real build function
+        return CNNVars{T}(G)
+    else
+        @unpack nx, ny, bc, halo, haloη = G
+        return CNNVars{T, Nothing, Nothing, Nothing, Nothing}(;
+            nx=nx, ny=ny, bc=bc, halo=halo, haloη=haloη,
+            Su_layers=nothing, Sv_layers=nothing,
+            model_Su=nothing, model_Sv=nothing
+        )
+    end
+end
+
+# """Generator function for convolutional NN momentum terms"""
+# function CNNVars{T}(G::Grid) where {T<:AbstractFloat}
+
+#     @unpack nx,ny,bc,Δ= G
+#     @unpack halo,haloη = G
+#     @unpack halosstx,halossty = G
+
+#     nqx = if (bc == "periodic") nx else nx+1 end      # q-grid in x-direction
+#     nqy = ny+1                                        # q-grid in y-direction
+
+#     # This was the size of the CNNs set for my work. There's currently no setup for the user
+#     # to decide how large/small to make the CNN forcing term, the only way to alter the number of
+#     # weights is to manually change these values
+#     Su_dims = [3,25,25,1]
+#     Sv_dims = [3,25,25,2]
+
+#     Su_layers = Lux.Chain(
+#         (
+#             Lux.Conv((5,5), Su_dims[i] => Su_dims[i+1], (i == (length(Su_dims)-1) ? identity : gelu); pad=SamePad(),use_bias=false)
+#             for i in 1:(length(Su_dims)-1)
+#         )...
+#     )
+
+#     Sv_layers = Lux.Chain(
+#         (
+#             Lux.Conv((5,5), Sv_dims[i] => Sv_dims[i+1], (i == (length(Sv_dims)-1) ? identity : gelu); pad=SamePad(),use_bias=false)
+#             for i in 1:(length(Sv_dims)-1)
+#         )...
+#     )
+
+#     model_Su = Lux.setup(Random.default_rng(), Su_layers)
+#     model_Sv = Lux.setup(Random.default_rng(), Sv_layers)
+
+#     use_reactant = false
+
+#     return CNNVars{T, typeof(Su_layers), typeof(Sv_layers), typeof(model_Su), typeof(model_Sv)}(; nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη,
+#                     halosstx=halosstx,halossty=halossty, Su_layers, Sv_layers, model_Su, model_Sv#, compiled_Su, compiled_Sv, compiled_dSu, compiled_dSv
+#     )
+# end
+
 """Preallocate the diagnostic variables and return them as matrices in structs."""
 function preallocate(   ::Type{T},
                         ::Type{Tprog},
@@ -541,6 +661,7 @@ function preallocate(   ::Type{T},
     SL = SemiLagrangeVars{T}(G)
     PV = PrognosticVars{T}(G)
     ZB = ZBVars{Tprog}(G)
+    CNN = build_cnn_vars(Tprog, G)#CNNVars{Tprog}(G)
 
-    return DiagnosticVars{T,Tprog}(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PV,ZB)
+    return DiagnosticVars(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PV,ZB,CNN)
 end

@@ -2,7 +2,7 @@ module ShallowWaters
 
     export run_model, model_setup, Parameter, ∂x, ∂y, Ix, Iy, ∇²
 
-    using NetCDF, Parameters, Printf, Dates, Interpolations
+    using NetCDF, Parameters, Printf, Dates, Interpolations, Random
 
     include("default_parameters.jl")
     include("grid.jl")
@@ -23,6 +23,7 @@ module ShallowWaters
     include("diffusion.jl")
     include("tracer_advection.jl")
     include("zanna_bolton_forcing.jl")
+    include("nn_forcing.jl")
 
     include("feedback.jl")
     include("output.jl")

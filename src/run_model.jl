@@ -33,8 +33,8 @@ function run_model(::Type{T},P::Parameter) where {T<:AbstractFloat}
     Prog = initial_conditions(Tprog,G,P,C)
     Diag = preallocate(T,Tprog,G)
 
-    # one structure with everything already inside 
-    S = ModelSetup{T,Tprog}(P,G,C,F,Prog,Diag,0)
+    # one structure with everything already inside
+    S = ModelSetup{T,Tprog}(P,G,C,F,Prog,Diag)
     Prog = time_integration(S)
 
     return Prog
@@ -65,7 +65,7 @@ function model_setup(::Type{T},P::Parameter) where {T<:AbstractFloat}
     Prog = initial_conditions(Tprog,G,P,C)
     Diag = preallocate(T,Tprog,G)
 
-    S = ModelSetup{T,Tprog}(P,G,C,F,Prog,Diag,0)
+    S = ModelSetup{T,Tprog}(P,G,C,F,Prog,Diag)
 
     return S
 
