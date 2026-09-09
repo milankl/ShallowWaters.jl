@@ -27,5 +27,5 @@ mutable struct ModelSetup{T<:AbstractFloat,Tprog<:AbstractFloat}
     constants::Constants{T,Tprog}
     forcing::Forcing{T}
     Prog::PrognosticVars{Tprog}
-    Diag::DiagnosticVars{T, Tprog}
+    Diag::DiagnosticVars{T,Tprog}
 end

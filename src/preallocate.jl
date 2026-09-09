@@ -524,8 +524,8 @@ function ZBVars{T}(G::Grid) where {T<:AbstractFloat}
                             halosstx=halosstx,halossty=halossty)
 end
 
-""" Variables that appear in NN forcing term """
-@with_kw mutable struct CNNVars{T<:AbstractFloat, SuLayerType, SvLayerType, SuModelType, SvModelType}#, SuCompiledType, SvCompiledType, DSuCompiledType, DSvCompiledType}
+""" Variables that appear in NN forcing term, should only be filled when extension is added """
+@with_kw mutable struct CNNVars{T<:AbstractFloat, SuLayerType, SvLayerType, SuModelType, SvModelType}
 
     # to be specified
     nx::Int
@@ -533,8 +533,6 @@ end
     bc::String
     halo::Int
     haloη::Int
-    halosstx::Int
-    halossty::Int
 
     nux::Int = if (bc == "periodic") nx else nx-1 end      # u-grid in x-direction
     nuy::Int = ny                                          # u-grid in y-direction
@@ -589,72 +587,62 @@ end
 
 end
 
-"""Generator function for convolutional NN momentum terms"""
-function CNNVars{T}(G::Grid) where {T<:AbstractFloat}
-
-    @unpack nx,ny,bc,Δ= G
-    @unpack halo,haloη = G
-    @unpack halosstx,halossty = G
-
-    nqx = if (bc == "periodic") nx else nx+1 end      # q-grid in x-direction
-    nqy = ny+1                                        # q-grid in y-direction
-
-    # This was the size of the CNNs set for my work. There's currently no setup for the user
-    # to decide how large/small to make the CNN forcing term, the only way to alter the number of
-    # weights is to manually change these values
-    Su_dims = [3,25,25,1]
-    Sv_dims = [3,25,25,2]
-
-    Su_layers = Lux.Chain(
-        (
-            Lux.Conv((5,5), Su_dims[i] => Su_dims[i+1], (i == (length(Su_dims)-1) ? identity : gelu); pad=SamePad(),use_bias=false)
-            for i in 1:(length(Su_dims)-1)
-        )...
-    )
-
-    Sv_layers = Lux.Chain(
-        (
-            Lux.Conv((5,5), Sv_dims[i] => Sv_dims[i+1], (i == (length(Sv_dims)-1) ? identity : gelu); pad=SamePad(),use_bias=false)
-            for i in 1:(length(Sv_dims)-1)
-        )...
-    )
-
-    model_Su = Lux.setup(Random.default_rng(), Su_layers)
-    model_Sv = Lux.setup(Random.default_rng(), Sv_layers)
-
-    use_reactant = false
-    # if use_reactant
-    #     model_Su = Reactant.to_rarray(model_Su)
-    #     Su_input = Reactant.to_rarray(Array{T}(undef, 9+9+4, nqx, nqy))
-    #     Sv_input = Reactant.to_rarray(Array{T}(undef, 9+4+4, nx, ny))
-
-    #     Su_dinput = Reactant.to_rarray(Array{T}(undef, 9+9+4, nqx, nqy))
-    #     Sv_dinput = Reactant.to_rarray(Array{T}(undef, 9+4+4, nx, ny))
-
-    #     d_Su_res = Reactant.to_rarray(Array{T}(undef, 1, nqx, nqy))
-    #     d_Sv_res = Reactant.to_rarray(Array{T}(undef, 2, nx, ny))
-    # end
-    # if use_reactant
-    #     model_Sv = Reactant.to_rarray(model_Sv)
-    # end
-
-    # if use_reactant
-    #     compiled_Su = Reactant.@compile Lux.apply(Su_layers, Su_input, model_Su[1], model_Su[2])
-    #     compiled_Sv = Reactant.@compile Lux.apply(Sv_layers, Sv_input, model_Sv[1], model_Sv[2])
-
-    #     compiled_dSu = Reactant.@compile grad_apply(d_Su_res, deepcopy(model_Su[1]), Su_layers, Su_input, Su_dinput, model_Su[1], model_Su[2])
-    #     compiled_dSv = Reactant.@compile grad_apply(d_Sv_res, deepcopy(model_Sv[1]), Sv_layers, Sv_input, Sv_dinput, model_Sv[1], model_Sv[2])
-    # else
-    #     compiled_Su = nothing
-    #     compiled_Sv = nothing
-    #     compiled_dSu = nothing
-    #     compiled_dSv = nothing
-    # end
-
-    return CNNVars{T, typeof(Su_layers), typeof(Sv_layers), typeof(model_Su), typeof(model_Sv)}(; nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη,
-                    halosstx=halosstx,halossty=halossty, Su_layers, Sv_layers, model_Su, model_Sv#, compiled_Su, compiled_Sv, compiled_dSu, compiled_dSv
-    )
+"""
+We only want CNNVars to contain the Lux values if the extension is loaded
+"""
+function build_cnn_vars(::Type{T}, G::Grid) where {T<:AbstractFloat}
+    if hasmethod(CNNVars{T}, Tuple{typeof(G)})
+        # Lux extension is loaded and has defined the real build function
+        return CNNVars{T}(G)
+    else
+        @unpack nx, ny, bc, halo, haloη = G
+        return CNNVars{T, Nothing, Nothing, Nothing, Nothing}(;
+            nx=nx, ny=ny, bc=bc, halo=halo, haloη=haloη,
+            Su_layers=nothing, Sv_layers=nothing,
+            model_Su=nothing, model_Sv=nothing
+        )
+    end
 end
+
+# """Generator function for convolutional NN momentum terms"""
+# function CNNVars{T}(G::Grid) where {T<:AbstractFloat}
+
+#     @unpack nx,ny,bc,Δ= G
+#     @unpack halo,haloη = G
+#     @unpack halosstx,halossty = G
+
+#     nqx = if (bc == "periodic") nx else nx+1 end      # q-grid in x-direction
+#     nqy = ny+1                                        # q-grid in y-direction
+
+#     # This was the size of the CNNs set for my work. There's currently no setup for the user
+#     # to decide how large/small to make the CNN forcing term, the only way to alter the number of
+#     # weights is to manually change these values
+#     Su_dims = [3,25,25,1]
+#     Sv_dims = [3,25,25,2]
+
+#     Su_layers = Lux.Chain(
+#         (
+#             Lux.Conv((5,5), Su_dims[i] => Su_dims[i+1], (i == (length(Su_dims)-1) ? identity : gelu); pad=SamePad(),use_bias=false)
+#             for i in 1:(length(Su_dims)-1)
+#         )...
+#     )
+
+#     Sv_layers = Lux.Chain(
+#         (
+#             Lux.Conv((5,5), Sv_dims[i] => Sv_dims[i+1], (i == (length(Sv_dims)-1) ? identity : gelu); pad=SamePad(),use_bias=false)
+#             for i in 1:(length(Sv_dims)-1)
+#         )...
+#     )
+
+#     model_Su = Lux.setup(Random.default_rng(), Su_layers)
+#     model_Sv = Lux.setup(Random.default_rng(), Sv_layers)
+
+#     use_reactant = false
+
+#     return CNNVars{T, typeof(Su_layers), typeof(Sv_layers), typeof(model_Su), typeof(model_Sv)}(; nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη,
+#                     halosstx=halosstx,halossty=halossty, Su_layers, Sv_layers, model_Su, model_Sv#, compiled_Su, compiled_Sv, compiled_dSu, compiled_dSv
+#     )
+# end
 
 """Preallocate the diagnostic variables and return them as matrices in structs."""
 function preallocate(   ::Type{T},
@@ -673,7 +661,7 @@ function preallocate(   ::Type{T},
     SL = SemiLagrangeVars{T}(G)
     PV = PrognosticVars{T}(G)
     ZB = ZBVars{Tprog}(G)
-    CNN = CNNVars{Tprog}(G)
+    CNN = build_cnn_vars(Tprog, G)#CNNVars{Tprog}(G)
 
-    return DiagnosticVars{T,Tprog}(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PV,ZB,CNN)
+    return DiagnosticVars(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PV,ZB,CNN)
 end

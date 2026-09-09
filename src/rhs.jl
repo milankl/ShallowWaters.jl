@@ -52,7 +52,7 @@ function rhs_nonlinear!(u::AbstractMatrix,
     end
 
     if S.parameters.nn_forcing_momentum 
-        NN_momentum(u, v, S)
+        CNN_momentum(u, v, S)
     end
 
     # adding the terms

@@ -2,9 +2,7 @@ module ShallowWaters
 
     export run_model, model_setup, Parameter, ∂x, ∂y, Ix, Iy, ∇²
 
-    using NetCDF, Parameters, Printf, Dates, Interpolations
-
-    using Lux, Random
+    using NetCDF, Parameters, Printf, Dates, Interpolations, Random
 
     include("default_parameters.jl")
     include("grid.jl")
