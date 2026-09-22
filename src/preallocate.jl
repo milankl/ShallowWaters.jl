@@ -590,7 +590,7 @@ end
 """
 We only want CNNVars to contain the Lux values if the extension is loaded
 """
-function CNNVars{T}(G::Any) where {T<:AbstractFloat}
+function CNNVars(::Type{T}, G::Any) where {T<:AbstractFloat}
     @unpack nx, ny, bc, halo, haloη = G
     return CNNVars{T, Nothing, Nothing, Nothing, Nothing}(; nx=nx, ny=ny, bc=bc, halo=halo, haloη=haloη,
                         Su_layers=nothing, Sv_layers=nothing, model_Su=nothing, model_Sv=nothing)
@@ -627,7 +627,7 @@ function preallocate(   ::Type{T},
     SL = SemiLagrangeVars{T}(G)
     PV = PrognosticVars{T}(G)
     ZB = ZBVars{Tprog}(G)
-    CNN = CNNVars{Tprog}(G)
+    CNN = CNNVars(Tprog, G)
 
     return DiagnosticVars(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PV,ZB,CNN)
 end

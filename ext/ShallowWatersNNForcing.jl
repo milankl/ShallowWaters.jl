@@ -5,7 +5,7 @@ module ShallowWatersNNForcing
     using Lux
 
     """Generator function for convolutional NN momentum terms"""
-    function ShallowWaters.CNNVars{T}(G::ShallowWaters.Grid) where {T<:AbstractFloat}
+    function ShallowWaters.CNNVars(::Type{T}, G::ShallowWaters.Grid) where {T<:AbstractFloat}
 
         @unpack nx,ny,bc,Δ= G
         @unpack halo,haloη = G
