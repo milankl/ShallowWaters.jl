@@ -590,58 +590,24 @@ end
 """
 We only want CNNVars to contain the Lux values if the extension is loaded
 """
-function build_cnn_vars(::Type{T}, G::Grid) where {T<:AbstractFloat}
-    if hasmethod(CNNVars{T}, Tuple{typeof(G)})
-        # Lux extension is loaded and has defined the real build function
-        return CNNVars{T}(G)
-    else
-        @unpack nx, ny, bc, halo, haloη = G
-        return CNNVars{T, Nothing, Nothing, Nothing, Nothing}(;
-            nx=nx, ny=ny, bc=bc, halo=halo, haloη=haloη,
-            Su_layers=nothing, Sv_layers=nothing,
-            model_Su=nothing, model_Sv=nothing
-        )
-    end
+function CNNVars{T}(G::Any) where {T<:AbstractFloat}
+    @unpack nx, ny, bc, halo, haloη = G
+    return CNNVars{T, Nothing, Nothing, Nothing, Nothing}(; nx=nx, ny=ny, bc=bc, halo=halo, haloη=haloη,
+                        Su_layers=nothing, Sv_layers=nothing, model_Su=nothing, model_Sv=nothing)
 end
 
-# """Generator function for convolutional NN momentum terms"""
-# function CNNVars{T}(G::Grid) where {T<:AbstractFloat}
-
-#     @unpack nx,ny,bc,Δ= G
-#     @unpack halo,haloη = G
-#     @unpack halosstx,halossty = G
-
-#     nqx = if (bc == "periodic") nx else nx+1 end      # q-grid in x-direction
-#     nqy = ny+1                                        # q-grid in y-direction
-
-#     # This was the size of the CNNs set for my work. There's currently no setup for the user
-#     # to decide how large/small to make the CNN forcing term, the only way to alter the number of
-#     # weights is to manually change these values
-#     Su_dims = [3,25,25,1]
-#     Sv_dims = [3,25,25,2]
-
-#     Su_layers = Lux.Chain(
-#         (
-#             Lux.Conv((5,5), Su_dims[i] => Su_dims[i+1], (i == (length(Su_dims)-1) ? identity : gelu); pad=SamePad(),use_bias=false)
-#             for i in 1:(length(Su_dims)-1)
-#         )...
-#     )
-
-#     Sv_layers = Lux.Chain(
-#         (
-#             Lux.Conv((5,5), Sv_dims[i] => Sv_dims[i+1], (i == (length(Sv_dims)-1) ? identity : gelu); pad=SamePad(),use_bias=false)
-#             for i in 1:(length(Sv_dims)-1)
-#         )...
-#     )
-
-#     model_Su = Lux.setup(Random.default_rng(), Su_layers)
-#     model_Sv = Lux.setup(Random.default_rng(), Sv_layers)
-
-#     use_reactant = false
-
-#     return CNNVars{T, typeof(Su_layers), typeof(Sv_layers), typeof(model_Su), typeof(model_Sv)}(; nx=nx,ny=ny,bc=bc,halo=halo,haloη=haloη,
-#                     halosstx=halosstx,halossty=halossty, Su_layers, Sv_layers, model_Su, model_Sv#, compiled_Su, compiled_Sv, compiled_dSu, compiled_dSv
-#     )
+# function build_cnn_vars(::Type{T}, G::Grid) where {T<:AbstractFloat}
+#     if hasmethod(CNNVars{T}, Tuple{typeof(G)})
+#         # Lux extension is loaded and has defined the real build function
+#         return CNNVars{T}(G)
+#     else
+#         @unpack nx, ny, bc, halo, haloη = G
+#         return CNNVars{T, Nothing, Nothing, Nothing, Nothing}(;
+#             nx=nx, ny=ny, bc=bc, halo=halo, haloη=haloη,
+#             Su_layers=nothing, Sv_layers=nothing,
+#             model_Su=nothing, model_Sv=nothing
+#         )
+#     end
 # end
 
 """Preallocate the diagnostic variables and return them as matrices in structs."""
@@ -661,7 +627,7 @@ function preallocate(   ::Type{T},
     SL = SemiLagrangeVars{T}(G)
     PV = PrognosticVars{T}(G)
     ZB = ZBVars{Tprog}(G)
-    CNN = build_cnn_vars(Tprog, G)#CNNVars{Tprog}(G)
+    CNN = CNNVars{Tprog}(G)
 
     return DiagnosticVars(RK,TD,VF,VT,BN,BD,AH,LP,SM,SL,PV,ZB,CNN)
 end
